@@ -40,10 +40,104 @@ const ALT_COLORS = [
   '#FF8A00', // Orange
 ];
 
+const KettlebellIcon = ({ color }: { color: string }) => (
+  <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+    {/* Kettlebell Handle */}
+    <View style={{
+      width: 12,
+      height: 9,
+      borderRadius: 5,
+      borderWidth: 1.5,
+      borderColor: color,
+      backgroundColor: 'transparent',
+      position: 'absolute',
+      top: 1,
+    }} />
+    {/* Kettlebell Body */}
+    <View style={{
+      width: 15,
+      height: 15,
+      borderRadius: 7.5,
+      borderWidth: 1.5,
+      borderColor: color,
+      backgroundColor: 'transparent',
+      position: 'absolute',
+      bottom: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}>
+      {/* Inner weight marker */}
+      <View style={{
+        width: 3,
+        height: 3,
+        borderRadius: 1.5,
+        backgroundColor: color,
+      }} />
+    </View>
+  </View>
+);
+
+const WeightPlateIcon = ({ color }: { color: string }) => (
+  <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+    {/* Outer Plate rim */}
+    <View style={{
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 1.5,
+      borderColor: color,
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}>
+      {/* Inner dash details */}
+      <View style={{
+        width: 13,
+        height: 13,
+        borderRadius: 6.5,
+        borderWidth: 0.75,
+        borderColor: color,
+        borderStyle: 'dashed',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        {/* Center hole */}
+        <View style={{
+          width: 4,
+          height: 4,
+          borderRadius: 2,
+          borderWidth: 1,
+          borderColor: color,
+          backgroundColor: '#13141C',
+        }} />
+      </View>
+    </View>
+  </View>
+);
+
 const ALT_IMAGES = [
-  require('@/assets/images/eq_dumbbell.png'),
-  require('@/assets/images/eq_cable.png'),
-  require('@/assets/images/eq_barbell.png'),
+  (color: string) => (
+    <Image
+      source={require('@/assets/images/eq_dumbbell.png')}
+      style={{ width: 24, height: 24, opacity: 0.85 }}
+      contentFit="contain"
+    />
+  ),
+  (color: string) => (
+    <Image
+      source={require('@/assets/images/eq_cable.png')}
+      style={{ width: 24, height: 24, opacity: 0.85 }}
+      contentFit="contain"
+    />
+  ),
+  (color: string) => (
+    <Image
+      source={require('@/assets/images/eq_barbell.png')}
+      style={{ width: 24, height: 24, opacity: 0.85 }}
+      contentFit="contain"
+    />
+  ),
+  (color: string) => <KettlebellIcon color={color} />,
+  (color: string) => <WeightPlateIcon color={color} />,
 ];
 import * as Haptics from 'expo-haptics';
 import {
@@ -270,52 +364,11 @@ export default function SinglePageLandingScreen() {
             <View style={styles.headerRow}>
               <View>
                 <Text style={styles.greeting}>Workout Journal</Text>
-                <Text style={styles.dateSub}>Log your best. Forget the rest.</Text>
-              </View>
-              <View style={styles.headerButtons}>
-                <TouchableOpacity
-                  style={styles.headerRoundBtn}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Search size={16} color="#FFFFFF" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.headerRoundBtn}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Filter size={16} color="#FFFFFF" />
-                </TouchableOpacity>
+                <Text style={styles.dateSub}>
+                  we remember so you can <Text style={{ fontWeight: '900', color: '#3B82F6' }}>FORGET</Text>
+                </Text>
               </View>
             </View>
-          </View>
-
-          {/* Banner Lift Card from screenshot */}
-          <View style={styles.bannerCard}>
-            <View style={styles.bannerLeft}>
-              <View style={styles.bannerIconCircle}>
-                <Flame size={18} color="#10B981" fill="#10B981" />
-              </View>
-              <View>
-                <Text style={styles.bannerTitle}>Ready for a lift?</Text>
-                <Text style={styles.bannerSubtitle}>Log details in under 30 seconds</Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={styles.bannerBtn}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                handleSelectMuscleCard('Chest');
-              }}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.bannerBtnText}>Start Session</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Segment Selector Toggle */}
@@ -636,7 +689,7 @@ export default function SinglePageLandingScreen() {
                             {/* Exercise aesthetic line-art outline icon thumbnail badge */}
                             {(() => {
                                const exerciseColor = ALT_COLORS[index % 4];
-                               const exerciseImage = ALT_IMAGES[index % 3];
+                               const renderExerciseIcon = ALT_IMAGES[index % 5];
                                return (
                                  <View style={[
                                    styles.exerciseBadgeCircle,
@@ -644,11 +697,7 @@ export default function SinglePageLandingScreen() {
                                      backgroundColor: `${exerciseColor}12`, // Soft transparent backdrop
                                    }
                                  ]}>
-                                   <Image
-                                     source={exerciseImage}
-                                     style={styles.exerciseBadgeImg}
-                                     contentFit="contain"
-                                   />
+                                   {renderExerciseIcon(exerciseColor)}
                                  </View>
                                );
                              })()}
