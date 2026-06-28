@@ -19,8 +19,8 @@ const styles = StyleSheet.create({
     borderRadius: 22, // Flagship large rounded corners
     padding: 20, // Spacious padding
     marginBottom: 16, // Spacious layout spacing
-    backgroundColor: '#131B31', // Slate Navy Card Background
+    backgroundColor: '#13141C', // Midnight Obsidian card color
     borderWidth: 1,
-    borderColor: '#222F50', // Navy Slate Borders
+    borderColor: '#212330', // Rich Gunmetal border
   },
 });

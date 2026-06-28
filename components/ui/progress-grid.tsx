@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: 20,
     borderWidth: 1,
-    backgroundColor: '#131B31', // Slate Navy Background
-    borderColor: '#222F50', // Navy Slate Borders
+    backgroundColor: '#13141C', // Obsidian Card Background
+    borderColor: '#212330', // Gunmetal Borders
     marginBottom: 20,
   },
   header: {
@@ -165,13 +165,13 @@ const styles = StyleSheet.create({
   topStreakRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
+    backgroundColor: '#1A1C28', // Dark slate bubble
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 99,
     gap: 4,
     borderWidth: 0.5,
-    borderColor: '#222F50',
+    borderColor: '#212330',
   },
   topStreakNum: {
     fontSize: 12,
@@ -189,12 +189,12 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#070C1B', // Deep Midnight Navy background for values
+    backgroundColor: '#090A0F', // Obsidian background
     borderRadius: 16,
     paddingVertical: 14,
     marginBottom: 20,
     borderWidth: 0.5,
-    borderColor: '#222F50',
+    borderColor: '#212330',
   },
   statColumn: {
     flex: 1,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: 36,
-    backgroundColor: '#222F50',
+    backgroundColor: '#212330',
   },
   iconCircle: {
     width: 28,
@@ -249,10 +249,10 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   cellActive: {
-    backgroundColor: '#A855F7', // Electric Purple Active
+    backgroundColor: '#10B981', // Emerald Green Active
   },
   cellInactive: {
-    backgroundColor: '#1E293B', // Inactive Cell Navy Slate
+    backgroundColor: '#1A1C28', // Inactive Cell Dark Obsidian
   },
   // Legend
   legendRow: {
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 16,
     borderTopWidth: 1,
-    borderTopColor: '#222F50',
+    borderTopColor: '#212330',
     paddingTop: 14,
     marginTop: 18,
   },

@@ -1,11 +1,11 @@
 import { Platform } from 'react-native';
 
-const accentColor = '#A855F7'; // Electric Purple
+const accentColor = '#10B981'; // Emerald Green
 const streakColor = '#FF8A00'; // Orange
-const backgroundColor = '#0A0A0A'; // Near Black
-const cardColor = '#141414'; // Card Background
-const cardColorAlt = '#1C1C1E'; // Alternate Card / Badge Background
-const borderColor = '#252525'; // Border
+const backgroundColor = '#090A0F'; // Midnight Obsidian background
+const cardColor = '#13141C'; // Slate Obsidian card background
+const cardColorAlt = '#1A1C28'; // Alternate card / badge background
+const borderColor = '#212330'; // Rich Gunmetal border
 const textPrimary = '#FFFFFF'; // White
 const textSecondary = '#9CA3AF'; // Gray
 

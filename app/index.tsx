@@ -23,6 +23,28 @@ const MUSCLE_IMAGES = {
   Legs: require('@/assets/images/muscle_legs.png'),
   Abs: require('@/assets/images/muscle_abs.png'),
 };
+
+const categoryColors: Record<string, string> = {
+  Chest: '#10B981',
+  Triceps: '#06B6D4',
+  Biceps: '#3B82F6',
+  Back: '#A855F7',
+  Legs: '#FF8A00',
+  Abs: '#10B981',
+};
+
+const ALT_COLORS = [
+  '#A855F7', // Purple
+  '#FACC15', // Yellow
+  '#3B82F6', // Blue
+  '#FF8A00', // Orange
+];
+
+const ALT_IMAGES = [
+  require('@/assets/images/eq_dumbbell.png'),
+  require('@/assets/images/eq_cable.png'),
+  require('@/assets/images/eq_barbell.png'),
+];
 import * as Haptics from 'expo-haptics';
 import {
   Star,
@@ -273,6 +295,29 @@ export default function SinglePageLandingScreen() {
             </View>
           </View>
 
+          {/* Banner Lift Card from screenshot */}
+          <View style={styles.bannerCard}>
+            <View style={styles.bannerLeft}>
+              <View style={styles.bannerIconCircle}>
+                <Flame size={18} color="#10B981" fill="#10B981" />
+              </View>
+              <View>
+                <Text style={styles.bannerTitle}>Ready for a lift?</Text>
+                <Text style={styles.bannerSubtitle}>Log details in under 30 seconds</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.bannerBtn}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                handleSelectMuscleCard('Chest');
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.bannerBtnText}>Start Session</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Segment Selector Toggle */}
           <View style={styles.segmentContainer}>
             <TouchableOpacity
@@ -304,19 +349,26 @@ export default function SinglePageLandingScreen() {
               <Text style={styles.sectionHeader}>SELECT MUSCLE GROUP</Text>
               <View style={styles.muscleGrid}>
                 {MUSCLE_GROUPS.map((muscle) => {
+                  const muscleColor = categoryColors[muscle] || '#10B981';
                   return (
                     <TouchableOpacity
                       key={muscle}
-                      style={styles.muscleCard}
+                      style={[
+                        styles.muscleCard,
+                        {
+                          borderColor: muscleColor,
+                          backgroundColor: `${muscleColor}10`, // Permanent soft glow background
+                        }
+                      ]}
                       onPress={() => handleSelectMuscleCard(muscle)}
                       activeOpacity={0.85}
                     >
-                      <Text style={[styles.muscleText, styles.textWhite]}>
+                      <Text style={[styles.muscleText, { color: muscleColor }]}>
                         {muscle.toUpperCase()}
                       </Text>
                       <Image
                         source={MUSCLE_IMAGES[muscle]}
-                        style={styles.muscleImage}
+                        style={[styles.muscleImage, { opacity: 0.85 }]}
                         contentFit="contain"
                       />
                     </TouchableOpacity>
@@ -360,22 +412,13 @@ export default function SinglePageLandingScreen() {
                     return formatDate(dateStr);
                   };
 
-                  // Determine colored icon category circle background
                   const primaryMuscle = sessionMuscles[0] || 'Chest';
-                  const categoryColors: Record<string, string> = {
-                    Chest: '#10B981', // green
-                    Triceps: '#06B6D4', // cyan
-                    Biceps: '#3B82F6', // blue
-                    Back: '#A855F7', // purple
-                    Legs: '#F59E0B', // amber
-                    Abs: '#10B981', // green
-                  };
-                  const circleColor = categoryColors[primaryMuscle] || '#A855F7';
+                  const circleColor = categoryColors[primaryMuscle] || '#10B981';
 
                   return (
                     <TouchableOpacity
                       key={item.id}
-                      style={styles.recentCard}
+                      style={[styles.recentCard, { borderLeftWidth: 4, borderLeftColor: circleColor }]}
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         setActiveSegment('history');
@@ -384,7 +427,7 @@ export default function SinglePageLandingScreen() {
                     >
                       <View style={styles.recentLeft}>
                         {/* Circular muscle group category outline icon */}
-                        <View style={[styles.recentIconCircle, { backgroundColor: `${circleColor}20`, borderColor: circleColor }]}>
+                        <View style={[styles.recentIconCircle, { backgroundColor: `${circleColor}15`, borderColor: circleColor, borderWidth: 1.5 }]}>
                           <Dumbbell size={16} color={circleColor} />
                         </View>
                         
@@ -427,7 +470,7 @@ export default function SinglePageLandingScreen() {
             <View style={styles.historySection}>
               {history.length === 0 ? (
                 <Card style={styles.welcomeCard}>
-                  <Calendar size={32} color="#A855F7" strokeWidth={1.5} />
+                  <Calendar size={32} color="#10B981" strokeWidth={1.5} />
                   <Text style={styles.welcomeTitle}>No workout history yet</Text>
                   <Text style={styles.welcomeDesc}>
                     Log completed sets above. Your session summary data cards will load here.
@@ -437,7 +480,7 @@ export default function SinglePageLandingScreen() {
                 history.map((item) => {
                   const sessionMuscles = getSessionMuscles(item);
                   return (
-                    <Card key={item.id} style={styles.historyLogCard}>
+                    <Card key={item.id} style={[styles.historyLogCard, { borderLeftWidth: 4, borderLeftColor: categoryColors[sessionMuscles[0] || 'Chest'] || '#10B981' }]}>
                       <View style={styles.historyCardHeader}>
                         <View style={styles.historyTitleCol}>
                           <Text style={styles.historySessionName}>{item.name}</Text>
@@ -515,6 +558,49 @@ export default function SinglePageLandingScreen() {
                   </TouchableOpacity>
                 </View>
 
+                {/* Top Horizontal Muscle Switcher to migrate groups */}
+                <View style={styles.modalSwitcherRow}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.modalSwitcherScroll}
+                  >
+                    {MUSCLE_GROUPS.map((muscle) => {
+                      const isActive = selectedModalMuscle === muscle;
+                      const activeColor = categoryColors[muscle] || '#10B981';
+
+                      return (
+                        <TouchableOpacity
+                          key={muscle}
+                          style={[
+                            styles.modalSwitcherPill,
+                            isActive && {
+                              borderColor: activeColor,
+                              backgroundColor: `${activeColor}20`,
+                            },
+                          ]}
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setSelectedModalMuscle(muscle);
+                            setSearch(''); // Clear search on switch
+                            setExpandedExerciseId(null); // Collapse open details
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Text
+                            style={[
+                              styles.modalSwitcherPillText,
+                              isActive && { color: activeColor, fontWeight: '800' },
+                            ]}
+                          >
+                            {muscle.toUpperCase()}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+
                 {/* Search filter input inside modal */}
                 <View style={styles.searchContainer}>
                   <TextInput
@@ -534,7 +620,7 @@ export default function SinglePageLandingScreen() {
                   contentContainerStyle={styles.modalListContent}
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
-                  renderItem={({ item }) => {
+                  renderItem={({ item, index }) => {
                     const isExpanded = expandedExerciseId === item.id;
                     const previousLog = getPreviousWorkoutForExercise(item.id);
 
@@ -547,6 +633,26 @@ export default function SinglePageLandingScreen() {
                             onPress={() => handleToggleExpand(item.id)}
                             activeOpacity={0.85}
                           >
+                            {/* Exercise aesthetic line-art outline icon thumbnail badge */}
+                            {(() => {
+                               const exerciseColor = ALT_COLORS[index % 4];
+                               const exerciseImage = ALT_IMAGES[index % 3];
+                               return (
+                                 <View style={[
+                                   styles.exerciseBadgeCircle,
+                                   {
+                                     backgroundColor: `${exerciseColor}12`, // Soft transparent backdrop
+                                   }
+                                 ]}>
+                                   <Image
+                                     source={exerciseImage}
+                                     style={styles.exerciseBadgeImg}
+                                     contentFit="contain"
+                                   />
+                                 </View>
+                               );
+                             })()}
+
                             <Text style={styles.exerciseName}>{item.name}</Text>
                             {isExpanded ? (
                               <ChevronUp size={16} color="#9CA3AF" />
@@ -691,7 +797,7 @@ export default function SinglePageLandingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#070C1B', // Deep Navy background
+    backgroundColor: '#090A0F', // Midnight Obsidian background
   },
   inner: {
     flex: 1,
@@ -732,9 +838,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     height: 44,
     borderRadius: 99,
-    backgroundColor: '#131B31', // Navy card fill
+    backgroundColor: '#13141C', // Obsidian card fill
     borderWidth: 1,
-    borderColor: '#222F50', // Slate Navy border
+    borderColor: '#212330', // Gunmetal border
     padding: 3,
     marginBottom: 24,
   },
@@ -745,9 +851,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   segmentBtnActive: {
-    backgroundColor: '#1C2541', // Highlight segment navy fill
+    backgroundColor: '#1C1D26', // Highlight active segment obsidian fill
     borderWidth: 0.5,
-    borderColor: '#222F50',
+    borderColor: '#212330',
   },
   segmentText: {
     fontSize: 12,
@@ -759,57 +865,57 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   sectionHeader: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     color: '#9CA3AF',
     letterSpacing: 0.5,
-    marginBottom: 12,
-    marginTop: 8,
+    marginBottom: 8,
+    marginTop: 6,
   },
   // Muscle Selection Grid
   muscleGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 10,
-    marginBottom: 24,
+    gap: 8,
+    marginBottom: 20,
   },
   muscleCard: {
-    width: '48.5%',
-    height: 80,
-    borderRadius: 20,
-    backgroundColor: '#131B31', // Slate Navy
+    width: '31.5%', // 3 columns
+    height: 70, // Shorter height for vertical compression
+    borderRadius: 16,
+    backgroundColor: '#13141C', // Obsidian Card Fill
     borderWidth: 1,
-    borderColor: '#222F50',
+    borderColor: '#212330', // Gunmetal Border
     position: 'relative',
     overflow: 'hidden',
-    padding: 14,
+    padding: 10,
     justifyContent: 'flex-end',
   },
   muscleCardActive: {
-    borderColor: '#A855F7',
-    backgroundColor: '#241B44', // Slate purple glow fill
+    borderColor: '#10B981', // Green selection border
+    backgroundColor: '#121F1A', // Subtle green selection backdrop glow
   },
   muscleText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '800',
     color: '#FFFFFF',
     zIndex: 2,
   },
   muscleImage: {
     position: 'absolute',
-    right: 4,
-    bottom: 4,
-    width: 68,
-    height: 68,
+    right: 2,
+    bottom: 2,
+    width: 48,
+    height: 48,
     opacity: 0.55,
   },
   muscleImageActive: {
     opacity: 0.95,
   },
   pillDark: {
-    backgroundColor: '#131B31',
-    borderColor: '#222F50',
+    backgroundColor: '#13141C',
+    borderColor: '#212330',
   },
   // Exercises List & Accordions
   exerciseCard: {
@@ -842,19 +948,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderLeftWidth: 1,
-    borderLeftColor: '#222F50',
+    borderLeftColor: '#252525',
   },
   // Inline Logger body
   loggerBody: {
     borderTopWidth: 1,
-    borderTopColor: '#222F50',
+    borderTopColor: '#212330',
     padding: 16,
-    backgroundColor: '#091022', // Deeper navy background
+    backgroundColor: '#090A0F', // Obsidian deep background
   },
   prevLogCard: {
-    backgroundColor: '#131B31',
+    backgroundColor: '#13141C',
     borderWidth: 1,
-    borderColor: '#222F50',
+    borderColor: '#212330',
     borderRadius: 14,
     padding: 12,
     marginBottom: 16,
@@ -874,9 +980,9 @@ const styles = StyleSheet.create({
   prevSetBubble: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B', // Inactive set navy bubble
+    backgroundColor: '#1A1C28', // Dark slate bubble fill
     borderWidth: 0.5,
-    borderColor: '#222F50',
+    borderColor: '#212330',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -933,7 +1039,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12, // Taller rows for premium breathing room
     borderBottomWidth: 1,
-    borderBottomColor: '#222F50', // Slate divider
+    borderBottomColor: '#252525', // Subtle divider
     position: 'relative',
   },
   setRowCompleted: {
@@ -958,8 +1064,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   checkBtnActive: {
-    backgroundColor: '#A855F7',
-    borderColor: '#A855F7',
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
   },
   deleteSetBtn: {
     position: 'absolute',
@@ -990,8 +1096,8 @@ const styles = StyleSheet.create({
     borderRadius: 99,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#222F50',
-    backgroundColor: '#131B31',
+    borderColor: '#212330',
+    backgroundColor: '#13141C',
     gap: 6,
   },
   addSetBtnText: {
@@ -1038,7 +1144,7 @@ const styles = StyleSheet.create({
   },
   historySetsReceipt: {
     borderTopWidth: 1,
-    borderTopColor: '#222F50',
+    borderTopColor: '#252525',
     paddingVertical: 10,
     marginBottom: 10,
     gap: 4,
@@ -1067,7 +1173,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#222F50',
+    borderTopColor: '#252525',
     paddingTop: 12,
   },
   historyDurationRow: {
@@ -1108,7 +1214,7 @@ const styles = StyleSheet.create({
   // Modal Popup Styles
   modalContainer: {
     flex: 1,
-    backgroundColor: '#070C1B', // Deep navy
+    backgroundColor: '#090A0F', // Pure obsidian black
   },
   modalInnerContainer: {
     flex: 1,
@@ -1124,7 +1230,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#222F50',
+    borderBottomColor: '#252525',
   },
   modalTitle: {
     fontSize: 22,
@@ -1143,14 +1249,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 99,
-    backgroundColor: '#131B31',
+    backgroundColor: '#13141C',
     borderWidth: 1,
-    borderColor: '#222F50',
+    borderColor: '#212330',
   },
   modalCloseBtnText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#A855F7', // Electric Purple Close
+    color: '#10B981', // Emerald Green Close
   },
   searchContainer: {
     paddingHorizontal: 24,
@@ -1161,8 +1267,8 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#222F50',
-    backgroundColor: '#131B31',
+    borderColor: '#212330',
+    backgroundColor: '#13141C',
     color: '#FFFFFF',
     paddingHorizontal: 16,
     fontSize: 14,
@@ -1188,9 +1294,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#131B31',
+    backgroundColor: '#13141C',
     borderWidth: 1,
-    borderColor: '#222F50',
+    borderColor: '#212330',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1205,7 +1311,7 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#A855F7', // Purple View All
+    color: '#10B981', // Green View All
   },
   recentList: {
     gap: 10,
@@ -1215,10 +1321,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#131B31',
+    backgroundColor: '#13141C',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#222F50',
+    borderColor: '#212330',
     padding: 16,
   },
   recentLeft: {
@@ -1279,7 +1385,7 @@ const styles = StyleSheet.create({
   recentVolumeText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#A855F7', // Purple volume highlight
+    color: '#10B981', // Green volume highlight
     letterSpacing: -0.2,
   },
   emptyRecentCard: {
@@ -1291,5 +1397,96 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#94A3B8',
     fontWeight: '600',
+  },
+  // Modal Switcher Pills Styles
+  modalSwitcherRow: {
+    paddingHorizontal: 24,
+    marginTop: 14,
+    marginBottom: 4,
+  },
+  modalSwitcherScroll: {
+    gap: 8,
+    paddingRight: 24,
+  },
+  modalSwitcherPill: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 99,
+    borderWidth: 1,
+    borderColor: '#212330',
+    backgroundColor: '#13141C',
+  },
+  modalSwitcherPillText: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  // Exercise Item Badge Thumbnails Styles
+  exerciseBadgeCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  exerciseBadgeImg: {
+    width: 24,
+    height: 24,
+    opacity: 0.85,
+  },
+  // Banner Lift Card Styles
+  bannerCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#13141C',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#10B98135', // Subtle green glow border outline
+    padding: 16,
+    marginBottom: 20,
+  },
+  bannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  bannerIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#10B98115',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#10B98140',
+  },
+  bannerTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
+  },
+  bannerSubtitle: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  bannerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#10B981', // Solid Emerald Green button
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 99,
+  },
+  bannerBtnText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#000000', // High contrast dark text on green button
   },
 });

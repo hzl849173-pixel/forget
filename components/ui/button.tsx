@@ -53,7 +53,7 @@ export const Button: React.FC<ButtonProps> = ({
       style={buttonStyles as ViewStyle[]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#000000' : '#A855F7'} />
+        <ActivityIndicator color={variant === 'primary' ? '#000000' : '#10B981'} />
       ) : (
         <Text style={textStyles as TextStyle[]}>{title}</Text>
       )}
@@ -81,24 +81,24 @@ const styles = StyleSheet.create({
   },
   // Luxury variants
   primary: {
-    backgroundColor: '#A855F7', // Electric Purple Accent
+    backgroundColor: '#10B981', // Emerald Green Accent
   },
   secondary: {
-    backgroundColor: '#131B31', // Slate Navy Background
+    backgroundColor: '#13141C', // Obsidian background
     borderWidth: 1,
-    borderColor: '#222F50', // Navy Slate Borders
+    borderColor: '#212330', // Gunmetal border
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1.2,
-    borderColor: '#222F50',
+    borderColor: '#212330',
   },
   danger: {
     backgroundColor: '#EF4444',
   },
   disabled: {
-    backgroundColor: '#0C1222', // Darker Navy
-    borderColor: '#131B31',
+    backgroundColor: '#101014',
+    borderColor: '#1A1B22',
     opacity: 0.5,
   },
   // Text Styles
