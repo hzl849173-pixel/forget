@@ -763,13 +763,17 @@ export default function SinglePageLandingScreen() {
   );
 
   const favoriteExercises = displayedExercises.filter((ex) => ex.isFavorite);
-  const nonFavExercises = displayedExercises.filter((ex) => !ex.isFavorite);
+  const customExercises = displayedExercises.filter((ex) => ex.isCustom && !ex.isFavorite);
+  const defaultExercises = displayedExercises.filter((ex) => !ex.isCustom && !ex.isFavorite);
   const exerciseSections: { title: string; data: typeof displayedExercises }[] = [];
   if (favoriteExercises.length > 0) {
     exerciseSections.push({ title: 'Favorites', data: favoriteExercises });
   }
+  if (customExercises.length > 0) {
+    exerciseSections.push({ title: 'Added Exercises', data: customExercises });
+  }
   INSTRUMENT_ORDER.forEach((inst) => {
-    const data = nonFavExercises.filter((ex) => (ex.instrument || 'Other') === inst);
+    const data = defaultExercises.filter((ex) => (ex.instrument || 'Other') === inst);
     if (data.length > 0) {
       exerciseSections.push({ title: inst, data });
     }
