@@ -8,7 +8,6 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   Modal,
   TextInput,
 } from 'react-native';
@@ -154,6 +153,7 @@ import {
   Sun,
   Moon,
   Edit2,
+  Trophy,
 } from 'lucide-react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -179,6 +179,8 @@ export default function SinglePageLandingScreen() {
     getPreviousWorkoutForExercise,
   } = useWorkout();
 
+  const totalWorkoutDays = new Set(history.map(session => session.date.split('T')[0])).size;
+
   // Active view segment: 'log' | 'history'
   const [activeSegment, setActiveSegment] = useState<'log' | 'history'>('log');
 
@@ -196,6 +198,26 @@ export default function SinglePageLandingScreen() {
 
   const [activeSessionExercises, setActiveSessionExercises] = useState<LoggedExercise[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<number>(0);
+
+  // Custom Modern Alert Modal State
+  const [customAlertVisible, setCustomAlertVisible] = useState(false);
+  const [customAlertTitle, setCustomAlertTitle] = useState('');
+  const [customAlertMessage, setCustomAlertMessage] = useState('');
+  const [customAlertButtons, setCustomAlertButtons] = useState<{ text: string; style?: 'cancel' | 'destructive' | 'default'; onPress?: () => void }[]>([]);
+  const [customAlertIcon, setCustomAlertIcon] = useState<React.ReactNode | null>(null);
+
+  const showCustomAlert = (
+    title: string,
+    message: string,
+    buttons: { text: string; style?: 'cancel' | 'destructive' | 'default'; onPress?: () => void }[] = [{ text: 'OK' }],
+    icon?: React.ReactNode
+  ) => {
+    setCustomAlertTitle(title);
+    setCustomAlertMessage(message);
+    setCustomAlertButtons(buttons);
+    setCustomAlertIcon(icon || null);
+    setCustomAlertVisible(true);
+  };
 
   React.useEffect(() => {
     AsyncStorage.getItem('@workout_journal_dark_mode').then((val) => {
@@ -222,6 +244,16 @@ export default function SinglePageLandingScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsDarkMode(nextVal);
     await AsyncStorage.setItem('@workout_journal_dark_mode', String(nextVal));
+  };
+
+  const handleShowWorkoutDaysInfo = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    showCustomAlert(
+      "Workout Days",
+      `This is the total number of unique days you have logged a workout.\n\nYou have worked out for ${totalWorkoutDays} day${totalWorkoutDays === 1 ? '' : 's'} total!`,
+      [{ text: "OK" }],
+      <Trophy size={28} color="#FACC15" fill="#FACC15" />
+    );
   };
 
   const theme = {
@@ -354,7 +386,12 @@ export default function SinglePageLandingScreen() {
   const handleSaveWorkout = async (exerciseId: string) => {
     if (activeSets.length === 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Save Error', 'Please add at least one set before saving.');
+      showCustomAlert(
+        'Add Sets',
+        'Please add at least one set with weight and repetitions before saving.',
+        [{ text: 'OK' }],
+        <Flame size={28} color="#EF4444" />
+      );
       return;
     }
 
@@ -436,13 +473,18 @@ export default function SinglePageLandingScreen() {
 
   const handleFinishWorkoutDay = async () => {
     if (activeSessionExercises.length === 0) {
-      Alert.alert('Save Error', 'You have not logged any exercises yet.');
+      showCustomAlert(
+        'Active Session',
+        'You have not logged any exercises in the active session yet.',
+        [{ text: 'OK' }],
+        <Dumbbell size={28} color="#3B82F6" />
+      );
       return;
     }
 
     const suggestedTitle = suggestWorkoutTitle(activeSessionExercises);
 
-    Alert.alert(
+    showCustomAlert(
       'Finish Workout Day',
       `Save today's session as "${suggestedTitle}"?`,
       [
@@ -452,6 +494,7 @@ export default function SinglePageLandingScreen() {
         },
         {
           text: 'Save',
+          style: 'default',
           onPress: async () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             
@@ -473,13 +516,14 @@ export default function SinglePageLandingScreen() {
             setSelectedModalMuscle(null);
           },
         },
-      ]
+      ],
+      <Trophy size={28} color="#10B981" />
     );
   };
 
   const handleCancelSession = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert(
+    showCustomAlert(
       'Cancel Workout',
       'Are you sure you want to discard your current workout day progress?',
       [
@@ -497,13 +541,14 @@ export default function SinglePageLandingScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           },
         },
-      ]
+      ],
+      <Trash2 size={28} color="#EF4444" />
     );
   };
 
   const handleDeleteHistoryLog = (id: string, name: string) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert(
+    showCustomAlert(
       'Delete Record',
       `Are you sure you want to permanently delete "${name}"?`,
       [
@@ -516,7 +561,8 @@ export default function SinglePageLandingScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           },
         },
-      ]
+      ],
+      <Trash2 size={28} color="#EF4444" />
     );
   };
 
@@ -577,21 +623,37 @@ export default function SinglePageLandingScreen() {
                 <Text style={[styles.headerSlogan, { color: theme.textSecondary }]}>WE REMEMBER SO YOU CAN</Text>
                 <Text style={[styles.headerBrand, { color: theme.textPrimary }]}>FORGET</Text>
               </View>
-              {/* Dark/Light Mode Toggle */}
-              <TouchableOpacity
-                style={[
-                  styles.themeToggleBtn,
-                  { backgroundColor: theme.cardBg, borderColor: theme.borderColor }
-                ]}
-                onPress={toggleDarkMode}
-                activeOpacity={0.8}
-              >
-                {isDarkMode ? (
-                  <Sun size={20} color="#FACC15" strokeWidth={2.2} />
-                ) : (
-                  <Moon size={20} color="#3B82F6" strokeWidth={2.2} />
-                )}
-              </TouchableOpacity>
+              {/* Header Action Controls */}
+              <View style={styles.headerActionContainer}>
+                {/* Workout Days Counter Badge */}
+                <TouchableOpacity
+                  style={[
+                    styles.workoutDaysBadge,
+                    { backgroundColor: theme.cardBg, borderColor: theme.borderColor }
+                  ]}
+                  onPress={handleShowWorkoutDaysInfo}
+                  activeOpacity={0.7}
+                >
+                  <Trophy size={14} color="#FACC15" fill="#FACC15" style={{ marginRight: 5 }} />
+                  <Text style={[styles.workoutDaysText, { color: theme.textPrimary }]}>{totalWorkoutDays}</Text>
+                </TouchableOpacity>
+
+                {/* Dark/Light Mode Toggle */}
+                <TouchableOpacity
+                  style={[
+                    styles.themeToggleBtn,
+                    { backgroundColor: theme.cardBg, borderColor: theme.borderColor }
+                  ]}
+                  onPress={toggleDarkMode}
+                  activeOpacity={0.8}
+                >
+                  {isDarkMode ? (
+                    <Sun size={20} color="#FACC15" strokeWidth={2.2} />
+                  ) : (
+                    <Moon size={20} color="#3B82F6" strokeWidth={2.2} />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
@@ -1189,6 +1251,75 @@ export default function SinglePageLandingScreen() {
             </SafeAreaView>
           </View>
         </Modal>
+      {/* Custom Modern Alert Modal */}
+      <Modal
+        visible={customAlertVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setCustomAlertVisible(false)}
+      >
+        <View style={styles.alertOverlay}>
+          <View style={[styles.alertCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+            {customAlertIcon && (
+              <View style={[styles.alertIconWrapper, { backgroundColor: isDarkMode ? '#3B82F615' : '#3B82F610' }]}>
+                {customAlertIcon}
+              </View>
+            )}
+            <Text style={[styles.alertTitle, { color: theme.textPrimary }]}>
+              {customAlertTitle}
+            </Text>
+            <Text style={[styles.alertMessage, { color: theme.textSecondary }]}>
+              {customAlertMessage}
+            </Text>
+            <View style={styles.alertButtonsRow}>
+              {customAlertButtons.map((btn, index) => {
+                const isDestructive = btn.style === 'destructive';
+                const isCancel = btn.style === 'cancel';
+                
+                let btnBg = isDarkMode ? '#1E1E28' : '#F3F4F6';
+                let textColor = theme.textPrimary;
+                
+                if (isDestructive) {
+                  btnBg = '#EF444420';
+                  textColor = '#EF4444';
+                } else if (!isCancel) {
+                  btnBg = '#3B82F620';
+                  textColor = '#3B82F6';
+                } else {
+                  btnBg = isDarkMode ? '#212330' : '#E5E7EB';
+                  textColor = theme.textSecondary;
+                }
+
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.alertBtn,
+                      { backgroundColor: btnBg, flex: customAlertButtons.length > 1 ? 1 : 0 }
+                    ]}
+                    onPress={() => {
+                      setCustomAlertVisible(false);
+                      if (btn.onPress) {
+                        setTimeout(btn.onPress, 100);
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.alertBtnText,
+                        { color: textColor, fontWeight: isCancel ? '600' : '800' }
+                      ]}
+                    >
+                      {btn.text}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+      </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -1927,6 +2058,24 @@ const styles = StyleSheet.create({
     shadowRadius: 1.5,
     elevation: 2,
   },
+  headerActionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  workoutDaysBadge: {
+    height: 38,
+    paddingHorizontal: 12,
+    borderRadius: 19,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  workoutDaysText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
   themeToggleBtn: {
     width: 38,
     height: 38,
@@ -2025,5 +2174,66 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     color: '#000000',
+  },
+  // Custom Alert Styles
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  alertCard: {
+    width: '100%',
+    maxWidth: 300,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    elevation: 8,
+  },
+  alertIconWrapper: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 8,
+    textAlign: 'center',
+    letterSpacing: -0.2,
+  },
+  alertMessage: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 24,
+  },
+  alertButtonsRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 10,
+    justifyContent: 'center',
+  },
+  alertBtn: {
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    minWidth: 90,
+  },
+  alertBtnText: {
+    fontSize: 13,
+    letterSpacing: 0.3,
   },
 });
