@@ -37,6 +37,9 @@ interface IncrementInputProps {
   min?: number;
   max?: number;
   placeholder?: string;
+  accentColor?: string;
+  style?: any;
+  textColor?: string;
 }
 
 export const IncrementInput: React.FC<IncrementInputProps> = ({
@@ -46,7 +49,12 @@ export const IncrementInput: React.FC<IncrementInputProps> = ({
   min = 0,
   max = 999,
   placeholder = '0',
+  accentColor,
+  style,
+  textColor,
 }) => {
+  const [isFocused, setIsFocused] = React.useState(false);
+
   const handleDecrement = () => {
     if (value - step >= min) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -72,32 +80,40 @@ export const IncrementInput: React.FC<IncrementInputProps> = ({
     }
   };
 
+  const activeBorderColor = accentColor || '#3B82F6';
+
   return (
-    <View style={styles.adjusterContainer}>
+    <View style={[
+      styles.adjusterContainer,
+      isFocused && { borderColor: activeBorderColor },
+      style
+    ]}>
       <TouchableOpacity
         style={styles.adjusterBtn}
         onPress={handleDecrement}
-        activeOpacity={0.7}
+        activeOpacity={0.5}
       >
-        <Minus size={16} color="#FFFFFF" strokeWidth={2.5} />
+        <Minus size={16} color={accentColor || '#FFFFFF'} strokeWidth={3} />
       </TouchableOpacity>
       
       <TextInput
-        style={styles.adjusterInput}
+        style={[styles.adjusterInput, textColor ? { color: textColor } : null]}
         keyboardType="decimal-pad"
         value={value === 0 ? '' : value.toString()}
         placeholder={placeholder}
         placeholderTextColor="#6B7280"
         onChangeText={handleTextChange}
         selectTextOnFocus
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
       />
       
       <TouchableOpacity
         style={styles.adjusterBtn}
         onPress={handleIncrement}
-        activeOpacity={0.7}
+        activeOpacity={0.5}
       >
-        <Plus size={16} color="#FFFFFF" strokeWidth={2.5} />
+        <Plus size={16} color={accentColor || '#FFFFFF'} strokeWidth={3} />
       </TouchableOpacity>
     </View>
   );
@@ -140,7 +156,8 @@ const styles = StyleSheet.create({
     borderRadius: 99, // Pill shape
     borderWidth: 1,
     height: 46, // Taller flagship card height
-    width: 115, // Wider
+    width: '100%', // Flexible width
+    maxWidth: 120, // Prevent overlapping and keep layout crisp
     backgroundColor: '#1C1C1E',
     borderColor: '#2D2D30',
   },

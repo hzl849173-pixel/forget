@@ -705,12 +705,17 @@ export default function SinglePageLandingScreen() {
                       onPress={() => handleSelectMuscleCard(muscle)}
                       activeOpacity={0.85}
                     >
-                      <Text style={[styles.muscleText, { color: isDarkMode ? muscleColor : '#111827' }]}>
-                        {muscle.toUpperCase()}
+                      <Text
+                        style={[styles.muscleText, { color: isDarkMode ? muscleColor : '#111827' }]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.7}
+                      >
+                        {muscle.toUpperCase() + ' '}
                       </Text>
                       <Image
                         source={MUSCLE_IMAGES[muscle]}
-                        style={[styles.muscleImage, { opacity: isDarkMode ? 0.85 : 0.75 }]}
+                        style={[styles.muscleImage, { opacity: isDarkMode ? 0.85 : 1.0 }]}
                         contentFit="contain"
                       />
                     </TouchableOpacity>
@@ -1013,7 +1018,12 @@ export default function SinglePageLandingScreen() {
                                );
                              })()}
 
-                            <Text style={[styles.exerciseName, { color: theme.textPrimary }]}>{item.name}</Text>
+                            <Text
+                              style={[styles.exerciseName, { color: theme.textPrimary }]}
+                              numberOfLines={2}
+                            >
+                              {item.name}
+                            </Text>
                             {isExpanded ? (
                               <ChevronUp size={16} color={theme.textSecondary} />
                             ) : (
@@ -1272,6 +1282,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     padding: 10,
+    paddingLeft: 6,
     justifyContent: 'flex-end',
   },
   muscleCardActive: {
@@ -1283,11 +1294,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
     zIndex: 2,
+    maxWidth: '75%',
   },
   muscleImage: {
     position: 'absolute',
-    right: 2,
-    bottom: 2,
+    right: -6,
+    bottom: -6,
     width: 48,
     height: 48,
     opacity: 0.55,
@@ -1319,6 +1331,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   exerciseName: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',

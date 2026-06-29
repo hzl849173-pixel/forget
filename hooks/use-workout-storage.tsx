@@ -29,7 +29,7 @@ interface WorkoutContextType {
   exercises: Exercise[];
   history: WorkoutSession[];
   isLoading: boolean;
-  addCompletedWorkout: (exerciseId: string, sets: WorkoutSet[], durationMinutes: number) => Promise<void>;
+  addCompletedWorkout: (name: string, loggedExercises: LoggedExercise[], durationMinutes: number) => Promise<void>;
   createCustomExercise: (name: string, muscleGroup: MuscleGroup) => Promise<Exercise>;
   toggleFavoriteExercise: (exerciseId: string) => Promise<void>;
   deleteWorkout: (id: string) => Promise<void>;
@@ -88,21 +88,13 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await AsyncStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(newHistory));
   };
 
-  const addCompletedWorkout = async (exerciseId: string, sets: WorkoutSet[], durationMinutes: number) => {
-    const exerciseDetails = exercises.find((e) => e.id === exerciseId);
-    const exerciseName = exerciseDetails ? exerciseDetails.name : 'Exercise';
-
+  const addCompletedWorkout = async (name: string, loggedExercises: LoggedExercise[], durationMinutes: number) => {
     const completedSession: WorkoutSession = {
       id: generateId(),
       date: new Date().toISOString(),
-      name: `${exerciseName} Session`,
+      name,
       duration: durationMinutes,
-      exercises: [
-        {
-          exerciseId,
-          sets: sets.filter((s) => s.isCompleted || s.weight > 0 || s.reps > 0),
-        },
-      ],
+      exercises: loggedExercises,
     };
 
     const newHistory = [completedSession, ...history];
