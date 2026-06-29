@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DEFAULT_EXERCISES, MuscleGroup, ExerciseSeed } from '../constants/exercises';
+import { DEFAULT_EXERCISES, MuscleGroup, ExerciseSeed, Instrument } from '../constants/exercises';
 
 export interface WorkoutSet {
   id: string;
@@ -31,7 +31,7 @@ interface WorkoutContextType {
   isLoading: boolean;
   favoriteOrder: string[];
   addCompletedWorkout: (name: string, loggedExercises: LoggedExercise[], durationMinutes: number) => Promise<void>;
-  createCustomExercise: (name: string, muscleGroup: MuscleGroup) => Promise<Exercise>;
+  createCustomExercise: (name: string, muscleGroup: MuscleGroup, instrument?: Instrument) => Promise<Exercise>;
   toggleFavoriteExercise: (exerciseId: string) => Promise<void>;
   deleteWorkout: (id: string) => Promise<void>;
   getPreviousWorkoutForExercise: (exerciseId: string) => LoggedExercise | null;
@@ -64,14 +64,40 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         ]);
 
         if (storedExercises) {
-          setExercises(JSON.parse(storedExercises));
+          const parsed: Exercise[] = JSON.parse(storedExercises);
+          const storedIds = new Set(parsed.map((e) => e.id));
+          const defaultMap = new Map(DEFAULT_EXERCISES.map((e) => [e.id, e]));
+          const missingDefaults = DEFAULT_EXERCISES.filter((e) => !storedIds.has(e.id));
+          const needsInstrumentMigration = parsed.some((e) => !e.instrument);
+          if (needsInstrumentMigration || missingDefaults.length > 0) {
+            const migrated = [
+              ...parsed.map((e) => ({
+                ...e,
+                instrument: e.instrument || defaultMap.get(e.id)?.instrument || 'Other' as const,
+              })),
+              ...missingDefaults,
+            ];
+            setExercises(migrated);
+            await AsyncStorage.setItem(STORAGE_KEYS.EXERCISES, JSON.stringify(migrated));
+          } else {
+            setExercises(parsed);
+          }
         } else {
           setExercises(DEFAULT_EXERCISES);
           await AsyncStorage.setItem(STORAGE_KEYS.EXERCISES, JSON.stringify(DEFAULT_EXERCISES));
         }
 
         if (storedFavoriteOrder) {
-          setFavoriteOrder(JSON.parse(storedFavoriteOrder));
+          const parsedOrder: string[] = JSON.parse(storedFavoriteOrder);
+          const defaultFavIds = new Set(DEFAULT_EXERCISES.filter((e) => e.isFavorite).map((e) => e.id));
+          const missingFavs = [...defaultFavIds].filter((id) => !parsedOrder.includes(id));
+          if (missingFavs.length > 0) {
+            const mergedOrder = [...parsedOrder, ...missingFavs];
+            setFavoriteOrder(mergedOrder);
+            await AsyncStorage.setItem(STORAGE_KEYS.FAVORITE_ORDER, JSON.stringify(mergedOrder));
+          } else {
+            setFavoriteOrder(parsedOrder);
+          }
         } else {
           const defaultFavs = DEFAULT_EXERCISES.filter((e) => e.isFavorite).map((e) => e.id);
           setFavoriteOrder(defaultFavs);
@@ -128,11 +154,12 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return null;
   };
 
-  const createCustomExercise = async (name: string, muscleGroup: MuscleGroup): Promise<Exercise> => {
+  const createCustomExercise = async (name: string, muscleGroup: MuscleGroup, instrument: Instrument = 'Other'): Promise<Exercise> => {
     const newExercise: Exercise = {
       id: generateId(),
       name: name.trim(),
       muscleGroup,
+      instrument,
       isCustom: true,
       isFavorite: false,
     };

@@ -5,7 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  FlatList,
+  SectionList,
   KeyboardAvoidingView,
   Platform,
   Modal,
@@ -162,7 +162,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 
 import { useWorkout, WorkoutSet, WorkoutSession, LoggedExercise, Exercise } from '@/hooks/use-workout-storage';
-import { MUSCLE_GROUPS, MuscleGroup, DEFAULT_EXERCISES } from '@/constants/exercises';
+import { MUSCLE_GROUPS, MuscleGroup, DEFAULT_EXERCISES, INSTRUMENT_ORDER, SHOULDER_EXERCISE_IDS } from '@/constants/exercises';
 import { ProgressGrid } from '@/components/ui/progress-grid';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -177,6 +177,7 @@ export default function SinglePageLandingScreen() {
     history,
     favoriteOrder,
     addCompletedWorkout,
+    createCustomExercise,
     toggleFavoriteExercise,
     deleteWorkout,
     getPreviousWorkoutForExercise,
@@ -203,6 +204,10 @@ export default function SinglePageLandingScreen() {
 
   const [activeSessionExercises, setActiveSessionExercises] = useState<LoggedExercise[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<number>(0);
+
+  // Add exercise state
+  const [addExerciseVisible, setAddExerciseVisible] = useState(false);
+  const [newExerciseName, setNewExerciseName] = useState('');
 
   // Rest timer state
   const [restTimerVisible, setRestTimerVisible] = useState(false);
@@ -416,6 +421,12 @@ export default function SinglePageLandingScreen() {
       }
       if (a.isFavorite && !b.isFavorite) return -1;
       if (!a.isFavorite && b.isFavorite) return 1;
+      if (muscle === 'Abs & Shoulders') {
+        const aIsShoulder = SHOULDER_EXERCISE_IDS.has(a.id);
+        const bIsShoulder = SHOULDER_EXERCISE_IDS.has(b.id);
+        if (aIsShoulder && !bIsShoulder) return -1;
+        if (!aIsShoulder && bIsShoulder) return 1;
+      }
       return 0;
     });
   };
@@ -750,6 +761,19 @@ export default function SinglePageLandingScreen() {
   const displayedExercises = sortedExerciseList.filter((ex) =>
     ex.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const favoriteExercises = displayedExercises.filter((ex) => ex.isFavorite);
+  const nonFavExercises = displayedExercises.filter((ex) => !ex.isFavorite);
+  const exerciseSections: { title: string; data: typeof displayedExercises }[] = [];
+  if (favoriteExercises.length > 0) {
+    exerciseSections.push({ title: 'Favorites', data: favoriteExercises });
+  }
+  INSTRUMENT_ORDER.forEach((inst) => {
+    const data = nonFavExercises.filter((ex) => (ex.instrument || 'Other') === inst);
+    if (data.length > 0) {
+      exerciseSections.push({ title: inst, data });
+    }
+  });
 
   const filteredHistory = historySearch.trim()
     ? history.filter((item) => {
@@ -1285,15 +1309,27 @@ export default function SinglePageLandingScreen() {
                 </View>
 
                 {/* Exercises List */}
-                <FlatList
-                  data={displayedExercises}
+                <SectionList
+                  sections={exerciseSections}
                   keyExtractor={(item) => item.id}
                   contentContainerStyle={styles.modalListContent}
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
-                  renderItem={({ item, index }) => {
+                  stickySectionHeadersEnabled={false}
+                  renderSectionHeader={({ section }) => (
+                    <View style={[styles.instrumentHeader, { borderBottomColor: theme.borderColor }]}>
+                      <Text style={[styles.instrumentHeaderText, { color: theme.textSecondary }]}>
+                        {section.title.toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
+                  renderItem={({ item, section }) => {
                     const liveEx = exercises.find((e) => e.id === item.id);
                     const isFav = liveEx?.isFavorite ?? false;
+                    const sectionStartIndex = exerciseSections
+                      .slice(0, exerciseSections.indexOf(section))
+                      .reduce((acc, s) => acc + s.data.length, 0);
+                    const index = sectionStartIndex + section.data.indexOf(item);
                     return (
                       <Card style={[styles.exerciseCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
                         <View style={styles.exerciseHeaderRow}>
@@ -1341,6 +1377,19 @@ export default function SinglePageLandingScreen() {
                       </Card>
                     );
                   }}
+                  ListHeaderComponent={() => (
+                    <TouchableOpacity
+                      style={[styles.addExerciseBtn, { borderColor: theme.borderColor }]}
+                      onPress={() => {
+                        setNewExerciseName('');
+                        setAddExerciseVisible(true);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Plus size={18} color="#10B981" strokeWidth={2.5} />
+                      <Text style={styles.addExerciseBtnText}>ADD EXERCISE</Text>
+                    </TouchableOpacity>
+                  )}
                 />
 
                 {/* Modal Sticky Footer if active session is not empty */}
@@ -1367,6 +1416,56 @@ export default function SinglePageLandingScreen() {
             </SafeAreaView>
           </View>
         </Modal>
+
+      {/* Add Exercise Modal */}
+      <Modal
+        visible={addExerciseVisible}
+        transparent={true}
+        animationType="none"
+        onRequestClose={() => setAddExerciseVisible(false)}
+      >
+        <View style={styles.addExerciseOverlay}>
+          <View style={[styles.addExerciseCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+            <Text style={[styles.addExerciseTitle, { color: theme.textPrimary }]}>ADD EXERCISE</Text>
+            <Text style={[styles.addExerciseSubtitle, { color: theme.textSecondary }]}>
+              {selectedModalMuscle?.toUpperCase()}
+            </Text>
+            <TextInput
+              style={[styles.addExerciseInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
+              placeholder="Exercise name"
+              placeholderTextColor={theme.inputPlaceholder}
+              value={newExerciseName}
+              onChangeText={setNewExerciseName}
+              autoFocus={true}
+              autoCorrect={false}
+            />
+            <View style={styles.addExerciseActions}>
+              <TouchableOpacity
+                style={[styles.addExerciseCancelBtn, { borderColor: theme.borderColor }]}
+                onPress={() => setAddExerciseVisible(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.addExerciseCancelText, { color: theme.textSecondary }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.addExerciseConfirmBtn, { backgroundColor: newExerciseName.trim() ? '#10B981' : theme.borderColor }]}
+                onPress={async () => {
+                  const name = newExerciseName.trim();
+                  if (!name || !selectedModalMuscle) return;
+                  await createCustomExercise(name, selectedModalMuscle);
+                  setNewExerciseName('');
+                  setAddExerciseVisible(false);
+                  setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle));
+                }}
+                activeOpacity={0.8}
+                disabled={!newExerciseName.trim()}
+              >
+                <Text style={styles.addExerciseConfirmText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Rest Timer Modal */}
       <Modal
@@ -3055,5 +3154,102 @@ const styles = StyleSheet.create({
   alertBtnText: {
     fontSize: 13,
     letterSpacing: 0.3,
+  },
+  instrumentHeader: {
+    paddingTop: 12,
+    paddingBottom: 4,
+    marginBottom: 2,
+    borderBottomWidth: 1,
+  },
+  instrumentHeaderText: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  addExerciseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    marginTop: 8,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  addExerciseBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#10B981',
+    letterSpacing: 0.5,
+  },
+  addExerciseOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  addExerciseCard: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 28,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  addExerciseTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  addExerciseSubtitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 20,
+    letterSpacing: 0.8,
+  },
+  addExerciseInput: {
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 20,
+  },
+  addExerciseActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  addExerciseCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  addExerciseCancelText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  addExerciseConfirmBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  addExerciseConfirmText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
 });
