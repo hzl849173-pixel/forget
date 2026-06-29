@@ -1,4 +1,4 @@
-export type MuscleGroup = 'Chest' | 'Triceps' | 'Biceps' | 'Back' | 'Legs' | 'Abs';
+export type MuscleGroup = 'Chest' | 'Triceps' | 'Biceps' | 'Back' | 'Legs' | 'Abs & Shoulders';
 
 export interface ExerciseSeed {
   id: string;
@@ -119,27 +119,27 @@ export const DEFAULT_EXERCISES: ExerciseSeed[] = [
   { id: 'kb-swings', name: 'Kettlebell Swings', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
   { id: 'box-squats', name: 'Barbell Box Squat', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
 
-  // Abs (20 Exercises)
-  { id: 'ab-crunch', name: 'Abdominal Crunch', muscleGroup: 'Abs', isCustom: false, isFavorite: true },
-  { id: 'plank', name: 'Forearm Plank', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'hanging-leg-raise', name: 'Hanging Leg Raise', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'russian-twist', name: 'Russian Twist', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'cable-crunch', name: 'Cable Crunch', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'ab-wheel', name: 'Ab Wheel Rollout', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'decline-situp', name: 'Decline Bench Sit-up', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'bicycle-crunches', name: 'Bicycle Crunches', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'lying-leg-raises', name: 'Lying Leg Raises', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'captains-chair-raises', name: "Captain's Chair Knee Raise", muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'woodchoppers', name: 'Cable Woodchoppers', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'mountain-climbers', name: 'Mountain Climbers', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'toe-touches', name: 'Toe Touches', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'side-plank', name: 'Side Plank', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'dead-bug', name: 'Dead Bug', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'flutter-kicks', name: 'Flutter Kicks', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'reverse-crunch', name: 'Reverse Crunch', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'v-ups', name: 'Abdominal V-Up', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'plank-jacks', name: 'Plank Jacks', muscleGroup: 'Abs', isCustom: false, isFavorite: false },
-  { id: 'swiss-ball-crunch', name: 'Swiss Ball Crunch', muscleGroup: 'Abs', isCustom: false, isFavorite: false }
+  // Abs & Shoulders (20 Exercises)
+  { id: 'ab-crunch', name: 'Abdominal Crunch', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: true },
+  { id: 'plank', name: 'Forearm Plank', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'hanging-leg-raise', name: 'Hanging Leg Raise', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'russian-twist', name: 'Russian Twist', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'cable-crunch', name: 'Cable Crunch', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'ab-wheel', name: 'Ab Wheel Rollout', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'decline-situp', name: 'Decline Bench Sit-up', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'bicycle-crunches', name: 'Bicycle Crunches', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'lying-leg-raises', name: 'Lying Leg Raises', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'captains-chair-raises', name: "Captain's Chair Knee Raise", muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'bb-overhead-press', name: 'Barbell Overhead Press', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: true },
+  { id: 'db-shoulder-press', name: 'Dumbbell Shoulder Press', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'db-lateral-raise', name: 'Dumbbell Lateral Raise', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'cable-lateral-raise', name: 'Cable Lateral Raise', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'db-rear-delt-fly', name: 'Dumbbell Rear Delt Fly', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'reverse-pec-deck', name: 'Reverse Pec Deck Fly', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'arnold-press', name: 'Arnold Press', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'db-front-raise', name: 'Dumbbell Front Raise', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'bb-upright-row', name: 'Barbell Upright Row', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'face-pull', name: 'Cable Face Pull', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false }
 ];
 
-export const MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Biceps', 'Back', 'Legs', 'Abs'];
+export const MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Biceps', 'Back', 'Legs', 'Abs & Shoulders'];

@@ -29,6 +29,7 @@ interface WorkoutContextType {
   exercises: Exercise[];
   history: WorkoutSession[];
   isLoading: boolean;
+  favoriteOrder: string[];
   addCompletedWorkout: (name: string, loggedExercises: LoggedExercise[], durationMinutes: number) => Promise<void>;
   createCustomExercise: (name: string, muscleGroup: MuscleGroup) => Promise<Exercise>;
   toggleFavoriteExercise: (exerciseId: string) => Promise<void>;
@@ -41,6 +42,7 @@ const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
 const STORAGE_KEYS = {
   EXERCISES: '@workout_journal_exercises_v2',
   HISTORY: '@workout_journal_history_v2',
+  FAVORITE_ORDER: '@workout_journal_favorite_order',
 };
 
 const generateId = () => Date.now().toString() + Math.random().toString(36).substring(2, 9);
@@ -48,15 +50,17 @@ const generateId = () => Date.now().toString() + Math.random().toString(36).subs
 export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [history, setHistory] = useState<WorkoutSession[]>([]);
+  const [favoriteOrder, setFavoriteOrder] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load initial data
   useEffect(() => {
     async function loadData() {
       try {
-        const [storedExercises, storedHistory] = await Promise.all([
+        const [storedExercises, storedHistory, storedFavoriteOrder] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.EXERCISES),
           AsyncStorage.getItem(STORAGE_KEYS.HISTORY),
+          AsyncStorage.getItem(STORAGE_KEYS.FAVORITE_ORDER),
         ]);
 
         if (storedExercises) {
@@ -64,6 +68,14 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         } else {
           setExercises(DEFAULT_EXERCISES);
           await AsyncStorage.setItem(STORAGE_KEYS.EXERCISES, JSON.stringify(DEFAULT_EXERCISES));
+        }
+
+        if (storedFavoriteOrder) {
+          setFavoriteOrder(JSON.parse(storedFavoriteOrder));
+        } else {
+          const defaultFavs = DEFAULT_EXERCISES.filter((e) => e.isFavorite).map((e) => e.id);
+          setFavoriteOrder(defaultFavs);
+          await AsyncStorage.setItem(STORAGE_KEYS.FAVORITE_ORDER, JSON.stringify(defaultFavs));
         }
 
         if (storedHistory) {
@@ -81,6 +93,11 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const saveExercises = async (newExercises: Exercise[]) => {
     setExercises(newExercises);
     await AsyncStorage.setItem(STORAGE_KEYS.EXERCISES, JSON.stringify(newExercises));
+  };
+
+  const saveFavoriteOrder = async (newOrder: string[]) => {
+    setFavoriteOrder(newOrder);
+    await AsyncStorage.setItem(STORAGE_KEYS.FAVORITE_ORDER, JSON.stringify(newOrder));
   };
 
   const saveHistory = async (newHistory: WorkoutSession[]) => {
@@ -125,10 +142,25 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const toggleFavoriteExercise = async (exerciseId: string) => {
+    const target = exercises.find((e) => e.id === exerciseId);
+    if (!target) return;
+    const willBeFav = !target.isFavorite;
+
     const newExercises = exercises.map((e) =>
-      e.id === exerciseId ? { ...e, isFavorite: !e.isFavorite } : e
+      e.id === exerciseId ? { ...e, isFavorite: willBeFav } : e
     );
-    await saveExercises(newExercises);
+
+    let newOrder: string[];
+    if (willBeFav) {
+      newOrder = [...favoriteOrder.filter((id) => id !== exerciseId), exerciseId];
+    } else {
+      newOrder = favoriteOrder.filter((id) => id !== exerciseId);
+    }
+
+    await Promise.all([
+      saveExercises(newExercises),
+      saveFavoriteOrder(newOrder),
+    ]);
   };
 
   const deleteWorkout = async (id: string) => {
@@ -142,6 +174,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         exercises,
         history,
         isLoading,
+        favoriteOrder,
         addCompletedWorkout,
         createCustomExercise,
         toggleFavoriteExercise,

@@ -20,7 +20,7 @@ const MUSCLE_IMAGES = {
   Biceps: require('@/assets/images/muscle_biceps.png'),
   Back: require('@/assets/images/muscle_back.png'),
   Legs: require('@/assets/images/muscle_legs.png'),
-  Abs: require('@/assets/images/muscle_abs.png'),
+  'Abs & Shoulders': require('@/assets/images/muscle_shoulders_v2.png'),
 };
 
 const categoryColors: Record<string, string> = {
@@ -29,7 +29,7 @@ const categoryColors: Record<string, string> = {
   Biceps: '#3B82F6',
   Back: '#A855F7',
   Legs: '#FF8A00',
-  Abs: '#10B981',
+  'Abs & Shoulders': '#107C41',
 };
 
 const ALT_COLORS = [
@@ -160,8 +160,8 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 
-import { useWorkout, WorkoutSet, WorkoutSession, LoggedExercise } from '@/hooks/use-workout-storage';
-import { MUSCLE_GROUPS, MuscleGroup } from '@/constants/exercises';
+import { useWorkout, WorkoutSet, WorkoutSession, LoggedExercise, Exercise } from '@/hooks/use-workout-storage';
+import { MUSCLE_GROUPS, MuscleGroup, DEFAULT_EXERCISES } from '@/constants/exercises';
 import { ProgressGrid } from '@/components/ui/progress-grid';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -174,6 +174,7 @@ export default function SinglePageLandingScreen() {
   const {
     exercises,
     history,
+    favoriteOrder,
     addCompletedWorkout,
     toggleFavoriteExercise,
     deleteWorkout,
@@ -188,6 +189,7 @@ export default function SinglePageLandingScreen() {
   // Workout logging states
   const [selectedModalMuscle, setSelectedModalMuscle] = useState<MuscleGroup | null>(null);
   const [search, setSearch] = useState('');
+  const [sortedExerciseList, setSortedExerciseList] = useState<Exercise[]>([]);
   
   // Expanded exercise state (active logger)
   const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(null);
@@ -274,6 +276,29 @@ export default function SinglePageLandingScreen() {
     segmentBtnActiveBorder: isDarkMode ? '#212330' : '#D1D5DB',
   };
 
+  const sortExercisesForMuscle = (muscle: MuscleGroup) => {
+    const list = exercises.filter((ex) => ex.muscleGroup === muscle);
+    const getFavoriteIndex = (exercise: Exercise) => {
+      const idx = favoriteOrder.indexOf(exercise.id);
+      if (idx !== -1) return idx;
+
+      const defaultIdx = DEFAULT_EXERCISES.findIndex((e) => e.id === exercise.id);
+      if (defaultIdx !== -1) {
+        return -1000 + defaultIdx;
+      }
+      return 999999;
+    };
+
+    return [...list].sort((a, b) => {
+      if (a.isFavorite && b.isFavorite) {
+        return getFavoriteIndex(a) - getFavoriteIndex(b);
+      }
+      if (a.isFavorite && !b.isFavorite) return -1;
+      if (!a.isFavorite && b.isFavorite) return 1;
+      return 0;
+    });
+  };
+
   const handleSelectMuscleCard = (muscle: MuscleGroup) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedModalMuscle(muscle);
@@ -281,6 +306,7 @@ export default function SinglePageLandingScreen() {
     setExpandedExerciseId(null);
     setActiveSets([]);
     setSameForAll(true);
+    setSortedExerciseList(sortExercisesForMuscle(muscle));
   };
 
   // Auto-populate sets when expanding an exercise
@@ -438,6 +464,7 @@ export default function SinglePageLandingScreen() {
     setSelectedModalMuscle(muscleGroup);
     setSearch('');
     setExpandedExerciseId(exerciseId);
+    setSortedExerciseList(sortExercisesForMuscle(muscleGroup));
     
     const existing = activeSessionExercises.find((le) => le.exerciseId === exerciseId);
     if (existing) {
@@ -598,19 +625,10 @@ export default function SinglePageLandingScreen() {
     });
   };
 
-  // Filter exercises by muscle selection & search query inside the modal popup
-  const filteredExercises = exercises.filter((ex) => {
-    const matchesSearch = ex.name.toLowerCase().includes(search.toLowerCase());
-    const matchesMuscle = ex.muscleGroup === (selectedModalMuscle || 'Chest');
-    return matchesSearch && matchesMuscle;
-  });
-
-  // Sort exercises so favorites appear first
-  const sortedExercises = [...filteredExercises].sort((a, b) => {
-    if (a.isFavorite && !b.isFavorite) return -1;
-    if (!a.isFavorite && b.isFavorite) return 1;
-    return 0;
-  });
+  // Filter the snapshotted sorted exercise list by search query inside the modal popup
+  const displayedExercises = sortedExerciseList.filter((ex) =>
+    ex.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
@@ -758,7 +776,7 @@ export default function SinglePageLandingScreen() {
                         styles.muscleCard,
                         {
                           borderColor: isDarkMode ? theme.borderColor : `${muscleColor}30`,
-                          backgroundColor: isDarkMode ? `${muscleColor}10` : '#FFFFFF',
+                          backgroundColor: isDarkMode ? '#000000' : '#FFFFFF',
                           shadowColor: '#000000',
                           shadowOffset: { width: 0, height: 1 },
                           shadowOpacity: isDarkMode ? 0 : 0.05,
@@ -771,11 +789,9 @@ export default function SinglePageLandingScreen() {
                     >
                       <Text
                         style={[styles.muscleText, { color: isDarkMode ? muscleColor : '#111827' }]}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                        minimumFontScale={0.7}
+                        numberOfLines={2}
                       >
-                        {muscle.toUpperCase() + ' '}
+                        {muscle.toUpperCase()}
                       </Text>
                       <Image
                         source={MUSCLE_IMAGES[muscle]}
@@ -1039,6 +1055,7 @@ export default function SinglePageLandingScreen() {
                             setSelectedModalMuscle(muscle);
                             setSearch(''); // Clear search on switch
                             setExpandedExerciseId(null); // Collapse open details
+                            setSortedExerciseList(sortExercisesForMuscle(muscle));
                           }}
                           activeOpacity={0.8}
                         >
@@ -1071,13 +1088,15 @@ export default function SinglePageLandingScreen() {
 
                 {/* Exercises List */}
                 <FlatList
-                  data={sortedExercises}
+                  data={displayedExercises}
                   keyExtractor={(item) => item.id}
                   contentContainerStyle={styles.modalListContent}
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                   renderItem={({ item, index }) => {
                     const isExpanded = expandedExerciseId === item.id;
+                    const liveEx = exercises.find((e) => e.id === item.id);
+                    const isFav = liveEx?.isFavorite ?? false;
 
                     return (
                       <Card style={[styles.exerciseCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
@@ -1128,8 +1147,8 @@ export default function SinglePageLandingScreen() {
                           >
                             <Star
                               size={18}
-                              color={item.isFavorite ? '#FF8A00' : theme.textSecondary}
-                              fill={item.isFavorite ? '#FF8A00' : 'transparent'}
+                              color={isFav ? '#FF8A00' : theme.textSecondary}
+                              fill={isFav ? '#FF8A00' : 'transparent'}
                               strokeWidth={2}
                             />
                           </TouchableOpacity>
@@ -1496,7 +1515,7 @@ const styles = StyleSheet.create({
   },
   muscleCard: {
     width: '31.5%', // 3 columns
-    height: 70, // Shorter height for vertical compression
+    height: 76, // Shorter height for vertical compression
     borderRadius: 16,
     backgroundColor: '#13141C', // Obsidian Card Fill
     borderWidth: 1,
@@ -1505,7 +1524,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     padding: 10,
     paddingLeft: 6,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
   },
   muscleCardActive: {
     borderColor: '#10B981', // Green selection border
