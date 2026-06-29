@@ -742,9 +742,20 @@ export default function SinglePageLandingScreen() {
               <View style={styles.recentList}>
                 {history.slice(0, 3).map((item) => {
                   const sessionMuscles = getSessionMuscles(item);
-                  const totalVolume = item.exercises.reduce((sum, ex) => {
-                    return sum + ex.sets.reduce((setSum, s) => setSum + (s.weight * s.reps), 0);
-                  }, 0);
+                  
+                  // Compute sets per muscle group
+                  const muscleSets: Record<string, number> = {};
+                  item.exercises.forEach((logEx) => {
+                    const details = exercises.find((e) => e.id === logEx.exerciseId);
+                    if (details) {
+                      const mGroup = details.muscleGroup;
+                      muscleSets[mGroup] = (muscleSets[mGroup] || 0) + logEx.sets.length;
+                    }
+                  });
+
+                  const setsPerMuscleString = Object.entries(muscleSets)
+                    .map(([muscle, count]) => `${muscle}: ${count} set${count > 1 ? 's' : ''}`)
+                    .join(' • ');
 
                   // Formatting date: today, yesterday, or date
                   const getRelativeDay = (dateStr: string) => {
@@ -797,8 +808,8 @@ export default function SinglePageLandingScreen() {
                           
                           {/* Exercises Row */}
                           <View style={styles.recentMetaRow}>
-                            <Text style={[styles.recentMetaText, { color: theme.textSecondary }]}>
-                              💪 {item.exercises[0]?.sets.length || 0} sets
+                            <Text style={[styles.recentMetaText, { color: theme.textSecondary }]} numberOfLines={1}>
+                              💪 {setsPerMuscleString}
                             </Text>
                           </View>
                         </View>
@@ -807,7 +818,6 @@ export default function SinglePageLandingScreen() {
                       {/* Right Details */}
                       <View style={styles.recentRight}>
                         <Text style={[styles.recentDayText, { color: theme.textSecondary }]}>{getRelativeDay(item.date)}</Text>
-                        <Text style={styles.recentVolumeText}>{totalVolume.toLocaleString()} kg</Text>
                       </View>
                     </TouchableOpacity>
                   );
