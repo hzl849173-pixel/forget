@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -144,18 +144,22 @@ import {
   Star,
   Flame,
   Dumbbell,
-  Clock,
   Trash2,
   Calendar,
   Plus,
-  Check,
   ChevronDown,
   ChevronUp,
   Search,
   Filter,
+  Sun,
+  Moon,
+  Edit2,
 } from 'lucide-react-native';
 
-import { useWorkout, WorkoutSet, WorkoutSession } from '@/hooks/use-workout-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StatusBar } from 'expo-status-bar';
+
+import { useWorkout, WorkoutSet, WorkoutSession, LoggedExercise } from '@/hooks/use-workout-storage';
 import { MUSCLE_GROUPS, MuscleGroup } from '@/constants/exercises';
 import { ProgressGrid } from '@/components/ui/progress-grid';
 import { Card } from '@/components/ui/card';
@@ -185,7 +189,54 @@ export default function SinglePageLandingScreen() {
   // Expanded exercise state (active logger)
   const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(null);
   const [activeSets, setActiveSets] = useState<WorkoutSet[]>([]);
-  const [loggingStartTime, setLoggingStartTime] = useState<number>(0);
+
+  const [sameForAll, setSameForAll] = useState(true);
+
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  const [activeSessionExercises, setActiveSessionExercises] = useState<LoggedExercise[]>([]);
+  const [sessionStartTime, setSessionStartTime] = useState<number>(0);
+
+  React.useEffect(() => {
+    AsyncStorage.getItem('@workout_journal_dark_mode').then((val) => {
+      if (val !== null) {
+        setIsDarkMode(val === 'true');
+      }
+    });
+
+    AsyncStorage.getItem('@active_session_exercises').then((val) => {
+      if (val !== null) {
+        setActiveSessionExercises(JSON.parse(val));
+      }
+    });
+
+    AsyncStorage.getItem('@session_start_time').then((val) => {
+      if (val !== null) {
+        setSessionStartTime(Number(val));
+      }
+    });
+  }, []);
+
+  const toggleDarkMode = async () => {
+    const nextVal = !isDarkMode;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsDarkMode(nextVal);
+    await AsyncStorage.setItem('@workout_journal_dark_mode', String(nextVal));
+  };
+
+  const theme = {
+    background: isDarkMode ? '#090A0F' : '#F3F4F6',
+    cardBg: isDarkMode ? '#13141C' : '#FFFFFF',
+    borderColor: isDarkMode ? '#212330' : '#E5E7EB',
+    textPrimary: isDarkMode ? '#FFFFFF' : '#111827',
+    textSecondary: isDarkMode ? '#9CA3AF' : '#4B5563',
+    inputBg: isDarkMode ? '#13141C' : '#FFFFFF',
+    inputBorder: isDarkMode ? '#212330' : '#E5E7EB',
+    inputPlaceholder: isDarkMode ? '#6B7280' : '#9CA3AF',
+    segmentBg: isDarkMode ? '#13141C' : '#E5E7EB',
+    segmentBtnActiveBg: isDarkMode ? '#1C1D26' : '#FFFFFF',
+    segmentBtnActiveBorder: isDarkMode ? '#212330' : '#D1D5DB',
+  };
 
   const handleSelectMuscleCard = (muscle: MuscleGroup) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -193,6 +244,7 @@ export default function SinglePageLandingScreen() {
     setSearch('');
     setExpandedExerciseId(null);
     setActiveSets([]);
+    setSameForAll(true);
   };
 
   // Auto-populate sets when expanding an exercise
@@ -202,29 +254,43 @@ export default function SinglePageLandingScreen() {
     if (expandedExerciseId === exerciseId) {
       setExpandedExerciseId(null);
       setActiveSets([]);
+      setSameForAll(true);
     } else {
       setExpandedExerciseId(exerciseId);
-      setLoggingStartTime(Date.now());
 
-      const previousLog = getPreviousWorkoutForExercise(exerciseId);
+      setSameForAll(true);
+
+      const existingInActive = activeSessionExercises.find((le) => le.exerciseId === exerciseId);
       const initialSets: WorkoutSet[] = [];
 
-      if (previousLog && previousLog.sets.length > 0) {
-        previousLog.sets.forEach((set) => {
+      if (existingInActive && existingInActive.sets.length > 0) {
+        existingInActive.sets.forEach((set) => {
           initialSets.push({
-            id: generateId(),
+            id: set.id,
             weight: set.weight,
             reps: set.reps,
-            isCompleted: false,
+            isCompleted: true,
           });
         });
       } else {
-        initialSets.push({
-          id: generateId(),
-          weight: 0,
-          reps: 0,
-          isCompleted: false,
-        });
+        const previousLog = getPreviousWorkoutForExercise(exerciseId);
+        if (previousLog && previousLog.sets.length > 0) {
+          previousLog.sets.forEach((set) => {
+            initialSets.push({
+              id: generateId(),
+              weight: set.weight,
+              reps: set.reps,
+              isCompleted: false,
+            });
+          });
+        } else {
+          initialSets.push({
+            id: generateId(),
+            weight: 0,
+            reps: 0,
+            isCompleted: false,
+          });
+        }
       }
       setActiveSets(initialSets);
     }
@@ -232,21 +298,15 @@ export default function SinglePageLandingScreen() {
 
   const handleAddSet = (exerciseId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const previousLog = getPreviousWorkoutForExercise(exerciseId);
-    const currentSetCount = activeSets.length;
+    
     let newWeight = 0;
     let newReps = 0;
-
-    if (previousLog && previousLog.sets.length > 0) {
-      const correspondingSet = previousLog.sets[currentSetCount] || previousLog.sets[previousLog.sets.length - 1];
-      newWeight = correspondingSet.weight;
-      newReps = correspondingSet.reps;
-    } else if (currentSetCount > 0) {
-      const lastSet = activeSets[currentSetCount - 1];
-      newWeight = lastSet.weight;
-      newReps = lastSet.reps;
+    
+    if (sameForAll && activeSets.length > 0) {
+      newWeight = activeSets[0].weight;
+      newReps = activeSets[0].reps;
     }
-
+    
     setActiveSets([
       ...activeSets,
       {
@@ -258,8 +318,30 @@ export default function SinglePageLandingScreen() {
     ]);
   };
 
+  const toggleSameForAll = () => {
+    const nextVal = !sameForAll;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSameForAll(nextVal);
+    if (nextVal && activeSets.length > 0) {
+      const firstSet = activeSets[0];
+      setActiveSets(activeSets.map((s) => ({
+        ...s,
+        weight: firstSet.weight,
+        reps: firstSet.reps,
+      })));
+    }
+  };
+
   const handleUpdateSet = (setId: string, updates: Partial<WorkoutSet>) => {
-    setActiveSets(activeSets.map((s) => (s.id === setId ? { ...s, ...updates } : s)));
+    if (sameForAll && (updates.weight !== undefined || updates.reps !== undefined)) {
+      setActiveSets(activeSets.map((s) => ({
+        ...s,
+        ...(updates.weight !== undefined ? { weight: updates.weight } : {}),
+        ...(updates.reps !== undefined ? { reps: updates.reps } : {}),
+      })));
+    } else {
+      setActiveSets(activeSets.map((s) => (s.id === setId ? { ...s, ...updates } : s)));
+    }
   };
 
   const handleRemoveSet = (setId: string) => {
@@ -267,28 +349,156 @@ export default function SinglePageLandingScreen() {
     setActiveSets(activeSets.filter((s) => s.id !== setId));
   };
 
-  const handleToggleSetComplete = (setId: string, isCompleted: boolean) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setActiveSets(activeSets.map((s) => (s.id === setId ? { ...s, isCompleted: !isCompleted } : s)));
-  };
+
 
   const handleSaveWorkout = async (exerciseId: string) => {
-    const completedSets = activeSets.filter((s) => s.isCompleted);
-    if (completedSets.length === 0) {
+    if (activeSets.length === 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Save Error', 'Please complete at least one set before saving.');
+      Alert.alert('Save Error', 'Please add at least one set before saving.');
       return;
     }
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const elapsedMinutes = Math.max(1, Math.round((Date.now() - loggingStartTime) / 60000));
     
-    await addCompletedWorkout(exerciseId, activeSets, elapsedMinutes);
+    // Set start time if it's the first exercise in the session
+    let currentStartTime = sessionStartTime;
+    if (activeSessionExercises.length === 0) {
+      currentStartTime = Date.now();
+      setSessionStartTime(currentStartTime);
+      await AsyncStorage.setItem('@session_start_time', String(currentStartTime));
+    }
+
+    // Add or replace the logged exercise in activeSessionExercises
+    const updatedExercises = [...activeSessionExercises];
+    const existingIndex = updatedExercises.findIndex((le) => le.exerciseId === exerciseId);
     
+    const newLog = {
+      exerciseId,
+      sets: activeSets.map((s) => ({ ...s, isCompleted: true })),
+    };
+
+    if (existingIndex > -1) {
+      updatedExercises[existingIndex] = newLog;
+    } else {
+      updatedExercises.push(newLog);
+    }
+
+    setActiveSessionExercises(updatedExercises);
+    await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updatedExercises));
+
     // Reset logger states
     setExpandedExerciseId(null);
     setActiveSets([]);
-    setSelectedModalMuscle(null);
+    setSameForAll(true);
+  };
+
+  const handleEditActiveExercise = (exerciseId: string, muscleGroup: MuscleGroup) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedModalMuscle(muscleGroup);
+    setSearch('');
+    setExpandedExerciseId(exerciseId);
+    
+    const existing = activeSessionExercises.find((le) => le.exerciseId === exerciseId);
+    if (existing) {
+      setActiveSets(existing.sets.map((s) => ({
+        id: s.id,
+        weight: s.weight,
+        reps: s.reps,
+        isCompleted: true,
+      })));
+    }
+  };
+
+  const handleEditLastExercise = () => {
+    if (activeSessionExercises.length === 0) return;
+    const lastLogged = activeSessionExercises[activeSessionExercises.length - 1];
+    const details = exercises.find((e) => e.id === lastLogged.exerciseId);
+    if (details) {
+      handleEditActiveExercise(lastLogged.exerciseId, details.muscleGroup);
+    }
+  };
+
+  const suggestWorkoutTitle = (loggedExs: LoggedExercise[]) => {
+    const muscles = new Set<string>();
+    loggedExs.forEach((le) => {
+      const details = exercises.find((e) => e.id === le.exerciseId);
+      if (details) {
+        muscles.add(details.muscleGroup);
+      }
+    });
+    const muscleArray = Array.from(muscles);
+    if (muscleArray.length === 0) return "Workout Day";
+    if (muscleArray.length === 1) return `${muscleArray[0]} Day`;
+    if (muscleArray.length === 2) return `${muscleArray[0]} & ${muscleArray[1]} Day`;
+    if (muscleArray.length === 3) return `${muscleArray[0]}, ${muscleArray[1]} & ${muscleArray[2]} Day`;
+    return "Full Body Day";
+  };
+
+  const handleFinishWorkoutDay = async () => {
+    if (activeSessionExercises.length === 0) {
+      Alert.alert('Save Error', 'You have not logged any exercises yet.');
+      return;
+    }
+
+    const suggestedTitle = suggestWorkoutTitle(activeSessionExercises);
+
+    Alert.alert(
+      'Finish Workout Day',
+      `Save today's session as "${suggestedTitle}"?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Save',
+          onPress: async () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            
+            const elapsedMinutes = sessionStartTime > 0
+              ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
+              : 15;
+
+            await addCompletedWorkout(suggestedTitle, activeSessionExercises, elapsedMinutes);
+
+            // Clear active session
+            setActiveSessionExercises([]);
+            setSessionStartTime(0);
+            await Promise.all([
+              AsyncStorage.removeItem('@active_session_exercises'),
+              AsyncStorage.removeItem('@session_start_time'),
+            ]);
+
+            // Reset modal and views
+            setSelectedModalMuscle(null);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCancelSession = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    Alert.alert(
+      'Cancel Workout',
+      'Are you sure you want to discard your current workout day progress?',
+      [
+        { text: 'Keep Workout', style: 'cancel' },
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: async () => {
+            setActiveSessionExercises([]);
+            setSessionStartTime(0);
+            await Promise.all([
+              AsyncStorage.removeItem('@active_session_exercises'),
+              AsyncStorage.removeItem('@session_start_time'),
+            ]);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          },
+        },
+      ]
+    );
   };
 
   const handleDeleteHistoryLog = (id: string, name: string) => {
@@ -353,7 +563,8 @@ export default function SinglePageLandingScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.inner}
@@ -363,43 +574,116 @@ export default function SinglePageLandingScreen() {
           <View style={styles.header}>
             <View style={styles.headerRow}>
               <View>
-                <Text style={styles.greeting}>Workout Journal</Text>
-                <Text style={styles.dateSub}>
+                <Text style={[styles.greeting, { color: theme.textPrimary }]}>Workout Journal</Text>
+                <Text style={[styles.dateSub, { color: theme.textSecondary }]}>
                   we remember so you can <Text style={{ fontWeight: '900', color: '#3B82F6' }}>FORGET</Text>
                 </Text>
               </View>
+              {/* Dark/Light Mode Toggle */}
+              <TouchableOpacity
+                style={[
+                  styles.themeToggleBtn,
+                  { backgroundColor: theme.cardBg, borderColor: theme.borderColor }
+                ]}
+                onPress={toggleDarkMode}
+                activeOpacity={0.8}
+              >
+                {isDarkMode ? (
+                  <Sun size={20} color="#FACC15" strokeWidth={2.2} />
+                ) : (
+                  <Moon size={20} color="#3B82F6" strokeWidth={2.2} />
+                )}
+              </TouchableOpacity>
             </View>
           </View>
 
           {/* Segment Selector Toggle */}
-          <View style={styles.segmentContainer}>
+          <View style={[styles.segmentContainer, { backgroundColor: theme.segmentBg, borderColor: theme.borderColor }]}>
             <TouchableOpacity
-              style={[styles.segmentBtn, activeSegment === 'log' ? styles.segmentBtnActive : null]}
+              style={[
+                styles.segmentBtn,
+                activeSegment === 'log' ? [styles.segmentBtnActive, { backgroundColor: theme.segmentBtnActiveBg, borderColor: theme.segmentBtnActiveBorder }] : null
+              ]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setActiveSegment('log');
               }}
               activeOpacity={0.8}
             >
-              <Text style={[styles.segmentText, activeSegment === 'log' ? styles.segmentTextActive : null]}>LOG WORKOUT</Text>
+              <Text style={[styles.segmentText, activeSegment === 'log' ? { color: theme.textPrimary } : { color: theme.textSecondary }]}>LOG WORKOUT</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.segmentBtn, activeSegment === 'history' ? styles.segmentBtnActive : null]}
+              style={[
+                styles.segmentBtn,
+                activeSegment === 'history' ? [styles.segmentBtnActive, { backgroundColor: theme.segmentBtnActiveBg, borderColor: theme.segmentBtnActiveBorder }] : null
+              ]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setActiveSegment('history');
               }}
               activeOpacity={0.8}
             >
-              <Text style={[styles.segmentText, activeSegment === 'history' ? styles.segmentTextActive : null]}>HISTORY</Text>
+              <Text style={[styles.segmentText, activeSegment === 'history' ? { color: theme.textPrimary } : { color: theme.textSecondary }]}>HISTORY</Text>
             </TouchableOpacity>
           </View>
 
           {/* Segment Switch Logic */}
           {activeSegment === 'log' ? (
             <>
+              {/* Active Session Status Card */}
+              {activeSessionExercises.length > 0 && (
+                <Card style={[styles.activeSessionCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                  <View style={styles.activeSessionHeader}>
+                    <View>
+                      <Text style={[styles.activeSessionTitle, { color: theme.textPrimary }]}>Active Session</Text>
+                      <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary }]}>
+                        {activeSessionExercises.length} exercise{activeSessionExercises.length > 1 ? 's' : ''} logged today
+                      </Text>
+                    </View>
+                    <View style={styles.headerActionRow}>
+                      <TouchableOpacity
+                        style={styles.editSessionBtn}
+                        onPress={handleEditLastExercise}
+                        activeOpacity={0.7}
+                      >
+                        <Edit2 size={16} color="#3B82F6" strokeWidth={2.5} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.cancelSessionBtn}
+                        onPress={handleCancelSession}
+                        activeOpacity={0.6}
+                      >
+                        <Trash2 size={18} color="#EF4444" strokeWidth={2} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <View style={styles.activeSessionList}>
+                    {activeSessionExercises.map((le) => {
+                      const details = exercises.find((e) => e.id === le.exerciseId);
+                      if (!details) return null;
+                      return (
+                        <View key={le.exerciseId} style={styles.activeSessionItem}>
+                          <Text style={[styles.activeSessionItemText, { color: theme.textPrimary }]}>
+                            • {details.name} ({le.sets.length} set{le.sets.length > 1 ? 's' : ''})
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.finishSessionBtn, { backgroundColor: '#10B981' }]}
+                    onPress={handleFinishWorkoutDay}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.finishSessionBtnText}>SAVE WORKOUT DAY</Text>
+                  </TouchableOpacity>
+                </Card>
+              )}
+
               {/* Muscle Selector Cards Grid */}
-              <Text style={styles.sectionHeader}>SELECT MUSCLE GROUP</Text>
+              <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>SELECT MUSCLE GROUP</Text>
               <View style={styles.muscleGrid}>
                 {MUSCLE_GROUPS.map((muscle) => {
                   const muscleColor = categoryColors[muscle] || '#10B981';
@@ -409,19 +693,24 @@ export default function SinglePageLandingScreen() {
                       style={[
                         styles.muscleCard,
                         {
-                          borderColor: muscleColor,
-                          backgroundColor: `${muscleColor}10`, // Permanent soft glow background
+                          borderColor: isDarkMode ? theme.borderColor : `${muscleColor}30`,
+                          backgroundColor: isDarkMode ? `${muscleColor}10` : '#FFFFFF',
+                          shadowColor: '#000000',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: isDarkMode ? 0 : 0.05,
+                          shadowRadius: 2,
+                          elevation: 1,
                         }
                       ]}
                       onPress={() => handleSelectMuscleCard(muscle)}
                       activeOpacity={0.85}
                     >
-                      <Text style={[styles.muscleText, { color: muscleColor }]}>
+                      <Text style={[styles.muscleText, { color: isDarkMode ? muscleColor : '#111827' }]}>
                         {muscle.toUpperCase()}
                       </Text>
                       <Image
                         source={MUSCLE_IMAGES[muscle]}
-                        style={[styles.muscleImage, { opacity: 0.85 }]}
+                        style={[styles.muscleImage, { opacity: isDarkMode ? 0.85 : 0.75 }]}
                         contentFit="contain"
                       />
                     </TouchableOpacity>
@@ -430,12 +719,12 @@ export default function SinglePageLandingScreen() {
               </View>
 
               {/* Consistency Graph */}
-              <Text style={styles.sectionHeader}>ACTIVITY TRACKER</Text>
+              <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>ACTIVITY TRACKER</Text>
               <ProgressGrid history={history} />
 
               {/* Recent Workouts list matching screenshot */}
               <View style={styles.recentWorkoutsHeader}>
-                <Text style={styles.sectionHeader}>RECENT WORKOUTS</Text>
+                <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>RECENT WORKOUTS</Text>
                 <TouchableOpacity
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -471,7 +760,20 @@ export default function SinglePageLandingScreen() {
                   return (
                     <TouchableOpacity
                       key={item.id}
-                      style={[styles.recentCard, { borderLeftWidth: 4, borderLeftColor: circleColor }]}
+                      style={[
+                        styles.recentCard,
+                        {
+                          borderLeftWidth: 4,
+                          borderLeftColor: circleColor,
+                          backgroundColor: theme.cardBg,
+                          borderColor: theme.borderColor,
+                          shadowColor: '#000000',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: isDarkMode ? 0 : 0.05,
+                          shadowRadius: 2,
+                          elevation: 1,
+                        }
+                      ]}
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         setActiveSegment('history');
@@ -480,24 +782,20 @@ export default function SinglePageLandingScreen() {
                     >
                       <View style={styles.recentLeft}>
                         {/* Circular muscle group category outline icon */}
-                        <View style={[styles.recentIconCircle, { backgroundColor: `${circleColor}15`, borderColor: circleColor, borderWidth: 1.5 }]}>
+                        <View style={[styles.recentIconCircle, { backgroundColor: isDarkMode ? `${circleColor}15` : `${circleColor}10`, borderColor: circleColor, borderWidth: 1.5 }]}>
                           <Dumbbell size={16} color={circleColor} />
                         </View>
                         
                         <View style={styles.recentInfo}>
-                          <Text style={styles.recentName}>{item.name}</Text>
-                          <Text style={styles.recentMuscles} numberOfLines={1}>
+                          <Text style={[styles.recentName, { color: theme.textPrimary }]}>{item.name}</Text>
+                          <Text style={[styles.recentMuscles, { color: theme.textSecondary }]} numberOfLines={1}>
                             {sessionMuscles.join(' • ')}
                           </Text>
                           
-                          {/* Exercises and Duration Row */}
+                          {/* Exercises Row */}
                           <View style={styles.recentMetaRow}>
-                            <Text style={styles.recentMetaText}>
+                            <Text style={[styles.recentMetaText, { color: theme.textSecondary }]}>
                               💪 {item.exercises[0]?.sets.length || 0} sets
-                            </Text>
-                            <Text style={styles.recentMetaDot}>•</Text>
-                            <Text style={styles.recentMetaText}>
-                              ⏱️ {item.duration} min
                             </Text>
                           </View>
                         </View>
@@ -505,15 +803,15 @@ export default function SinglePageLandingScreen() {
 
                       {/* Right Details */}
                       <View style={styles.recentRight}>
-                        <Text style={styles.recentDayText}>{getRelativeDay(item.date)}</Text>
+                        <Text style={[styles.recentDayText, { color: theme.textSecondary }]}>{getRelativeDay(item.date)}</Text>
                         <Text style={styles.recentVolumeText}>{totalVolume.toLocaleString()} kg</Text>
                       </View>
                     </TouchableOpacity>
                   );
                 })}
                 {history.length === 0 && (
-                  <Card style={styles.emptyRecentCard}>
-                    <Text style={styles.emptyRecentText}>No recent sessions completed.</Text>
+                  <Card style={[styles.emptyRecentCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                    <Text style={[styles.emptyRecentText, { color: theme.textSecondary }]}>No recent sessions completed.</Text>
                   </Card>
                 )}
               </View>
@@ -522,10 +820,10 @@ export default function SinglePageLandingScreen() {
             /* History View Section */
             <View style={styles.historySection}>
               {history.length === 0 ? (
-                <Card style={styles.welcomeCard}>
+                <Card style={[styles.welcomeCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
                   <Calendar size={32} color="#10B981" strokeWidth={1.5} />
-                  <Text style={styles.welcomeTitle}>No workout history yet</Text>
-                  <Text style={styles.welcomeDesc}>
+                  <Text style={[styles.welcomeTitle, { color: theme.textPrimary }]}>No workout history yet</Text>
+                  <Text style={[styles.welcomeDesc, { color: theme.textSecondary }]}>
                     Log completed sets above. Your session summary data cards will load here.
                   </Text>
                 </Card>
@@ -533,11 +831,27 @@ export default function SinglePageLandingScreen() {
                 history.map((item) => {
                   const sessionMuscles = getSessionMuscles(item);
                   return (
-                    <Card key={item.id} style={[styles.historyLogCard, { borderLeftWidth: 4, borderLeftColor: categoryColors[sessionMuscles[0] || 'Chest'] || '#10B981' }]}>
+                    <Card
+                      key={item.id}
+                      style={[
+                        styles.historyLogCard,
+                        {
+                          borderLeftWidth: 4,
+                          borderLeftColor: categoryColors[sessionMuscles[0] || 'Chest'] || '#10B981',
+                          backgroundColor: theme.cardBg,
+                          borderColor: theme.borderColor,
+                          shadowColor: '#000000',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: isDarkMode ? 0 : 0.05,
+                          shadowRadius: 2,
+                          elevation: 1,
+                        }
+                      ]}
+                    >
                       <View style={styles.historyCardHeader}>
                         <View style={styles.historyTitleCol}>
-                          <Text style={styles.historySessionName}>{item.name}</Text>
-                          <Text style={styles.historyDate}>{formatHistoryDate(item.date).toUpperCase()}</Text>
+                          <Text style={[styles.historySessionName, { color: theme.textPrimary }]}>{item.name}</Text>
+                          <Text style={[styles.historyDate, { color: theme.textSecondary }]}>{formatHistoryDate(item.date).toUpperCase()}</Text>
                         </View>
                         <TouchableOpacity
                           style={styles.deleteLogBtn}
@@ -549,24 +863,20 @@ export default function SinglePageLandingScreen() {
                       </View>
 
                       {/* Displaying direct detailed receipts of the sets completed */}
-                      <View style={styles.historySetsReceipt}>
+                      <View style={[styles.historySetsReceipt, { borderTopColor: theme.borderColor }]}>
                         {item.exercises.map((logEx) => (
                           <View key={logEx.exerciseId} style={styles.receiptExerciseGroup}>
                             {logEx.sets.map((set, setIndex) => (
                               <View key={set.id} style={styles.receiptSetRow}>
-                                <Text style={styles.receiptSetLabel}>SET {setIndex + 1}</Text>
-                                <Text style={styles.receiptSetValue}>{set.weight} kg × {set.reps}</Text>
+                                <Text style={[styles.receiptSetLabel, { color: theme.textSecondary }]}>SET {setIndex + 1}</Text>
+                                <Text style={[styles.receiptSetValue, { color: theme.textPrimary }]}>{set.weight} kg × {set.reps}</Text>
                               </View>
                             ))}
                           </View>
                         ))}
                       </View>
 
-                      <View style={styles.historyFooter}>
-                        <View style={styles.historyDurationRow}>
-                          <Clock size={11} color="#9CA3AF" strokeWidth={2} />
-                          <Text style={styles.historyDurationText}>{item.duration} min active</Text>
-                        </View>
+                      <View style={[styles.historyFooter, { borderTopColor: theme.borderColor }]}>
                         <View style={styles.historyBadgeRow}>
                           {sessionMuscles.map((m) => (
                             <MuscleBadge key={m} muscleGroup={m} size="sm" />
@@ -588,22 +898,22 @@ export default function SinglePageLandingScreen() {
           presentationStyle="pageSheet"
           onRequestClose={() => setSelectedModalMuscle(null)}
         >
-          <View style={styles.modalContainer}>
+          <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
             <SafeAreaView style={styles.modalInnerContainer} edges={['top', 'bottom', 'left', 'right']}>
               <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.modalKeyboardContainer}
               >
                 {/* Modal Header */}
-                <View style={styles.modalHeader}>
+                <View style={[styles.modalHeader, { borderBottomColor: theme.borderColor }]}>
                   <View>
-                    <Text style={styles.modalTitle}>
+                    <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>
                       {(selectedModalMuscle || '').toUpperCase()} WORKOUTS
                     </Text>
-                    <Text style={styles.modalSubtitle}>Select an exercise to log completed sets</Text>
+                    <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]}>Select an exercise to log completed sets</Text>
                   </View>
                   <TouchableOpacity
-                    style={styles.modalCloseBtn}
+                    style={[styles.modalCloseBtn, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
                     onPress={() => setSelectedModalMuscle(null)}
                     activeOpacity={0.7}
                   >
@@ -627,6 +937,7 @@ export default function SinglePageLandingScreen() {
                           key={muscle}
                           style={[
                             styles.modalSwitcherPill,
+                            { backgroundColor: theme.cardBg, borderColor: theme.borderColor },
                             isActive && {
                               borderColor: activeColor,
                               backgroundColor: `${activeColor}20`,
@@ -643,6 +954,7 @@ export default function SinglePageLandingScreen() {
                           <Text
                             style={[
                               styles.modalSwitcherPillText,
+                              { color: theme.textSecondary },
                               isActive && { color: activeColor, fontWeight: '800' },
                             ]}
                           >
@@ -657,9 +969,9 @@ export default function SinglePageLandingScreen() {
                 {/* Search filter input inside modal */}
                 <View style={styles.searchContainer}>
                   <TextInput
-                    style={styles.searchInput}
+                    style={[styles.searchInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
                     placeholder="Search exercises..."
-                    placeholderTextColor="#6B7280"
+                    placeholderTextColor={theme.inputPlaceholder}
                     value={search}
                     onChangeText={setSearch}
                     autoCorrect={false}
@@ -675,10 +987,9 @@ export default function SinglePageLandingScreen() {
                   keyboardShouldPersistTaps="handled"
                   renderItem={({ item, index }) => {
                     const isExpanded = expandedExerciseId === item.id;
-                    const previousLog = getPreviousWorkoutForExercise(item.id);
 
                     return (
-                      <Card style={styles.exerciseCard}>
+                      <Card style={[styles.exerciseCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
                         {/* Exercise Header Clickable Row */}
                         <View style={styles.exerciseHeaderRow}>
                           <TouchableOpacity
@@ -702,17 +1013,17 @@ export default function SinglePageLandingScreen() {
                                );
                              })()}
 
-                            <Text style={styles.exerciseName}>{item.name}</Text>
+                            <Text style={[styles.exerciseName, { color: theme.textPrimary }]}>{item.name}</Text>
                             {isExpanded ? (
-                              <ChevronUp size={16} color="#9CA3AF" />
+                              <ChevronUp size={16} color={theme.textSecondary} />
                             ) : (
-                              <ChevronDown size={16} color="#9CA3AF" />
+                              <ChevronDown size={16} color={theme.textSecondary} />
                             )}
                           </TouchableOpacity>
 
                           {/* Favorite button */}
                           <TouchableOpacity
-                            style={styles.favBtn}
+                            style={[styles.favBtn, { borderLeftColor: theme.borderColor }]}
                             onPress={() => {
                               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                               toggleFavoriteExercise(item.id);
@@ -721,7 +1032,7 @@ export default function SinglePageLandingScreen() {
                           >
                             <Star
                               size={18}
-                              color={item.isFavorite ? '#FF8A00' : '#4B5563'}
+                              color={item.isFavorite ? '#FF8A00' : theme.textSecondary}
                               fill={item.isFavorite ? '#FF8A00' : 'transparent'}
                               strokeWidth={2}
                             />
@@ -729,111 +1040,133 @@ export default function SinglePageLandingScreen() {
                         </View>
 
                         {/* Accordion sets logger content */}
-                        {isExpanded && (
-                          <View style={styles.loggerBody}>
-                            {/* Previous Stat comparison */}
-                            <View style={styles.prevLogCard}>
-                              <Text style={styles.prevLogLabel}>PREVIOUS LOG DETAILS</Text>
-                              {previousLog ? (
-                                <View style={styles.prevSetsRow}>
-                                  {previousLog.sets.map((s, sIdx) => (
-                                    <View key={s.id} style={styles.prevSetBubble}>
-                                      <Text style={styles.prevSetIndex}>{sIdx + 1}</Text>
-                                      <Text style={styles.prevSetText}>{s.weight}kg × {s.reps}</Text>
-                                    </View>
-                                  ))}
-                                </View>
-                              ) : (
-                                <Text style={styles.prevEmptyText}>No previous stats found. First session logging.</Text>
-                              )}
-                            </View>
-
-                            {/* Set Row Labels */}
-                            <View style={styles.setRowLabels}>
-                              <Text style={[styles.labelCol, styles.widthSet]}>SET</Text>
-                              <Text style={[styles.labelCol, styles.widthWeight]}>WEIGHT</Text>
-                              <Text style={[styles.labelCol, styles.widthReps]}>REPS</Text>
-                              <Text style={[styles.labelCol, styles.widthCheck]}></Text>
-                            </View>
-
-                            {/* Active Sets logging list */}
-                            {activeSets.map((set, index) => (
-                              <View
-                                key={set.id}
-                                style={[
-                                  styles.setRow,
-                                  set.isCompleted ? styles.setRowCompleted : null,
-                                ]}
-                              >
-                                <Text style={styles.setText}>{index + 1}</Text>
-                                
-                                <View style={styles.widthWeight}>
-                                  <IncrementInput
-                                    value={set.weight}
-                                    step={2.5}
-                                    onChange={(val) => handleUpdateSet(set.id, { weight: val })}
-                                    placeholder="kg"
-                                  />
-                                </View>
-
-                                <View style={styles.widthReps}>
-                                  <IncrementInput
-                                    value={set.reps}
-                                    step={1}
-                                    onChange={(val) => handleUpdateSet(set.id, { reps: val })}
-                                    placeholder="reps"
-                                  />
-                                </View>
-
-                                {/* Done checkbox */}
-                                <View style={styles.widthCheck}>
-                                  <TouchableOpacity
-                                    style={[
-                                      styles.checkBtn,
-                                      set.isCompleted ? styles.checkBtnActive : styles.checkBtnInactive,
-                                    ]}
-                                    onPress={() => handleToggleSetComplete(set.id, set.isCompleted)}
-                                    activeOpacity={0.7}
-                                  >
-                                    {set.isCompleted && <Check size={12} color="#000000" strokeWidth={3} />}
-                                  </TouchableOpacity>
-                                </View>
-
-                                {/* Delete set */}
-                                <TouchableOpacity
-                                  style={styles.deleteSetBtn}
-                                  onPress={() => handleRemoveSet(set.id)}
-                                  activeOpacity={0.7}
-                                >
-                                  <Text style={styles.deleteSetText}>×</Text>
-                                </TouchableOpacity>
-                              </View>
-                            ))}
-
-                            {/* Action panel */}
-                            <View style={styles.loggerActions}>
+                        {isExpanded && (() => {
+                          const categoryColor = categoryColors[item.muscleGroup] || '#10B981';
+                          return (
+                            <View style={[styles.loggerBody, { backgroundColor: theme.background, borderTopColor: theme.borderColor }]}>
+                              {/* Sync Option Switch Row */}
                               <TouchableOpacity
-                                style={styles.addSetBtn}
-                                onPress={() => handleAddSet(item.id)}
-                                activeOpacity={0.75}
+                                style={[styles.optionsRow, { justifyContent: 'space-between', alignItems: 'center' }]}
+                                onPress={toggleSameForAll}
+                                activeOpacity={0.8}
                               >
-                                <Plus size={14} color="#9CA3AF" strokeWidth={2.5} />
-                                <Text style={styles.addSetBtnText}>ADD SET</Text>
+                                <View style={{ flex: 1, paddingRight: 8 }}>
+                                  <Text style={[styles.optionsTitle, { color: theme.textPrimary }]}>Same for all sets</Text>
+                                  <Text style={[styles.optionsSubtitle, { color: theme.textSecondary }]}>
+                                    Sync weight and reps automatically
+                                  </Text>
+                                </View>
+                                <View
+                                  style={[
+                                    styles.switchTrack,
+                                    sameForAll
+                                      ? { backgroundColor: categoryColor, alignItems: 'flex-end' }
+                                      : { backgroundColor: isDarkMode ? '#2D2D30' : '#D1D5DB', alignItems: 'flex-start' }
+                                  ]}
+                                >
+                                  <View style={styles.switchThumb} />
+                                </View>
                               </TouchableOpacity>
 
-                              <Button
-                                title="Log Workout"
-                                variant="primary"
-                                onPress={() => handleSaveWorkout(item.id)}
-                                style={styles.saveWorkoutBtn}
-                              />
+                              {/* Set Row Labels */}
+                              <View style={styles.setRowLabels}>
+                                <Text style={[styles.labelCol, styles.widthSet, { color: theme.textPrimary }]}>SET</Text>
+                                <Text style={[styles.labelCol, styles.widthWeight, { color: theme.textSecondary }]}>WEIGHT</Text>
+                                <Text style={[styles.labelCol, styles.widthReps, { color: theme.textSecondary }]}>REPS</Text>
+                              </View>
+
+                              {/* Active Sets logging list */}
+                              {activeSets.map((set, index) => (
+                                <View
+                                  key={set.id}
+                                  style={[
+                                    styles.setRow,
+                                    { borderBottomColor: theme.borderColor },
+                                  ]}
+                                >
+                                  <Text style={[styles.setText, { color: theme.textPrimary }]}>{index + 1}</Text>
+                                  
+                                  <View style={styles.widthWeight}>
+                                    <IncrementInput
+                                      value={set.weight}
+                                      step={2.5}
+                                      onChange={(val) => handleUpdateSet(set.id, { weight: val })}
+                                      placeholder="kg"
+                                      accentColor={categoryColor}
+                                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
+                                      textColor={theme.textPrimary}
+                                    />
+                                  </View>
+
+                                  <View style={styles.widthReps}>
+                                    <IncrementInput
+                                      value={set.reps}
+                                      step={1}
+                                      onChange={(val) => handleUpdateSet(set.id, { reps: val })}
+                                      placeholder="reps"
+                                      accentColor={categoryColor}
+                                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
+                                      textColor={theme.textPrimary}
+                                    />
+                                  </View>
+
+                                  {/* Delete set */}
+                                  <TouchableOpacity
+                                    style={styles.deleteSetBtn}
+                                    onPress={() => handleRemoveSet(set.id)}
+                                    activeOpacity={0.7}
+                                  >
+                                    <Text style={[styles.deleteSetText, { color: theme.textSecondary }]}>×</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              ))}
+
+                              {/* Action panel */}
+                              <View style={styles.loggerActions}>
+                                <TouchableOpacity
+                                  style={[styles.addSetBtn, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
+                                  onPress={() => handleAddSet(item.id)}
+                                  activeOpacity={0.75}
+                                >
+                                  <Plus size={14} color={theme.textSecondary} strokeWidth={2.5} />
+                                  <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>ADD SET</Text>
+                                </TouchableOpacity>
+
+                                <Button
+                                  title="Log Workout"
+                                  variant="primary"
+                                  onPress={() => handleSaveWorkout(item.id)}
+                                  style={styles.saveWorkoutBtn}
+                                />
+                              </View>
                             </View>
-                          </View>
-                        )}
+                          );
+                        })()}
                       </Card>
                     );
                   }}
                 />
+
+                {/* Modal Sticky Footer if active session is not empty */}
+                {activeSessionExercises.length > 0 && (
+                  <View style={[styles.modalStickyFooter, { backgroundColor: theme.cardBg, borderTopColor: theme.borderColor }]}>
+                    <Text style={[styles.modalFooterText, { color: theme.textPrimary }]}>
+                      {activeSessionExercises.length} Exercise{activeSessionExercises.length > 1 ? 's' : ''} Logged
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.modalFinishBtn, { backgroundColor: '#10B981' }]}
+                      onPress={() => {
+                        setSelectedModalMuscle(null);
+                        setTimeout(() => {
+                          handleFinishWorkoutDay();
+                        }, 400);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.modalFinishBtnText}>FINISH DAY</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </KeyboardAvoidingView>
             </SafeAreaView>
           </View>
@@ -1066,17 +1399,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   widthSet: {
-    width: '10%',
+    width: '12%',
     textAlign: 'left',
     color: '#FFFFFF',
     fontWeight: '800',
   },
   widthWeight: {
-    width: '38%',
+    width: '44%',
     alignItems: 'center',
   },
   widthReps: {
-    width: '38%',
+    width: '44%',
     alignItems: 'center',
   },
   widthCheck: {
@@ -1095,7 +1428,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   setText: {
-    width: '10%',
+    width: '12%',
     fontSize: 16, // Larger indices
     fontWeight: '800',
     color: '#FFFFFF',
@@ -1325,7 +1658,7 @@ const styles = StyleSheet.create({
   },
   modalListContent: {
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingBottom: 95,
     paddingTop: 4,
   },
   // Header Row Details
@@ -1537,5 +1870,139 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     color: '#000000', // High contrast dark text on green button
+  },
+  optionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  optionsTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.1,
+  },
+  optionsSubtitle: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  switchTrack: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    paddingHorizontal: 2,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  switchThumb: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 1.5,
+    elevation: 2,
+  },
+  themeToggleBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeSessionCard: {
+    padding: 16,
+    marginBottom: 20,
+    borderRadius: 22,
+    borderWidth: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  activeSessionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  activeSessionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  activeSessionSubtitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  cancelSessionBtn: {
+    padding: 6,
+  },
+  activeSessionList: {
+    marginBottom: 16,
+    gap: 6,
+  },
+  activeSessionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  activeSessionItemText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  editSessionBtn: {
+    padding: 6,
+    marginRight: 8,
+  },
+  headerActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  finishSessionBtn: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  finishSessionBtnText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#000000',
+    letterSpacing: 0.5,
+  },
+  modalStickyFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalFooterText: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.1,
+  },
+  modalFinishBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalFinishBtnText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#000000',
   },
 });
