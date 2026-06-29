@@ -155,6 +155,7 @@ import {
   Edit2,
   Trophy,
   X,
+  Timer,
 } from 'lucide-react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -199,6 +200,81 @@ export default function SinglePageLandingScreen() {
 
   const [activeSessionExercises, setActiveSessionExercises] = useState<LoggedExercise[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<number>(0);
+
+  // Rest timer state
+  const [restTimerVisible, setRestTimerVisible] = useState(false);
+  const [restTimerSeconds, setRestTimerSeconds] = useState(0);
+  const [restTimerRunning, setRestTimerRunning] = useState(false);
+  const [restTimerDuration, setRestTimerDuration] = useState(60);
+  const [restTimerSound, setRestTimerSound] = useState<'alarm' | 'none'>('alarm');
+  const restTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const soundObjectRef = React.useRef<any>(null);
+
+  const playTimerSound = async () => {
+    try {
+      const { Audio } = require('expo-av');
+      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+      const soundFile = require('@/assets/sounds/alarm.wav');
+      const { sound } = await Audio.Sound.createAsync(soundFile, {
+        shouldPlay: true,
+        isLooping: true,
+        volume: 1.0,
+      });
+      soundObjectRef.current = sound;
+    } catch (e) {
+      console.warn('Sound playback failed:', e);
+    }
+  };
+
+  const stopTimerSound = async () => {
+    if (soundObjectRef.current) {
+      try { await soundObjectRef.current.stopAsync(); } catch {}
+      try { await soundObjectRef.current.unloadAsync(); } catch {}
+      soundObjectRef.current = null;
+    }
+  };
+
+  const formatRestTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  const startRestTimer = (seconds: number) => {
+    stopTimerSound();
+    if (restTimerRef.current) clearInterval(restTimerRef.current);
+    setRestTimerDuration(seconds);
+    setRestTimerSeconds(seconds);
+    setRestTimerRunning(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    restTimerRef.current = setInterval(() => {
+      setRestTimerSeconds((prev) => {
+        if (prev <= 1) {
+          if (restTimerRef.current) clearInterval(restTimerRef.current);
+          setRestTimerRunning(false);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          if (restTimerSound !== 'none') {
+            playTimerSound();
+          }
+          showCustomAlert(
+            'Rest Timer Done',
+            'Time to start your next set!',
+            [{ text: 'OK', onPress: () => stopTimerSound() }],
+            <Timer size={28} color="#10B981" />
+          );
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const stopRestTimer = () => {
+    stopTimerSound();
+    if (restTimerRef.current) clearInterval(restTimerRef.current);
+    setRestTimerRunning(false);
+    setRestTimerSeconds(0);
+  };
 
   // Weekly calendar state
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
@@ -253,6 +329,13 @@ export default function SinglePageLandingScreen() {
     setCustomAlertIcon(icon || null);
     setCustomAlertVisible(true);
   };
+
+  React.useEffect(() => {
+    return () => {
+      if (restTimerRef.current) clearInterval(restTimerRef.current);
+      stopTimerSound();
+    };
+  }, []);
 
   React.useEffect(() => {
     AsyncStorage.getItem('@active_session_exercises').then((val) => {
@@ -678,6 +761,28 @@ export default function SinglePageLandingScreen() {
                   <Text style={[styles.workoutDaysText, { color: theme.textPrimary }]}>{totalWorkoutDays}</Text>
                 </TouchableOpacity>
 
+                {/* Rest Timer */}
+                <TouchableOpacity
+                  style={[
+                    styles.restTimerBadge,
+                    {
+                      backgroundColor: restTimerRunning ? '#10B981' : theme.cardBg,
+                      borderColor: restTimerRunning ? '#10B981' : theme.borderColor,
+                    }
+                  ]}
+                  onPress={() => {
+                    stopTimerSound();
+                    setRestTimerVisible(true);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Timer size={14} color={restTimerRunning ? '#FFFFFF' : theme.textSecondary} strokeWidth={2.5} />
+                  {restTimerRunning || restTimerSeconds > 0 ? (
+                    <Text style={[styles.restTimerText, { color: restTimerRunning ? '#FFFFFF' : '#10B981' }]}>
+                      {formatRestTime(restTimerSeconds)}
+                    </Text>
+                  ) : null}
+                </TouchableOpacity>
 
               </View>
             </View>
@@ -950,109 +1055,6 @@ export default function SinglePageLandingScreen() {
               <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>ACTIVITY TRACKER</Text>
               <ProgressGrid history={history} isDarkMode={isDarkMode} />
 
-              {/* Recent Workouts list matching screenshot */}
-              <View style={styles.recentWorkoutsHeader}>
-                <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>RECENT WORKOUTS</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setActiveSegment('history');
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.viewAllText}>View All</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.recentList}>
-                {history.slice(0, 3).map((item) => {
-                  const sessionMuscles = getSessionMuscles(item);
-                  
-                  // Compute sets per muscle group
-                  const muscleSets: Record<string, number> = {};
-                  item.exercises.forEach((logEx) => {
-                    const details = exercises.find((e) => e.id === logEx.exerciseId);
-                    if (details) {
-                      const mGroup = details.muscleGroup;
-                      muscleSets[mGroup] = (muscleSets[mGroup] || 0) + logEx.sets.length;
-                    }
-                  });
-
-                  const setsPerMuscleString = Object.entries(muscleSets)
-                    .map(([muscle, count]) => `${muscle}: ${count} set${count > 1 ? 's' : ''}`)
-                    .join(' • ');
-
-                  // Formatting date: today, yesterday, or date
-                  const getRelativeDay = (dateStr: string) => {
-                    const today = new Date().toDateString();
-                    const yesterday = new Date(Date.now() - 86400000).toDateString();
-                    const sessionDate = new Date(dateStr).toDateString();
-
-                    if (sessionDate === today) return 'Today';
-                    if (sessionDate === yesterday) return 'Yesterday';
-                    return formatDate(dateStr);
-                  };
-
-                  const primaryMuscle = sessionMuscles[0] || 'Chest';
-                  const circleColor = categoryColors[primaryMuscle] || '#10B981';
-
-                  return (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={[
-                        styles.recentCard,
-                        {
-                          borderLeftWidth: 4,
-                          borderLeftColor: circleColor,
-                          backgroundColor: theme.cardBg,
-                          borderColor: theme.borderColor,
-                          shadowColor: '#000000',
-                          shadowOffset: { width: 0, height: 1 },
-                          shadowOpacity: isDarkMode ? 0 : 0.05,
-                          shadowRadius: 2,
-                          elevation: 1,
-                        }
-                      ]}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setActiveSegment('history');
-                      }}
-                      activeOpacity={0.85}
-                    >
-                      <View style={styles.recentLeft}>
-                        {/* Circular muscle group category outline icon */}
-                        <View style={[styles.recentIconCircle, { backgroundColor: isDarkMode ? `${circleColor}15` : `${circleColor}10`, borderColor: circleColor, borderWidth: 1.5 }]}>
-                          <Dumbbell size={16} color={circleColor} />
-                        </View>
-                        
-                        <View style={styles.recentInfo}>
-                          <Text style={[styles.recentName, { color: theme.textPrimary }]}>{item.name}</Text>
-                          <Text style={[styles.recentMuscles, { color: theme.textSecondary }]} numberOfLines={1}>
-                            {sessionMuscles.join(' • ')}
-                          </Text>
-                          
-                          {/* Exercises Row */}
-                          <View style={styles.recentMetaRow}>
-                            <Text style={[styles.recentMetaText, { color: theme.textSecondary }]} numberOfLines={1}>
-                              💪 {setsPerMuscleString}
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-
-                      {/* Right Details */}
-                      <View style={styles.recentRight}>
-                        <Text style={[styles.recentDayText, { color: theme.textSecondary }]}>{getRelativeDay(item.date)}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-                {history.length === 0 && (
-                  <Card style={[styles.emptyRecentCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                    <Text style={[styles.emptyRecentText, { color: theme.textSecondary }]}>No recent sessions completed.</Text>
-                  </Card>
-                )}
-              </View>
             </>
           ) : (
             /* History View Section */
@@ -1312,6 +1314,110 @@ export default function SinglePageLandingScreen() {
             </SafeAreaView>
           </View>
         </Modal>
+
+      {/* Rest Timer Modal */}
+      <Modal
+        visible={restTimerVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setRestTimerVisible(false)}
+      >
+        <View style={styles.timerOverlay}>
+          <View style={[styles.timerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+            <TouchableOpacity
+              style={styles.timerCloseBtn}
+              onPress={() => setRestTimerVisible(false)}
+              activeOpacity={0.7}
+            >
+              <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
+            </TouchableOpacity>
+
+            <Text style={[styles.timerDisplay, { color: restTimerRunning ? '#10B981' : theme.textPrimary }]}>
+              {formatRestTime(restTimerSeconds)}
+            </Text>
+
+            <View style={styles.timerActions}>
+              {restTimerRunning ? (
+                <TouchableOpacity
+                  style={[styles.timerActionBtn, { backgroundColor: '#EF444420' }]}
+                  onPress={stopRestTimer}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.timerActionText, { color: '#EF4444' }]}>STOP</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.timerActionBtn, { backgroundColor: '#10B98120' }]}
+                  onPress={() => startRestTimer(restTimerSeconds > 0 ? restTimerSeconds : restTimerDuration)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.timerActionText, { color: '#10B981' }]}>START</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <View style={styles.timerPresets}>
+              {[30, 60, 90, 120, 180, 300].map((sec) => (
+                <TouchableOpacity
+                  key={sec}
+                  style={[
+                    styles.timerPresetBtn,
+                    {
+                      backgroundColor: restTimerDuration === sec && !restTimerRunning ? '#3B82F620' : theme.background,
+                      borderColor: restTimerDuration === sec && !restTimerRunning ? '#3B82F6' : theme.borderColor,
+                    }
+                  ]}
+                  onPress={() => {
+                    if (!restTimerRunning) {
+                      setRestTimerDuration(sec);
+                      setRestTimerSeconds(sec);
+                    }
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.timerPresetText,
+                      { color: restTimerDuration === sec && !restTimerRunning ? '#3B82F6' : theme.textSecondary },
+                    ]}
+                  >
+                    {sec >= 60 ? `${sec / 60} min` : `${sec}s`}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={[styles.timerSoundBox, { borderTopColor: theme.borderColor }]}>
+              <Text style={[styles.timerSoundLabel, { color: theme.textSecondary }]}>SOUND</Text>
+              <View style={styles.timerSoundOptions}>
+                {(['alarm', 'none'] as const).map((opt) => (
+                  <TouchableOpacity
+                    key={opt}
+                    style={[
+                      styles.timerSoundBtn,
+                      {
+                        backgroundColor: restTimerSound === opt ? '#3B82F620' : theme.background,
+                        borderColor: restTimerSound === opt ? '#3B82F6' : theme.borderColor,
+                      }
+                    ]}
+                    onPress={() => setRestTimerSound(opt)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.timerSoundBtnText,
+                        { color: restTimerSound === opt ? '#3B82F6' : theme.textSecondary },
+                      ]}
+                    >
+                      {opt === 'none' ? 'OFF' : opt.toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Exercise Set Logger Modal */}
       <Modal
@@ -2559,6 +2665,120 @@ const styles = StyleSheet.create({
   },
   workoutDaysText: {
     fontSize: 13,
+    fontWeight: '800',
+  },
+  restTimerBadge: {
+    height: 38,
+    paddingHorizontal: 10,
+    borderRadius: 19,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    minWidth: 38,
+  },
+  restTimerText: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  timerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  timerCard: {
+    width: '100%',
+    maxWidth: 300,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 28,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  timerCloseBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F3F4F6',
+  },
+  timerDisplay: {
+    fontSize: 48,
+    fontWeight: '800',
+    letterSpacing: -1,
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  timerActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  timerActionBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+  },
+  timerActionText: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  timerPresets: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  timerPresetBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 99,
+    borderWidth: 1,
+  },
+  timerPresetText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  timerSoundBox: {
+    borderTopWidth: 1,
+    marginTop: 20,
+    paddingTop: 16,
+    width: '100%',
+    alignItems: 'center',
+    gap: 10,
+  },
+  timerSoundLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  timerSoundOptions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  timerSoundBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 99,
+    borderWidth: 1,
+  },
+  timerSoundBtnText: {
+    fontSize: 11,
     fontWeight: '800',
   },
   activeSessionCard: {
