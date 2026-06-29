@@ -403,8 +403,9 @@ export default function SinglePageLandingScreen() {
     segmentBtnActiveBorder: '#D1D5DB',
   };
 
-  const sortExercisesForMuscle = (muscle: MuscleGroup, extras?: Exercise[]) => {
-    const list = extras ? [...exercises.filter((ex) => ex.muscleGroup === muscle), ...extras] : exercises.filter((ex) => ex.muscleGroup === muscle);
+  const sortExercisesForMuscle = (muscle: MuscleGroup, extras?: Exercise[], excludeIds?: Set<string>) => {
+    const filtered = excludeIds ? exercises.filter((ex) => ex.muscleGroup === muscle && !excludeIds.has(ex.id)) : exercises.filter((ex) => ex.muscleGroup === muscle);
+    const list = extras ? [...filtered, ...extras] : filtered;
     const getFavoriteIndex = (exercise: Exercise) => {
       const idx = favoriteOrder.indexOf(exercise.id);
       if (idx !== -1) return idx;
@@ -676,7 +677,10 @@ export default function SinglePageLandingScreen() {
               AsyncStorage.removeItem('@session_start_time'),
             ]);
 
-            // Reset modal and views
+            // Reset modal, logger, and views
+            setExpandedExerciseId(null);
+            setActiveSets([]);
+            setSameForAll(true);
             setSelectedModalMuscle(null);
           },
         },
@@ -1075,36 +1079,33 @@ export default function SinglePageLandingScreen() {
                           </Text>
                         );
                       }
-                      return dayWorkouts.map((w) => {
-                        const sessionMuscles = getSessionMuscles(w);
+                      return dayWorkouts.map((w, wi) => {
                         return (
-                          <View key={w.id} style={styles.weeklyDetailBlock}>
-                            <View style={styles.weeklyDetailHeader}>
-                              <Text style={[styles.weeklyDetailName, { color: theme.textPrimary }]}>{w.name}</Text>
-                              <Text style={[styles.weeklyDetailDate, { color: theme.textSecondary }]}>
-                                {new Date(w.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                              </Text>
-                            </View>
-                            {w.exercises.map((logEx) => {
-                              const exDetails = exercises.find((e) => e.id === logEx.exerciseId);
-                              return (
-                                <View key={logEx.exerciseId} style={styles.weeklyDetailExercise}>
-                                  <Text style={[styles.weeklyDetailExerciseName, { color: theme.textPrimary }]}>
-                                    {exDetails?.name || 'Unknown'}
-                                  </Text>
-                                  {logEx.sets.map((set, setIndex) => (
-                                    <View key={set.id} style={styles.weeklyDetailSetRow}>
-                                      <Text style={[styles.weeklyDetailSetLabel, { color: theme.textSecondary }]}>SET {setIndex + 1}</Text>
-                                      <Text style={[styles.weeklyDetailSetValue, { color: theme.textPrimary }]}>{set.weight} kg × {set.reps}</Text>
-                                    </View>
-                                  ))}
-                                </View>
-                              );
-                            })}
-                            <View style={styles.weeklyBadgeRow}>
-                              {sessionMuscles.map((m) => (
-                                <MuscleBadge key={m} muscleGroup={m} size="sm" />
-                              ))}
+                          <View key={w.id}>
+                            {wi > 0 && <View style={[styles.weeklyDaySeparator, { backgroundColor: theme.borderColor }]} />}
+                            <View style={styles.weeklyDetailBlock}>
+                              <View style={styles.weeklyDetailHeader}>
+                                <Text style={[styles.weeklyDetailName, { color: theme.textPrimary }]}>{w.name}</Text>
+                                <Text style={[styles.weeklyDetailDate, { color: theme.textSecondary }]}>
+                                  {new Date(w.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                </Text>
+                              </View>
+                              {w.exercises.map((logEx) => {
+                                const exDetails = exercises.find((e) => e.id === logEx.exerciseId);
+                                return (
+                                  <View key={logEx.exerciseId} style={styles.weeklyDetailExercise}>
+                                    <Text style={[styles.weeklyDetailExerciseName, { color: theme.textPrimary }]}>
+                                      {exDetails?.name || 'Unknown'}
+                                    </Text>
+                                    {logEx.sets.map((set, setIndex) => (
+                                      <View key={set.id} style={styles.weeklyDetailSetRow}>
+                                        <Text style={[styles.weeklyDetailSetLabel, { color: theme.textSecondary }]}>SET {setIndex + 1}</Text>
+                                        <Text style={[styles.weeklyDetailSetValue, { color: theme.textPrimary }]}>{set.weight} kg × {set.reps}</Text>
+                                      </View>
+                                    ))}
+                                  </View>
+                                );
+                              })}
                             </View>
                           </View>
                         );
@@ -1384,7 +1385,7 @@ export default function SinglePageLandingScreen() {
                               onPress={async () => {
                                 await deleteCustomExercise(item.id);
                                 if (selectedModalMuscle) {
-                                  setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle));
+                                  setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle, undefined, new Set([item.id])));
                                 }
                               }}
                               activeOpacity={0.7}
@@ -2021,11 +2022,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981',
     marginTop: 1,
   },
+  weeklyDaySeparator: {
+    height: 1,
+    marginVertical: 12,
+  },
   weeklyWorkouts: {
     borderTopWidth: 1,
     marginTop: 12,
     paddingTop: 12,
-    gap: 16,
   },
   weeklyEmpty: {
     fontSize: 12,
