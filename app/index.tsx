@@ -150,8 +150,6 @@ import {
   ChevronUp,
   Search,
   Filter,
-  Sun,
-  Moon,
   Edit2,
   Trophy,
   X,
@@ -197,8 +195,6 @@ export default function SinglePageLandingScreen() {
 
   const [sameForAll, setSameForAll] = useState(true);
 
-  const [isDarkMode, setIsDarkMode] = useState(true);
-
   const [activeSessionExercises, setActiveSessionExercises] = useState<LoggedExercise[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<number>(0);
 
@@ -226,12 +222,6 @@ export default function SinglePageLandingScreen() {
   };
 
   React.useEffect(() => {
-    AsyncStorage.getItem('@workout_journal_dark_mode').then((val) => {
-      if (val !== null) {
-        setIsDarkMode(val === 'true');
-      }
-    });
-
     AsyncStorage.getItem('@active_session_exercises').then((val) => {
       if (val !== null) {
         setActiveSessionExercises(JSON.parse(val));
@@ -245,13 +235,6 @@ export default function SinglePageLandingScreen() {
     });
   }, []);
 
-  const toggleDarkMode = async () => {
-    const nextVal = !isDarkMode;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setIsDarkMode(nextVal);
-    await AsyncStorage.setItem('@workout_journal_dark_mode', String(nextVal));
-  };
-
   const handleShowWorkoutDaysInfo = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     showCustomAlert(
@@ -262,18 +245,20 @@ export default function SinglePageLandingScreen() {
     );
   };
 
+  const isDarkMode = false;
+
   const theme = {
-    background: isDarkMode ? '#090A0F' : '#F3F4F6',
-    cardBg: isDarkMode ? '#13141C' : '#FFFFFF',
-    borderColor: isDarkMode ? '#212330' : '#E5E7EB',
-    textPrimary: isDarkMode ? '#FFFFFF' : '#111827',
-    textSecondary: isDarkMode ? '#9CA3AF' : '#4B5563',
-    inputBg: isDarkMode ? '#13141C' : '#FFFFFF',
-    inputBorder: isDarkMode ? '#212330' : '#E5E7EB',
-    inputPlaceholder: isDarkMode ? '#6B7280' : '#9CA3AF',
-    segmentBg: isDarkMode ? '#13141C' : '#E5E7EB',
-    segmentBtnActiveBg: isDarkMode ? '#1C1D26' : '#FFFFFF',
-    segmentBtnActiveBorder: isDarkMode ? '#212330' : '#D1D5DB',
+    background: '#F3F4F6',
+    cardBg: '#FFFFFF',
+    borderColor: '#E5E7EB',
+    textPrimary: '#111827',
+    textSecondary: '#4B5563',
+    inputBg: '#FFFFFF',
+    inputBorder: '#E5E7EB',
+    inputPlaceholder: '#9CA3AF',
+    segmentBg: '#E5E7EB',
+    segmentBtnActiveBg: '#FFFFFF',
+    segmentBtnActiveBorder: '#D1D5DB',
   };
 
   const sortExercisesForMuscle = (muscle: MuscleGroup) => {
@@ -632,7 +617,7 @@ export default function SinglePageLandingScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
-      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
+      <StatusBar style="dark" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.inner}
@@ -660,21 +645,7 @@ export default function SinglePageLandingScreen() {
                   <Text style={[styles.workoutDaysText, { color: theme.textPrimary }]}>{totalWorkoutDays}</Text>
                 </TouchableOpacity>
 
-                {/* Dark/Light Mode Toggle */}
-                <TouchableOpacity
-                  style={[
-                    styles.themeToggleBtn,
-                    { backgroundColor: theme.cardBg, borderColor: theme.borderColor }
-                  ]}
-                  onPress={toggleDarkMode}
-                  activeOpacity={0.8}
-                >
-                  {isDarkMode ? (
-                    <Sun size={20} color="#FACC15" strokeWidth={2.2} />
-                  ) : (
-                    <Moon size={20} color="#3B82F6" strokeWidth={2.2} />
-                  )}
-                </TouchableOpacity>
+
               </View>
             </View>
           </View>
@@ -1094,51 +1065,38 @@ export default function SinglePageLandingScreen() {
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                   renderItem={({ item, index }) => {
-                    const isExpanded = expandedExerciseId === item.id;
                     const liveEx = exercises.find((e) => e.id === item.id);
                     const isFav = liveEx?.isFavorite ?? false;
-
                     return (
                       <Card style={[styles.exerciseCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                        {/* Exercise Header Clickable Row */}
                         <View style={styles.exerciseHeaderRow}>
                           <TouchableOpacity
                             style={styles.exerciseInfoClick}
                             onPress={() => handleToggleExpand(item.id)}
                             activeOpacity={0.85}
                           >
-                            {/* Exercise aesthetic line-art outline icon thumbnail badge */}
                             {(() => {
                                const exerciseColor = ALT_COLORS[index % 4];
                                const renderExerciseIcon = ALT_IMAGES[index % 5];
                                return (
                                  <View style={[
                                    styles.exerciseBadgeCircle,
-                                   {
-                                     backgroundColor: `${exerciseColor}12`, // Soft transparent backdrop
-                                   }
+                                   { backgroundColor: `${exerciseColor}12` }
                                  ]}>
                                    {renderExerciseIcon(exerciseColor)}
                                  </View>
                                );
                              })()}
-
                             <Text
                               style={[styles.exerciseName, { color: theme.textPrimary }]}
                               numberOfLines={2}
                             >
                               {item.name}
                             </Text>
-                            {isExpanded ? (
-                              <ChevronUp size={16} color={theme.textSecondary} />
-                            ) : (
-                              <ChevronDown size={16} color={theme.textSecondary} />
-                            )}
                           </TouchableOpacity>
 
-                          {/* Favorite button */}
                           <TouchableOpacity
-                            style={[styles.favBtn, { borderLeftColor: theme.borderColor }]}
+                            style={styles.favBtn}
                             onPress={() => {
                               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                               toggleFavoriteExercise(item.id);
@@ -1153,110 +1111,6 @@ export default function SinglePageLandingScreen() {
                             />
                           </TouchableOpacity>
                         </View>
-
-                        {/* Accordion sets logger content */}
-                        {isExpanded && (() => {
-                          const categoryColor = categoryColors[item.muscleGroup] || '#10B981';
-                          return (
-                            <View style={[styles.loggerBody, { backgroundColor: theme.background, borderTopColor: theme.borderColor }]}>
-                              {/* Sync Option Switch Row */}
-                              <TouchableOpacity
-                                style={[styles.optionsRow, { justifyContent: 'space-between', alignItems: 'center' }]}
-                                onPress={toggleSameForAll}
-                                activeOpacity={0.8}
-                              >
-                                <View style={{ flex: 1, paddingRight: 8 }}>
-                                  <Text style={[styles.optionsTitle, { color: theme.textPrimary }]}>Same for all sets</Text>
-                                  <Text style={[styles.optionsSubtitle, { color: theme.textSecondary }]}>
-                                    Sync weight and reps automatically
-                                  </Text>
-                                </View>
-                                <View
-                                  style={[
-                                    styles.switchTrack,
-                                    sameForAll
-                                      ? { backgroundColor: categoryColor, alignItems: 'flex-end' }
-                                      : { backgroundColor: isDarkMode ? '#2D2D30' : '#D1D5DB', alignItems: 'flex-start' }
-                                  ]}
-                                >
-                                  <View style={styles.switchThumb} />
-                                </View>
-                              </TouchableOpacity>
-
-                              {/* Set Row Labels */}
-                              <View style={styles.setRowLabels}>
-                                <Text style={[styles.labelCol, styles.widthSet, { color: theme.textPrimary }]}>SET</Text>
-                                <Text style={[styles.labelCol, styles.widthWeight, { color: theme.textSecondary }]}>WEIGHT</Text>
-                                <Text style={[styles.labelCol, styles.widthReps, { color: theme.textSecondary }]}>REPS</Text>
-                              </View>
-
-                              {/* Active Sets logging list */}
-                              {activeSets.map((set, index) => (
-                                <View
-                                  key={set.id}
-                                  style={[
-                                    styles.setRow,
-                                    { borderBottomColor: theme.borderColor },
-                                  ]}
-                                >
-                                  <Text style={[styles.setText, { color: theme.textPrimary }]}>{index + 1}</Text>
-                                  
-                                  <View style={styles.widthWeight}>
-                                    <IncrementInput
-                                      value={set.weight}
-                                      step={2.5}
-                                      onChange={(val) => handleUpdateSet(set.id, { weight: val })}
-                                      placeholder="kg"
-                                      accentColor={categoryColor}
-                                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
-                                      textColor={theme.textPrimary}
-                                    />
-                                  </View>
-
-                                  <View style={styles.widthReps}>
-                                    <IncrementInput
-                                      value={set.reps}
-                                      step={1}
-                                      onChange={(val) => handleUpdateSet(set.id, { reps: val })}
-                                      placeholder="reps"
-                                      accentColor={categoryColor}
-                                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
-                                      textColor={theme.textPrimary}
-                                    />
-                                  </View>
-
-                                  {/* Delete set */}
-                                  <TouchableOpacity
-                                    style={styles.deleteSetBtn}
-                                    onPress={() => handleRemoveSet(set.id)}
-                                    activeOpacity={0.7}
-                                  >
-                                    <Text style={[styles.deleteSetText, { color: theme.textSecondary }]}>×</Text>
-                                  </TouchableOpacity>
-                                </View>
-                              ))}
-
-                              {/* Action panel */}
-                              <View style={styles.loggerActions}>
-                                <TouchableOpacity
-                                  style={[styles.addSetBtn, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
-                                  onPress={() => handleAddSet(item.id)}
-                                  activeOpacity={0.75}
-                                >
-                                  <Plus size={14} color={theme.textSecondary} strokeWidth={2.5} />
-                                  <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>ADD SET</Text>
-                                </TouchableOpacity>
-
-                                <Button
-                                  title="Log Workout"
-                                  variant="primary"
-                                  onPress={() => handleSaveWorkout(item.id)}
-                                  style={styles.saveWorkoutBtn}
-                                />
-                              </View>
-                            </View>
-                          );
-                        })()}
                       </Card>
                     );
                   }}
@@ -1286,6 +1140,133 @@ export default function SinglePageLandingScreen() {
             </SafeAreaView>
           </View>
         </Modal>
+
+      {/* Exercise Set Logger Modal */}
+      <Modal
+        visible={expandedExerciseId !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setExpandedExerciseId(null);
+          setActiveSets([]);
+          setSameForAll(true);
+        }}
+      >
+        <View style={styles.exerciseLoggerOverlay}>
+          <View style={[styles.exerciseLoggerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+            {(() => {
+              const exItem = expandedExerciseId ? exercises.find((e) => e.id === expandedExerciseId) : null;
+              if (!exItem) return null;
+              const categoryColor = categoryColors[exItem.muscleGroup] || '#10B981';
+              return (
+                <>
+                  <View style={styles.exerciseLoggerHeader}>
+                    <View style={styles.exerciseLoggerTitleCol}>
+                      <Text style={[styles.exerciseLoggerName, { color: theme.textPrimary }]}>{exItem.name}</Text>
+                      <Text style={[styles.exerciseLoggerMuscle, { color: categoryColor }]}>{exItem.muscleGroup.toUpperCase()}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.exerciseLoggerCloseBtn, { backgroundColor: '#F3F4F6', borderColor: theme.borderColor }]}
+                      onPress={() => {
+                        setExpandedExerciseId(null);
+                        setActiveSets([]);
+                        setSameForAll(true);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={[styles.exerciseLoggerDivider, { backgroundColor: theme.borderColor }]} />
+
+                  <TouchableOpacity
+                    style={styles.exerciseLoggerOptionRow}
+                    onPress={toggleSameForAll}
+                    activeOpacity={0.8}
+                  >
+                    <View style={{ flex: 1, paddingRight: 8 }}>
+                      <Text style={[styles.optionsTitle, { color: theme.textPrimary }]}>Same for all sets</Text>
+                      <Text style={[styles.optionsSubtitle, { color: theme.textSecondary }]}>
+                        Sync weight and reps automatically
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.switchTrack,
+                        sameForAll
+                          ? { backgroundColor: categoryColor, alignItems: 'flex-end' }
+                          : { backgroundColor: '#D1D5DB', alignItems: 'flex-start' }
+                      ]}
+                    >
+                      <View style={styles.switchThumb} />
+                    </View>
+                  </TouchableOpacity>
+
+                  <View style={styles.setRowLabels}>
+                    <Text style={[styles.labelCol, styles.widthSet, { color: theme.textPrimary }]}>SET</Text>
+                    <Text style={[styles.labelCol, styles.widthWeight, { color: theme.textSecondary }]}>WEIGHT</Text>
+                    <Text style={[styles.labelCol, styles.widthReps, { color: theme.textSecondary }]}>REPS</Text>
+                  </View>
+
+                  {activeSets.map((set, index) => (
+                    <View key={set.id} style={[styles.setRow, { borderBottomColor: theme.borderColor }]}>
+                      <Text style={[styles.setText, { color: theme.textPrimary }]}>{index + 1}</Text>
+                      <View style={styles.widthWeight}>
+                        <IncrementInput
+                          value={set.weight}
+                          step={2.5}
+                          onChange={(val) => handleUpdateSet(set.id, { weight: val })}
+                          placeholder="kg"
+                          accentColor={categoryColor}
+                          style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
+                          textColor={theme.textPrimary}
+                        />
+                      </View>
+                      <View style={styles.widthReps}>
+                        <IncrementInput
+                          value={set.reps}
+                          step={1}
+                          onChange={(val) => handleUpdateSet(set.id, { reps: val })}
+                          placeholder="reps"
+                          accentColor={categoryColor}
+                          style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
+                          textColor={theme.textPrimary}
+                        />
+                      </View>
+                      <TouchableOpacity
+                        style={styles.deleteSetBtn}
+                        onPress={() => handleRemoveSet(set.id)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.deleteSetText, { color: theme.textSecondary }]}>×</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+
+                  <View style={styles.loggerActions}>
+                    <TouchableOpacity
+                      style={[styles.addSetBtn, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
+                      onPress={() => exItem && handleAddSet(exItem.id)}
+                      activeOpacity={0.75}
+                    >
+                      <Plus size={14} color={theme.textSecondary} strokeWidth={2.5} />
+                      <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>ADD SET</Text>
+                    </TouchableOpacity>
+                    <Button
+                      title="Log Workout"
+                      variant="primary"
+                      onPress={() => exItem && handleSaveWorkout(exItem.id)}
+                      style={styles.saveWorkoutBtn}
+                    />
+                  </View>
+                </>
+              );
+            })()}
+          </View>
+        </View>
+      </Modal>
+
       {/* Custom Modern Alert Modal */}
       <Modal
         visible={customAlertVisible}
@@ -2302,14 +2283,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
-  themeToggleBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   activeSessionCard: {
     padding: 16,
     marginBottom: 20,
@@ -2400,6 +2373,65 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     color: '#000000',
+  },
+  // Exercise Logger Modal Styles
+  exerciseLoggerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  exerciseLoggerCard: {
+    width: '100%',
+    maxWidth: 380,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  exerciseLoggerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  exerciseLoggerTitleCol: {
+    flex: 1,
+    marginRight: 12,
+    gap: 3,
+  },
+  exerciseLoggerName: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  exerciseLoggerMuscle: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  exerciseLoggerCloseBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  exerciseLoggerDivider: {
+    height: 1,
+    marginVertical: 16,
+  },
+  exerciseLoggerOptionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   // Custom Alert Styles
   alertOverlay: {
