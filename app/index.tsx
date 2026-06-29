@@ -29,7 +29,7 @@ const categoryColors: Record<string, string> = {
   Biceps: '#3B82F6',
   Back: '#A855F7',
   Legs: '#FF8A00',
-  'Abs & Shoulders': '#107C41',
+  'Abs & Shoulders': '#22C55E',
 };
 
 const ALT_COLORS = [
@@ -187,9 +187,12 @@ export default function SinglePageLandingScreen() {
   // Active view segment: 'log' | 'history'
   const [activeSegment, setActiveSegment] = useState<'log' | 'history'>('log');
 
+  const switcherScrollRef = React.useRef<ScrollView>(null);
+
   // Workout logging states
   const [selectedModalMuscle, setSelectedModalMuscle] = useState<MuscleGroup | null>(null);
   const [search, setSearch] = useState('');
+  const [historySearch, setHistorySearch] = useState('');
   const [sortedExerciseList, setSortedExerciseList] = useState<Exercise[]>([]);
   
   // Expanded exercise state (active logger)
@@ -350,6 +353,23 @@ export default function SinglePageLandingScreen() {
       }
     });
   }, []);
+
+  React.useEffect(() => {
+    if (selectedModalMuscle && switcherScrollRef.current) {
+      const index = MUSCLE_GROUPS.indexOf(selectedModalMuscle);
+      if (index !== -1) {
+        setTimeout(() => {
+          if (index >= 4) {
+            switcherScrollRef.current?.scrollToEnd({ animated: false });
+          } else if (index <= 1) {
+            switcherScrollRef.current?.scrollTo({ x: 0, animated: false });
+          } else {
+            switcherScrollRef.current?.scrollTo({ x: index * 72, animated: false });
+          }
+        }, 150);
+      }
+    }
+  }, [selectedModalMuscle]);
 
   const handleShowWorkoutDaysInfo = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -731,6 +751,20 @@ export default function SinglePageLandingScreen() {
     ex.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const filteredHistory = historySearch.trim()
+    ? history.filter((item) => {
+        const q = historySearch.toLowerCase();
+        if (item.name.toLowerCase().includes(q)) return true;
+        if (formatHistoryDate(item.date).toLowerCase().includes(q)) return true;
+        const hasMatchingExercise = item.exercises.some((logEx) => {
+          const details = exercises.find((e) => e.id === logEx.exerciseId);
+          return details?.name.toLowerCase().includes(q);
+        });
+        if (hasMatchingExercise) return true;
+        return false;
+      })
+    : history;
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
       <StatusBar style="dark" />
@@ -1059,16 +1093,30 @@ export default function SinglePageLandingScreen() {
           ) : (
             /* History View Section */
             <View style={styles.historySection}>
-              {history.length === 0 ? (
+              {history.length > 0 && (
+                <View style={styles.historySearchContainer}>
+                  <TextInput
+                    style={[styles.historySearchInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
+                    placeholder="Search history..."
+                    placeholderTextColor={theme.inputPlaceholder}
+                    value={historySearch}
+                    onChangeText={setHistorySearch}
+                    autoCorrect={false}
+                  />
+                </View>
+              )}
+              {(historySearch ? filteredHistory : history).length === 0 ? (
                 <Card style={[styles.welcomeCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
                   <Calendar size={32} color="#10B981" strokeWidth={1.5} />
-                  <Text style={[styles.welcomeTitle, { color: theme.textPrimary }]}>No workout history yet</Text>
+                  <Text style={[styles.welcomeTitle, { color: theme.textPrimary }]}>
+                    {historySearch ? 'No matching workouts' : 'No workout history yet'}
+                  </Text>
                   <Text style={[styles.welcomeDesc, { color: theme.textSecondary }]}>
-                    Log completed sets above. Your session summary data cards will load here.
+                    {historySearch ? 'Try a different search term.' : 'Log completed sets above. Your session summary data cards will load here.'}
                   </Text>
                 </Card>
               ) : (
-                history.map((item) => {
+                (historySearch ? filteredHistory : history).map((item) => {
                   const sessionMuscles = getSessionMuscles(item);
                   const muscleSets: Record<string, number> = {};
                   item.exercises.forEach((logEx) => {
@@ -1146,8 +1194,8 @@ export default function SinglePageLandingScreen() {
         {/* Muscle Workout list popup modal */}
         <Modal
           visible={selectedModalMuscle !== null}
-          animationType="slide"
-          presentationStyle="pageSheet"
+          animationType="none"
+          presentationStyle="fullScreen"
           onRequestClose={() => setSelectedModalMuscle(null)}
         >
           <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
@@ -1158,11 +1206,15 @@ export default function SinglePageLandingScreen() {
               >
                 {/* Modal Header */}
                 <View style={[styles.modalHeader, { borderBottomColor: theme.borderColor }]}>
-                  <View>
-                    <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text 
+                      style={[styles.modalTitle, { color: theme.textPrimary }]} 
+                      numberOfLines={1} 
+                      adjustsFontSizeToFit
+                    >
                       {(selectedModalMuscle || '').toUpperCase()} WORKOUTS
                     </Text>
-                    <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]}>Select an exercise to log completed sets</Text>
+                    <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>Select an exercise to log completed sets</Text>
                   </View>
                   <TouchableOpacity
                     style={[styles.modalCloseBtn, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
@@ -1176,6 +1228,7 @@ export default function SinglePageLandingScreen() {
                 {/* Top Horizontal Muscle Switcher to migrate groups */}
                 <View style={styles.modalSwitcherRow}>
                   <ScrollView
+                    ref={switcherScrollRef}
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.modalSwitcherScroll}
@@ -1319,7 +1372,7 @@ export default function SinglePageLandingScreen() {
       <Modal
         visible={restTimerVisible}
         transparent={true}
-        animationType="fade"
+        animationType="none"
         onRequestClose={() => setRestTimerVisible(false)}
       >
         <View style={styles.timerOverlay}>
@@ -1423,7 +1476,7 @@ export default function SinglePageLandingScreen() {
       <Modal
         visible={expandedExerciseId !== null}
         transparent={true}
-        animationType="fade"
+        animationType="none"
         onRequestClose={() => {
           setExpandedExerciseId(null);
           setActiveSets([]);
@@ -1549,7 +1602,7 @@ export default function SinglePageLandingScreen() {
       <Modal
         visible={customAlertVisible}
         transparent={true}
-        animationType="fade"
+        animationType="none"
         onRequestClose={() => setCustomAlertVisible(false)}
       >
         <View style={styles.alertOverlay}>
@@ -1619,7 +1672,7 @@ export default function SinglePageLandingScreen() {
       <Modal
         visible={selectedHistoryItem !== null}
         transparent={true}
-        animationType="fade"
+        animationType="none"
         onRequestClose={() => setSelectedHistoryItem(null)}
       >
         <View style={styles.detailOverlay}>
@@ -2395,6 +2448,17 @@ const styles = StyleSheet.create({
     borderColor: '#212330',
     backgroundColor: '#13141C',
     color: '#FFFFFF',
+    paddingHorizontal: 16,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  historySearchContainer: {
+    marginBottom: 12,
+  },
+  historySearchInput: {
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
     paddingHorizontal: 16,
     fontSize: 14,
     fontWeight: '600',

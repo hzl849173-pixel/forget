@@ -10,136 +10,167 @@ export interface ExerciseSeed {
 
 export const DEFAULT_EXERCISES: ExerciseSeed[] = [
   // Chest (20 Exercises)
+  // -- Barbell & Landmine --
   { id: 'bb-bench-press', name: 'Barbell Bench Press', muscleGroup: 'Chest', isCustom: false, isFavorite: true },
-  { id: 'db-incline-press', name: 'Incline Dumbbell Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'db-bench-press', name: 'Dumbbell Bench Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'cable-crossover', name: 'Cable Crossover', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
   { id: 'bb-incline-press', name: 'Incline Barbell Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'chest-dips', name: 'Parallel Bar Chest Dips', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'push-ups', name: 'Push-ups', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'db-flyes', name: 'Flat Dumbbell Flyes', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
   { id: 'bb-decline-press', name: 'Decline Barbell Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'pec-deck', name: 'Pec Deck Flyes', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'db-pullover', name: 'Dumbbell Pullover', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'chest-press-machine', name: 'Chest Press Machine', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'low-to-high-cable', name: 'Low-to-High Cable Flyes', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'db-incline-flyes', name: 'Incline Dumbbell Flyes', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'db-decline-press', name: 'Decline Dumbbell Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'landmine-press', name: 'Landmine Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
   { id: 'floor-press', name: 'Barbell Floor Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'weighted-pushups', name: 'Weighted Push-ups', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
-  { id: 'hammer-strength-press', name: 'Hammer Strength Chest Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+  { id: 'landmine-press', name: 'Landmine Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+
+  // -- Dumbbell --
+  { id: 'db-bench-press', name: 'Dumbbell Bench Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+  { id: 'db-incline-press', name: 'Incline Dumbbell Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+  { id: 'db-decline-press', name: 'Decline Dumbbell Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+  { id: 'db-flyes', name: 'Flat Dumbbell Flyes', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+  { id: 'db-incline-flyes', name: 'Incline Dumbbell Flyes', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+  { id: 'db-pullover', name: 'Dumbbell Pullover', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+
+  // -- Cable --
+  { id: 'cable-crossover', name: 'Cable Crossover', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+  { id: 'low-to-high-cable', name: 'Low-to-High Cable Flyes', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
   { id: 'single-arm-cable-press', name: 'Single-Arm Cable Chest Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
 
+  // -- Machine --
+  { id: 'chest-press-machine', name: 'Chest Press Machine', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+  { id: 'hammer-strength-press', name: 'Hammer Strength Chest Press', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+  { id: 'pec-deck', name: 'Pec Deck Flyes', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+
+  // -- Bodyweight --
+  { id: 'push-ups', name: 'Push-ups', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+  { id: 'weighted-pushups', name: 'Weighted Push-ups', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+  { id: 'chest-dips', name: 'Parallel Bar Chest Dips', muscleGroup: 'Chest', isCustom: false, isFavorite: false },
+
   // Triceps (20 Exercises)
+  // -- Pushdowns --
   { id: 'tricep-pushdown', name: 'Cable Triceps Rope Pushdown', muscleGroup: 'Triceps', isCustom: false, isFavorite: true },
+  { id: 'cable-vbar-pushdown', name: 'Cable V-Bar Pushdown', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
+  { id: 'rev-grip-pushdown', name: 'Reverse Grip Tricep Pushdown', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
+  // -- Extensions & Skull Crushers --
   { id: 'skull-crushers', name: 'EZ Bar Skull Crushers', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
+  { id: 'db-skull-crushers', name: 'Dumbbell Skull Crushers', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
+  { id: 'lying-db-ext', name: 'Lying Dumbbell Extension', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
   { id: 'overhead-db-extension', name: 'Overhead Dumbbell Extension', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
+  { id: 'bb-overhead-ext', name: 'Barbell Overhead Extension', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
+  { id: 'cable-overhead-ext', name: 'Single-Arm Cable Overhead Extension', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
+  { id: 'cable-rope-overhead', name: 'Cable Overhead Rope Extension', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
+  { id: 'bench-cable-ext', name: 'Bench Cable Extension', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
+  // -- Presses, Dips & Bodyweight --
   { id: 'close-grip-bench', name: 'Close-Grip Barbell Bench Press', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
+  { id: 'tate-press', name: 'Dumbbell Tate Press', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
   { id: 'bench-dips', name: 'Bench Dips', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
   { id: 'weighted-dips', name: 'Weighted Dips', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
-  { id: 'cable-overhead-ext', name: 'Single-Arm Cable Overhead Extension', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
-  { id: 'db-kickbacks', name: 'Dumbbell Kickbacks', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
   { id: 'close-grip-pushups', name: 'Close-Grip Push-ups', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
-  { id: 'cable-vbar-pushdown', name: 'Cable V-Bar Pushdown', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
-  { id: 'cable-kickbacks', name: 'Cable One-Arm Kickback', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
-  { id: 'bb-overhead-ext', name: 'Barbell Overhead Extension', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
-  { id: 'lying-db-ext', name: 'Lying Dumbbell Extension', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
-  { id: 'tate-press', name: 'Dumbbell Tate Press', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
   { id: 'diamond-pushups', name: 'Diamond Push-ups', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
-  { id: 'cable-rope-overhead', name: 'Cable Overhead Rope Extension', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
-  { id: 'db-skull-crushers', name: 'Dumbbell Skull Crushers', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
   { id: 'kb-tricep-press', name: 'Kettlebell Tricep Press', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
-  { id: 'bench-cable-ext', name: 'Bench Cable Extension', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
-  { id: 'rev-grip-pushdown', name: 'Reverse Grip Tricep Pushdown', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
+  // -- Kickbacks --
+  { id: 'db-kickbacks', name: 'Dumbbell Kickbacks', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
+  { id: 'cable-kickbacks', name: 'Cable One-Arm Kickback', muscleGroup: 'Triceps', isCustom: false, isFavorite: false },
 
   // Biceps (20 Exercises)
+  // -- Curls --
   { id: 'db-bicep-curl', name: 'Dumbbell Bicep Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: true },
-  { id: 'db-hammer-curl', name: 'Dumbbell Hammer Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: 'incline-db-curl', name: 'Incline Dumbbell Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
   { id: 'bb-curl', name: 'Barbell Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: 'preacher-curl', name: 'EZ Bar Preacher Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: 'cable-bicep-curl', name: 'Cable Bicep Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: 'chin-ups', name: 'Chin-ups', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  { id: 'ez-bar-curl', name: 'EZ Bar Bicep Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  { id: 'incline-db-curl', name: 'Incline Dumbbell Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
   { id: 'concentration-curl', name: 'Concentration Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
   { id: 'spider-curl', name: 'Dumbbell Spider Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: 'ez-bar-curl', name: 'EZ Bar Bicep Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: 'zottman-curl', name: 'Zottman Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: 'cable-hammer-curl', name: 'Cable Hammer Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: 'db-preacher-curl', name: 'Dumbbell Preacher Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: 'rev-bb-curl', name: 'Reverse Barbell Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: '21s-bicep-curl', name: '21s Bicep Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
   { id: 'db-drag-curl', name: 'Dumbbell Drag Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: 'crossbody-hammer', name: 'Cross-Body Hammer Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: 'cable-preacher-curl', name: 'Single-Arm Cable Preacher Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
-  { id: 'overhead-cable-curl', name: 'Cable Overhead Bicep Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  { id: '21s-bicep-curl', name: '21s Bicep Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
   { id: 'kb-bicep-curl', name: 'Kettlebell Bicep Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  // -- Preacher Curls --
+  { id: 'preacher-curl', name: 'EZ Bar Preacher Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  { id: 'db-preacher-curl', name: 'Dumbbell Preacher Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  { id: 'cable-preacher-curl', name: 'Single-Arm Cable Preacher Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  // -- Hammer & Reverse Curls --
+  { id: 'db-hammer-curl', name: 'Dumbbell Hammer Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  { id: 'crossbody-hammer', name: 'Cross-Body Hammer Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  { id: 'cable-hammer-curl', name: 'Cable Hammer Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  { id: 'zottman-curl', name: 'Zottman Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  { id: 'rev-bb-curl', name: 'Reverse Barbell Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  // -- Cables --
+  { id: 'cable-bicep-curl', name: 'Cable Bicep Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  { id: 'overhead-cable-curl', name: 'Cable Overhead Bicep Curl', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
+  // -- Bodyweight --
+  { id: 'chin-ups', name: 'Chin-ups', muscleGroup: 'Biceps', isCustom: false, isFavorite: false },
 
   // Back (20 Exercises)
+  // -- Rows --
+  { id: 'bb-row', name: 'Barbell Bent Over Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  { id: 'db-row', name: 'Single-Arm Dumbbell Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  { id: 'cable-row', name: 'Seated Cable Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  { id: 'tbar-row', name: 'T-Bar Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  { id: 'chest-supported-row', name: 'Chest-Supported Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  { id: 'meadows-row', name: 'Meadows Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  { id: 'inverted-row', name: 'Inverted Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  // -- Pullups & Pulldowns --
   { id: 'pull-ups', name: 'Pull-ups', muscleGroup: 'Back', isCustom: false, isFavorite: true },
   { id: 'lat-pulldown', name: 'Wide-Grip Lat Pulldown', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'bb-row', name: 'Barbell Bent Over Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'deadlift', name: 'Barbell Deadlift', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'cable-row', name: 'Seated Cable Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'db-row', name: 'Single-Arm Dumbbell Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'tbar-row', name: 'T-Bar Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'face-pulls', name: 'Face Pulls', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'lat-pushdowns', name: 'Cable Lat Pushdowns', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'chest-supported-row', name: 'Chest-Supported Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'hyperextensions', name: 'Back Hyperextensions', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'rack-pulls', name: 'Rack Pulls', muscleGroup: 'Back', isCustom: false, isFavorite: false },
   { id: 'underhand-pulldown', name: 'Underhand Lat Pulldown', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'meadows-row', name: 'Meadows Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
   { id: 'single-arm-pulldown', name: 'Single-Arm Lat Pulldown', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'inverted-row', name: 'Inverted Row', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  { id: 'lat-pushdowns', name: 'Cable Lat Pushdowns', muscleGroup: 'Back', isCustom: false, isFavorite: false },
   { id: 'back-db-pullover', name: 'Dumbbell Back Pullover', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  // -- Deadlifts, Lower Back & Traps --
+  { id: 'deadlift', name: 'Barbell Deadlift', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  { id: 'rack-pulls', name: 'Rack Pulls', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  { id: 'hyperextensions', name: 'Back Hyperextensions', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  { id: 'cable-pullthroughs', name: 'Cable Pull-Throughs', muscleGroup: 'Back', isCustom: false, isFavorite: false },
   { id: 'bb-shrugs', name: 'Barbell Shrugs', muscleGroup: 'Back', isCustom: false, isFavorite: false },
   { id: 'db-shrugs', name: 'Dumbbell Shrugs', muscleGroup: 'Back', isCustom: false, isFavorite: false },
-  { id: 'cable-pullthroughs', name: 'Cable Pull-Throughs', muscleGroup: 'Back', isCustom: false, isFavorite: false },
+  // -- Others --
+  { id: 'face-pulls', name: 'Face Pulls', muscleGroup: 'Back', isCustom: false, isFavorite: false },
 
   // Legs (20 Exercises)
+  // -- Squats & Presses --
   { id: 'bb-squat', name: 'Barbell Back Squat', muscleGroup: 'Legs', isCustom: false, isFavorite: true },
-  { id: 'leg-press', name: 'Leg Press', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
-  { id: 'rdl', name: 'Romanian Deadlift', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  { id: 'front-squat', name: 'Barbell Front Squat', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  { id: 'box-squats', name: 'Barbell Box Squat', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  { id: 'hack-squat', name: 'Hack Squat Machine', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  { id: 'goblet-squat', name: 'Goblet Squat', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
   { id: 'bulgarian-split-squat', name: 'Bulgarian Split Squat', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  { id: 'leg-press', name: 'Leg Press', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  // -- Lunges & Step-ups --
+  { id: 'db-walking-lunges', name: 'Dumbbell Walking Lunges', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  { id: 'db-stepups', name: 'Dumbbell Step-ups', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  // -- Extensions & Curls --
   { id: 'leg-extensions', name: 'Leg Extension Machine', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
   { id: 'seated-leg-curls', name: 'Seated Leg Curl Machine', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
-  { id: 'standing-calf-raises', name: 'Standing Calf Raise', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
-  { id: 'db-walking-lunges', name: 'Dumbbell Walking Lunges', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
-  { id: 'goblet-squat', name: 'Goblet Squat', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
-  { id: 'front-squat', name: 'Barbell Front Squat', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
   { id: 'lying-leg-curls', name: 'Lying Leg Curl Machine', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
-  { id: 'hip-thrust', name: 'Barbell Hip Thrust', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
-  { id: 'hack-squat', name: 'Hack Squat Machine', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
-  { id: 'seated-calf-raises', name: 'Seated Calf Raise', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
-  { id: 'db-stepups', name: 'Dumbbell Step-ups', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
-  { id: 'calf-press-legpress', name: 'Leg Press Calf Press', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
-  { id: 'sumo-deadlift', name: 'Sumo Deadlift', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
   { id: 'glute-ham-raise', name: 'Glute Ham Raise', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  // -- Posterior Chain --
+  { id: 'rdl', name: 'Romanian Deadlift', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  { id: 'sumo-deadlift', name: 'Sumo Deadlift', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  { id: 'hip-thrust', name: 'Barbell Hip Thrust', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
   { id: 'kb-swings', name: 'Kettlebell Swings', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
-  { id: 'box-squats', name: 'Barbell Box Squat', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  // -- Calf Raises --
+  { id: 'standing-calf-raises', name: 'Standing Calf Raise', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  { id: 'seated-calf-raises', name: 'Seated Calf Raise', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
+  { id: 'calf-press-legpress', name: 'Leg Press Calf Press', muscleGroup: 'Legs', isCustom: false, isFavorite: false },
 
   // Abs & Shoulders (20 Exercises)
-  { id: 'ab-crunch', name: 'Abdominal Crunch', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: true },
-  { id: 'plank', name: 'Forearm Plank', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
-  { id: 'hanging-leg-raise', name: 'Hanging Leg Raise', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
-  { id: 'russian-twist', name: 'Russian Twist', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
-  { id: 'cable-crunch', name: 'Cable Crunch', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
-  { id: 'ab-wheel', name: 'Ab Wheel Rollout', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
-  { id: 'decline-situp', name: 'Decline Bench Sit-up', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
-  { id: 'bicycle-crunches', name: 'Bicycle Crunches', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
-  { id: 'lying-leg-raises', name: 'Lying Leg Raises', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
-  { id: 'captains-chair-raises', name: "Captain's Chair Knee Raise", muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  // -- Shoulder Presses --
   { id: 'bb-overhead-press', name: 'Barbell Overhead Press', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: true },
   { id: 'db-shoulder-press', name: 'Dumbbell Shoulder Press', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'arnold-press', name: 'Arnold Press', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  // -- Shoulder Isolation & Rows --
   { id: 'db-lateral-raise', name: 'Dumbbell Lateral Raise', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
   { id: 'cable-lateral-raise', name: 'Cable Lateral Raise', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'db-front-raise', name: 'Dumbbell Front Raise', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
   { id: 'db-rear-delt-fly', name: 'Dumbbell Rear Delt Fly', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
   { id: 'reverse-pec-deck', name: 'Reverse Pec Deck Fly', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
-  { id: 'arnold-press', name: 'Arnold Press', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
-  { id: 'db-front-raise', name: 'Dumbbell Front Raise', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
   { id: 'bb-upright-row', name: 'Barbell Upright Row', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
-  { id: 'face-pull', name: 'Cable Face Pull', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false }
+  { id: 'face-pull', name: 'Cable Face Pull', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  // -- Abdominal Crunches & Sit-ups --
+  { id: 'ab-crunch', name: 'Abdominal Crunch', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: true },
+  { id: 'cable-crunch', name: 'Cable Crunch', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'decline-situp', name: 'Decline Bench Sit-up', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'bicycle-crunches', name: 'Bicycle Crunches', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'russian-twist', name: 'Russian Twist', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  // -- Core Stabilization & Leg Raises --
+  { id: 'plank', name: 'Forearm Plank', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'ab-wheel', name: 'Ab Wheel Rollout', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'lying-leg-raises', name: 'Lying Leg Raises', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'hanging-leg-raise', name: 'Hanging Leg Raise', muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false },
+  { id: 'captains-chair-raises', name: "Captain's Chair Knee Raise", muscleGroup: 'Abs & Shoulders', isCustom: false, isFavorite: false }
 ];
 
-export const MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Biceps', 'Back', 'Legs', 'Abs & Shoulders'];
+export const MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Abs & Shoulders', 'Back', 'Biceps', 'Legs'];
