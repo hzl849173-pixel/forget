@@ -179,6 +179,7 @@ export default function SinglePageLandingScreen() {
     addCompletedWorkout,
     createCustomExercise,
     toggleFavoriteExercise,
+    deleteCustomExercise,
     deleteWorkout,
     getPreviousWorkoutForExercise,
   } = useWorkout();
@@ -402,8 +403,8 @@ export default function SinglePageLandingScreen() {
     segmentBtnActiveBorder: '#D1D5DB',
   };
 
-  const sortExercisesForMuscle = (muscle: MuscleGroup) => {
-    const list = exercises.filter((ex) => ex.muscleGroup === muscle);
+  const sortExercisesForMuscle = (muscle: MuscleGroup, extras?: Exercise[]) => {
+    const list = extras ? [...exercises.filter((ex) => ex.muscleGroup === muscle), ...extras] : exercises.filter((ex) => ex.muscleGroup === muscle);
     const getFavoriteIndex = (exercise: Exercise) => {
       const idx = favoriteOrder.indexOf(exercise.id);
       if (idx !== -1) return idx;
@@ -1377,6 +1378,20 @@ export default function SinglePageLandingScreen() {
                               strokeWidth={2}
                             />
                           </TouchableOpacity>
+                          {item.isCustom && (
+                            <TouchableOpacity
+                              style={styles.deleteCustomBtn}
+                              onPress={async () => {
+                                await deleteCustomExercise(item.id);
+                                if (selectedModalMuscle) {
+                                  setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle));
+                                }
+                              }}
+                              activeOpacity={0.7}
+                            >
+                              <Trash2 size={14} color="#EF4444" strokeWidth={2} />
+                            </TouchableOpacity>
+                          )}
                         </View>
                       </Card>
                     );
@@ -1456,10 +1471,10 @@ export default function SinglePageLandingScreen() {
                 onPress={async () => {
                   const name = newExerciseName.trim();
                   if (!name || !selectedModalMuscle) return;
-                  await createCustomExercise(name, selectedModalMuscle);
+                  const created = await createCustomExercise(name, selectedModalMuscle);
                   setNewExerciseName('');
                   setAddExerciseVisible(false);
-                  setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle));
+                  setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle, [created]));
                 }}
                 activeOpacity={0.8}
                 disabled={!newExerciseName.trim()}
@@ -1668,13 +1683,6 @@ export default function SinglePageLandingScreen() {
                           textColor={theme.textPrimary}
                         />
                       </View>
-                      <TouchableOpacity
-                        style={styles.deleteSetBtn}
-                        onPress={() => handleRemoveSet(set.id)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[styles.deleteSetText, { color: theme.textSecondary }]}>×</Text>
-                      </TouchableOpacity>
                     </View>
                   ))}
 
@@ -2194,10 +2202,9 @@ const styles = StyleSheet.create({
   setRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12, // Taller rows for premium breathing room
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#252525', // Subtle divider
-    position: 'relative',
+    borderBottomColor: '#252525',
   },
   setRowCompleted: {
     opacity: 0.4,
@@ -2224,19 +2231,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981',
     borderColor: '#10B981',
   },
-  deleteSetBtn: {
-    position: 'absolute',
-    right: -12,
-    top: 10,
-    width: 24,
-    height: 24,
+  deleteCustomBtn: {
+    width: 44,
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  deleteSetText: {
-    color: '#4B5563',
-    fontSize: 18,
-    fontWeight: '300',
+    borderLeftWidth: 1,
+    borderLeftColor: '#252525',
   },
   loggerActions: {
     flexDirection: 'row',

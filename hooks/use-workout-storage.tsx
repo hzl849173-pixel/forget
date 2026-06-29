@@ -33,6 +33,7 @@ interface WorkoutContextType {
   addCompletedWorkout: (name: string, loggedExercises: LoggedExercise[], durationMinutes: number) => Promise<void>;
   createCustomExercise: (name: string, muscleGroup: MuscleGroup, instrument?: Instrument) => Promise<Exercise>;
   toggleFavoriteExercise: (exerciseId: string) => Promise<void>;
+  deleteCustomExercise: (exerciseId: string) => Promise<void>;
   deleteWorkout: (id: string) => Promise<void>;
   getPreviousWorkoutForExercise: (exerciseId: string) => LoggedExercise | null;
 }
@@ -195,6 +196,13 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await saveHistory(newHistory);
   };
 
+  const deleteCustomExercise = async (exerciseId: string) => {
+    const newExercises = exercises.filter((e) => e.id !== exerciseId);
+    await saveExercises(newExercises);
+    const newOrder = favoriteOrder.filter((id) => id !== exerciseId);
+    await saveFavoriteOrder(newOrder);
+  };
+
   return (
     <WorkoutContext.Provider
       value={{
@@ -205,6 +213,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         addCompletedWorkout,
         createCustomExercise,
         toggleFavoriteExercise,
+        deleteCustomExercise,
         deleteWorkout,
         getPreviousWorkoutForExercise,
       }}
