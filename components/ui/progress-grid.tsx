@@ -7,17 +7,6 @@ interface ProgressGridProps {
   isDarkMode?: boolean;
 }
 
-const categoryColors: Record<string, string> = {
-  Chest: '#3B82F6',
-  Back: '#10B981',
-  Shoulders: '#F59E0B',
-  Legs: '#8B5CF6',
-  Arms: '#EC4899',
-  Triceps: '#EC4899',
-  Biceps: '#EF4444',
-  Core: '#6B7280',
-};
-
 export const ProgressGrid: React.FC<ProgressGridProps> = ({ history, isDarkMode = true }) => {
   const { exercises } = useWorkout();
 
@@ -57,6 +46,7 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ history, isDarkMode 
     textPrimary: isDarkMode ? '#FFFFFF' : '#111827',
     textSecondary: isDarkMode ? '#94A3B8' : '#6B7280',
     progressBarBg: isDarkMode ? '#212330' : '#E5E7EB',
+    barColor: isDarkMode ? '#34D399' : '#059669', // Calm uniform Mint Green (Low eye strain)
   };
 
   return (
@@ -75,7 +65,6 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ history, isDarkMode 
       ) : (
         <View style={styles.listContainer}>
           {muscleList.map(([muscle, count]) => {
-            const barColor = categoryColors[muscle] || '#10B981';
             const percentage = (count / maxSets) * 100;
             return (
               <View key={muscle} style={styles.row}>
@@ -83,7 +72,7 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ history, isDarkMode 
                   <Text style={[styles.muscleLabel, { color: theme.textPrimary }]}>
                     {muscle.toUpperCase()}
                   </Text>
-                  <Text style={[styles.setsCount, { color: barColor }]}>
+                  <Text style={[styles.setsCount, { color: theme.barColor }]}>
                     {count} set{count > 1 ? 's' : ''}
                   </Text>
                 </View>
@@ -91,7 +80,11 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ history, isDarkMode 
                   <View
                     style={[
                       styles.progressBar,
-                      { width: `${percentage}%`, backgroundColor: barColor }
+                      {
+                        width: `${percentage}%`,
+                        backgroundColor: theme.barColor,
+                        opacity: isDarkMode ? 0.75 : 0.95
+                      }
                     ]}
                   />
                 </View>
