@@ -154,6 +154,7 @@ import {
   Moon,
   Edit2,
   Trophy,
+  X,
 } from 'lucide-react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -198,6 +199,9 @@ export default function SinglePageLandingScreen() {
 
   const [activeSessionExercises, setActiveSessionExercises] = useState<LoggedExercise[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<number>(0);
+
+  // Selected workout for detail modal
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<WorkoutSession | null>(null);
 
   // Custom Modern Alert Modal State
   const [customAlertVisible, setCustomAlertVisible] = useState(false);
@@ -905,60 +909,72 @@ export default function SinglePageLandingScreen() {
               ) : (
                 history.map((item) => {
                   const sessionMuscles = getSessionMuscles(item);
+                  const muscleSets: Record<string, number> = {};
+                  item.exercises.forEach((logEx) => {
+                    const details = exercises.find((e) => e.id === logEx.exerciseId);
+                    if (details) {
+                      muscleSets[details.muscleGroup] = (muscleSets[details.muscleGroup] || 0) + logEx.sets.length;
+                    }
+                  });
+                  const muscleSetsString = Object.entries(muscleSets)
+                    .sort(([a], [b]) => sessionMuscles.indexOf(a as any) - sessionMuscles.indexOf(b as any))
+                    .map(([muscle, sets]) => `${muscle} ${sets}`)
+                    .join(' · ');
                   return (
-                    <Card
+                    <TouchableOpacity
                       key={item.id}
-                      style={[
-                        styles.historyLogCard,
-                        {
-                          borderLeftWidth: 4,
-                          borderLeftColor: categoryColors[sessionMuscles[0] || 'Chest'] || '#10B981',
-                          backgroundColor: theme.cardBg,
-                          borderColor: theme.borderColor,
-                          shadowColor: '#000000',
-                          shadowOffset: { width: 0, height: 1 },
-                          shadowOpacity: isDarkMode ? 0 : 0.05,
-                          shadowRadius: 2,
-                          elevation: 1,
-                        }
-                      ]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setSelectedHistoryItem(item);
+                      }}
+                      activeOpacity={0.85}
                     >
-                      <View style={styles.historyCardHeader}>
-                        <View style={styles.historyTitleCol}>
-                          <Text style={[styles.historySessionName, { color: theme.textPrimary }]}>{item.name}</Text>
-                          <Text style={[styles.historyDate, { color: theme.textSecondary }]}>{formatHistoryDate(item.date).toUpperCase()}</Text>
+                      <Card
+                        style={[
+                          styles.historyLogCard,
+                          {
+                            borderLeftWidth: 4,
+                            borderLeftColor: categoryColors[sessionMuscles[0] || 'Chest'] || '#10B981',
+                            backgroundColor: theme.cardBg,
+                            borderColor: theme.borderColor,
+                            shadowColor: '#000000',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: isDarkMode ? 0 : 0.05,
+                            shadowRadius: 2,
+                            elevation: 1,
+                          }
+                        ]}
+                      >
+                        <View style={styles.historyCardHeader}>
+                          <View style={styles.historyTitleCol}>
+                            <Text style={[styles.historySessionName, { color: theme.textPrimary }]}>{item.name}</Text>
+                            <Text style={[styles.historyDate, { color: theme.textSecondary }]}>{formatHistoryDate(item.date).toUpperCase()}</Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.deleteLogBtn}
+                            onPress={() => handleDeleteHistoryLog(item.id, item.name)}
+                            activeOpacity={0.6}
+                          >
+                            <Trash2 size={16} color="#EF4444" strokeWidth={2} />
+                          </TouchableOpacity>
                         </View>
-                        <TouchableOpacity
-                          style={styles.deleteLogBtn}
-                          onPress={() => handleDeleteHistoryLog(item.id, item.name)}
-                          activeOpacity={0.6}
-                        >
-                          <Trash2 size={16} color="#EF4444" strokeWidth={2} />
-                        </TouchableOpacity>
-                      </View>
 
-                      {/* Displaying direct detailed receipts of the sets completed */}
-                      <View style={[styles.historySetsReceipt, { borderTopColor: theme.borderColor }]}>
-                        {item.exercises.map((logEx) => (
-                          <View key={logEx.exerciseId} style={styles.receiptExerciseGroup}>
-                            {logEx.sets.map((set, setIndex) => (
-                              <View key={set.id} style={styles.receiptSetRow}>
-                                <Text style={[styles.receiptSetLabel, { color: theme.textSecondary }]}>SET {setIndex + 1}</Text>
-                                <Text style={[styles.receiptSetValue, { color: theme.textPrimary }]}>{set.weight} kg × {set.reps}</Text>
-                              </View>
+                        {/* Simplified summary */}
+                        <View style={[styles.historySetsReceipt, { borderTopColor: theme.borderColor }]}>
+                          <Text style={[styles.historySummaryText, { color: theme.textSecondary }]} numberOfLines={1}>
+                            {muscleSetsString}
+                          </Text>
+                        </View>
+
+                        <View style={[styles.historyFooter, { borderTopColor: theme.borderColor }]}>
+                          <View style={styles.historyBadgeRow}>
+                            {sessionMuscles.map((m) => (
+                              <MuscleBadge key={m} muscleGroup={m} size="sm" />
                             ))}
                           </View>
-                        ))}
-                      </View>
-
-                      <View style={[styles.historyFooter, { borderTopColor: theme.borderColor }]}>
-                        <View style={styles.historyBadgeRow}>
-                          {sessionMuscles.map((m) => (
-                            <MuscleBadge key={m} muscleGroup={m} size="sm" />
-                          ))}
                         </View>
-                      </View>
-                    </Card>
+                      </Card>
+                    </TouchableOpacity>
                   );
                 })
               )}
@@ -1317,6 +1333,73 @@ export default function SinglePageLandingScreen() {
                 );
               })}
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Workout Detail Modal */}
+      <Modal
+        visible={selectedHistoryItem !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSelectedHistoryItem(null)}
+      >
+        <View style={styles.detailOverlay}>
+          <View style={[styles.detailCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+            {/* Floating close button */}
+            <TouchableOpacity
+              style={[styles.detailCloseFloatingBtn, { backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6', borderColor: theme.borderColor }]}
+              onPress={() => setSelectedHistoryItem(null)}
+              activeOpacity={0.7}
+            >
+              <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
+            </TouchableOpacity>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {selectedHistoryItem && (
+                <>
+                  <View style={styles.detailHeader}>
+                    <View style={styles.detailTitleCol}>
+                      <Text style={[styles.detailSessionName, { color: theme.textPrimary }]}>{selectedHistoryItem.name}</Text>
+                      <Text style={[styles.detailDate, { color: theme.textSecondary }]}>{formatHistoryDate(selectedHistoryItem.date).toUpperCase()}</Text>
+                    </View>
+                  </View>
+
+                  {selectedHistoryItem.duration > 0 && (
+                    <View style={styles.detailDurationRow}>
+                      <Text style={[styles.detailDurationLabel, { color: theme.textSecondary }]}>
+                        Duration
+                      </Text>
+                      <Text style={[styles.detailDurationValue, { color: theme.textPrimary }]}>
+                        {selectedHistoryItem.duration} min
+                      </Text>
+                    </View>
+                  )}
+
+                  <View style={[styles.detailDivider, { backgroundColor: theme.borderColor }]} />
+
+                  {selectedHistoryItem.exercises.map((logEx) => {
+                    const exDetails = exercises.find((e) => e.id === logEx.exerciseId);
+                    return (
+                      <View key={logEx.exerciseId} style={styles.detailExerciseGroup}>
+                        <View style={styles.detailExerciseHeader}>
+                          <View style={[styles.detailExerciseDot, { backgroundColor: categoryColors[exDetails?.muscleGroup || ''] || '#10B981' }]} />
+                          <Text style={[styles.detailExerciseName, { color: theme.textPrimary }]}>
+                            {exDetails?.name || 'Unknown'}
+                          </Text>
+                        </View>
+                        {logEx.sets.map((set, setIndex) => (
+                          <View key={set.id} style={styles.detailSetRow}>
+                            <Text style={[styles.detailSetLabel, { color: theme.textSecondary }]}>SET {setIndex + 1}</Text>
+                            <Text style={[styles.detailSetValue, { color: theme.textPrimary }]}>{set.weight} kg × {set.reps}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    );
+                  })}
+                </>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1723,6 +1806,130 @@ const styles = StyleSheet.create({
   historyBadgeRow: {
     flexDirection: 'row',
     gap: 6,
+  },
+  historySummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  historySummaryText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  historySummaryDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    opacity: 0.5,
+  },
+  // Detail Modal Styles
+  detailOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  detailCard: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  detailHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  detailTitleCol: {
+    flex: 1,
+    marginRight: 12,
+    gap: 3,
+  },
+  detailSessionName: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  },
+  detailDate: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  detailCloseFloatingBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    zIndex: 10,
+  },
+  detailExerciseHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  detailExerciseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  detailDurationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  detailDurationLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  detailDurationValue: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  detailDivider: {
+    height: 1,
+    marginVertical: 16,
+  },
+  detailExerciseGroup: {
+    marginBottom: 16,
+    gap: 4,
+  },
+  detailExerciseName: {
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 6,
+    letterSpacing: -0.2,
+  },
+  detailSetRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 3,
+    paddingLeft: 4,
+  },
+  detailSetLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  detailSetValue: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   // Empty states
   welcomeCard: {
