@@ -146,6 +146,8 @@ import {
   Trash2,
   Calendar,
   Plus,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   ChevronUp,
   Search,
@@ -197,6 +199,37 @@ export default function SinglePageLandingScreen() {
 
   const [activeSessionExercises, setActiveSessionExercises] = useState<LoggedExercise[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<number>(0);
+
+  // Weekly calendar state
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+
+  const getWeekDates = (offset: number) => {
+    const now = new Date();
+    now.setDate(now.getDate() + offset * 7);
+    const dayOfWeek = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
+    const week: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      week.push(d);
+    }
+    return week;
+  };
+
+  const getWeekNumber = (dates: Date[]) => {
+    const firstDay = dates[0];
+    const monthStart = new Date(firstDay.getFullYear(), firstDay.getMonth(), 1);
+    const diff = Math.floor((firstDay.getTime() - monthStart.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.ceil((diff + monthStart.getDay()) / 7) + 1;
+  };
+
+  const getWorkoutsForDay = (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return history.filter((s) => s.date.startsWith(dateStr));
+  };
 
   // Selected workout for detail modal
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<WorkoutSession | null>(null);
@@ -773,6 +806,145 @@ export default function SinglePageLandingScreen() {
                   );
                 })}
               </View>
+
+              {/* Weekly Calendar */}
+              <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>WEEKLY OVERVIEW</Text>
+              <Card style={[styles.weeklyCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                <View style={styles.weeklyHeader}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setCurrentWeekOffset(currentWeekOffset - 1);
+                      setSelectedDay(null);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <ChevronLeft size={18} color={theme.textSecondary} strokeWidth={2.5} />
+                  </TouchableOpacity>
+                  <Text style={[styles.weeklyTitle, { color: theme.textPrimary }]}>
+                    {(() => {
+                      const dates = getWeekDates(currentWeekOffset);
+                      const m = dates[0].toLocaleDateString(undefined, { month: 'long' }).toUpperCase();
+                      const y = dates[0].getFullYear();
+                      return `${m} ${y}`;
+                    })()}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setCurrentWeekOffset(currentWeekOffset + 1);
+                      setSelectedDay(null);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <ChevronRight size={18} color={theme.textSecondary} strokeWidth={2.5} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.weekDaysRow}>
+                  {(() => {
+                    const dates = getWeekDates(currentWeekOffset);
+                    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                    return dates.map((date, i) => {
+                      const dateStr = date.toISOString().split('T')[0];
+                      const isToday = new Date().toISOString().split('T')[0] === dateStr;
+                      const hasWorkout = history.some((s) => s.date.startsWith(dateStr));
+                      const isSelected = selectedDay === dateStr;
+                      return (
+                        <TouchableOpacity
+                          key={i}
+                          style={[
+                            styles.weekDaySquare,
+                            {
+                              backgroundColor: isSelected
+                                ? '#3B82F6'
+                                : hasWorkout
+                                ? '#10B98120'
+                                : theme.background,
+                              borderColor: isSelected
+                                ? '#3B82F6'
+                                : isToday
+                                ? '#3B82F660'
+                                : theme.borderColor,
+                            },
+                          ]}
+                          onPress={() => setSelectedDay(isSelected ? null : dateStr)}
+                          activeOpacity={0.7}
+                        >
+                          <Text
+                            style={[
+                              styles.weekDayLabel,
+                              { color: isSelected ? '#FFFFFF' : theme.textSecondary },
+                            ]}
+                          >
+                            {dayLabels[i]}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.weekDayNum,
+                              { color: isSelected ? '#FFFFFF' : theme.textPrimary },
+                            ]}
+                          >
+                            {date.getDate()}
+                          </Text>
+                          {hasWorkout && !isSelected && (
+                            <View style={styles.weekDayDot} />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    });
+                  })()}
+                </View>
+
+                {selectedDay && (
+                  <View style={[styles.weeklyWorkouts, { borderTopColor: theme.borderColor }]}>
+                    {(() => {
+                      const dayWorkouts = history.filter((s) =>
+                        s.date.startsWith(selectedDay)
+                      );
+                      if (dayWorkouts.length === 0) {
+                        return (
+                          <Text style={[styles.weeklyEmpty, { color: theme.textSecondary }]}>
+                            No workouts on this day
+                          </Text>
+                        );
+                      }
+                      return dayWorkouts.map((w) => {
+                        const sessionMuscles = getSessionMuscles(w);
+                        return (
+                          <View key={w.id} style={styles.weeklyDetailBlock}>
+                            <View style={styles.weeklyDetailHeader}>
+                              <Text style={[styles.weeklyDetailName, { color: theme.textPrimary }]}>{w.name}</Text>
+                              <Text style={[styles.weeklyDetailDate, { color: theme.textSecondary }]}>
+                                {new Date(w.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                              </Text>
+                            </View>
+                            {w.exercises.map((logEx) => {
+                              const exDetails = exercises.find((e) => e.id === logEx.exerciseId);
+                              return (
+                                <View key={logEx.exerciseId} style={styles.weeklyDetailExercise}>
+                                  <Text style={[styles.weeklyDetailExerciseName, { color: theme.textPrimary }]}>
+                                    {exDetails?.name || 'Unknown'}
+                                  </Text>
+                                  {logEx.sets.map((set, setIndex) => (
+                                    <View key={set.id} style={styles.weeklyDetailSetRow}>
+                                      <Text style={[styles.weeklyDetailSetLabel, { color: theme.textSecondary }]}>SET {setIndex + 1}</Text>
+                                      <Text style={[styles.weeklyDetailSetValue, { color: theme.textPrimary }]}>{set.weight} kg × {set.reps}</Text>
+                                    </View>
+                                  ))}
+                                </View>
+                              );
+                            })}
+                            <View style={styles.weeklyBadgeRow}>
+                              {sessionMuscles.map((m) => (
+                                <MuscleBadge key={m} muscleGroup={m} size="sm" />
+                              ))}
+                            </View>
+                          </View>
+                        );
+                      });
+                    })()}
+                  </View>
+                )}
+              </Card>
 
               {/* Consistency Graph */}
               <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>ACTIVITY TRACKER</Text>
@@ -1532,6 +1704,112 @@ const styles = StyleSheet.create({
   pillDark: {
     backgroundColor: '#13141C',
     borderColor: '#212330',
+  },
+  // Weekly Calendar Styles
+  weeklyCard: {
+    padding: 16,
+    marginBottom: 20,
+  },
+  weeklyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  weeklyTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  weekDaysRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 4,
+  },
+  weekDaySquare: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 2,
+  },
+  weekDayLabel: {
+    fontSize: 8,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  weekDayNum: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  weekDayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#10B981',
+    marginTop: 1,
+  },
+  weeklyWorkouts: {
+    borderTopWidth: 1,
+    marginTop: 12,
+    paddingTop: 12,
+    gap: 16,
+  },
+  weeklyEmpty: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingVertical: 8,
+  },
+  weeklyDetailBlock: {
+    gap: 8,
+  },
+  weeklyDetailHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  weeklyDetailName: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+    flex: 1,
+    marginRight: 8,
+  },
+  weeklyDetailDate: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  weeklyDetailExercise: {
+    paddingLeft: 4,
+    gap: 2,
+  },
+  weeklyDetailExerciseName: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  weeklyDetailSetRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 1,
+    paddingLeft: 8,
+  },
+  weeklyDetailSetLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  weeklyDetailSetValue: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  weeklyBadgeRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingTop: 4,
   },
   // Exercises List & Accordions
   exerciseCard: {
