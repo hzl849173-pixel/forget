@@ -5,9 +5,10 @@ import { WorkoutSession } from '../../hooks/use-workout-storage';
 
 interface ProgressGridProps {
   history: WorkoutSession[];
+  isDarkMode?: boolean;
 }
 
-export const ProgressGrid: React.FC<ProgressGridProps> = ({ history }) => {
+export const ProgressGrid: React.FC<ProgressGridProps> = ({ history, isDarkMode = true }) => {
   // Generate the last 30 days (including today)
   const getPast30Days = () => {
     const days = [];
@@ -66,39 +67,49 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ history }) => {
     return letters[day];
   };
 
+  const theme = {
+    cardBg: isDarkMode ? '#13141C' : '#FFFFFF',
+    borderColor: isDarkMode ? '#212330' : '#E5E7EB',
+    textPrimary: isDarkMode ? '#FFFFFF' : '#111827',
+    textSecondary: isDarkMode ? '#94A3B8' : '#6B7280',
+    bubbleBg: isDarkMode ? '#1A1C28' : '#F3F4F6',
+    innerBg: isDarkMode ? '#090A0F' : '#F9FAFB',
+    cellInactive: isDarkMode ? '#1A1C28' : '#E5E7EB',
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
       {/* Overview Title Block */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Activity Overview</Text>
-          <Text style={styles.subtitle}>Last 30 Days</Text>
+          <Text style={[styles.title, { color: theme.textPrimary }]}>Activity Overview</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Last 30 Days</Text>
         </View>
-        <View style={styles.topStreakRow}>
+        <View style={[styles.topStreakRow, { backgroundColor: theme.bubbleBg, borderColor: theme.borderColor }]}>
           <Flame size={16} color="#FF8A00" fill="#FF8A00" />
-          <Text style={styles.topStreakNum}>{streak}</Text>
-          <Text style={styles.topStreakLabel}>Day Streak</Text>
+          <Text style={[styles.topStreakNum, { color: theme.textPrimary }]}>{streak}</Text>
+          <Text style={[styles.topStreakLabel, { color: theme.textSecondary }]}>Day Streak</Text>
         </View>
       </View>
 
       {/* Simplified Stat Column Blocks (Only Active Days and Day Streak) */}
-      <View style={styles.statsRow}>
+      <View style={[styles.statsRow, { backgroundColor: theme.innerBg, borderColor: theme.borderColor }]}>
         <View style={styles.statColumn}>
           <View style={[styles.iconCircle, { backgroundColor: '#10B98120' }]}>
             <Calendar size={16} color="#10B981" />
           </View>
-          <Text style={styles.statValue}>{activeDaysCount}</Text>
-          <Text style={styles.statLabel}>Active Days</Text>
+          <Text style={[styles.statValue, { color: theme.textPrimary }]}>{activeDaysCount}</Text>
+          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Active Days</Text>
         </View>
 
-        <View style={styles.statDivider} />
+        <View style={[styles.statDivider, { backgroundColor: theme.borderColor }]} />
 
         <View style={styles.statColumn}>
           <View style={[styles.iconCircle, { backgroundColor: '#FF8A0020' }]}>
             <Flame size={16} color="#FF8A00" />
           </View>
-          <Text style={styles.statValue}>{streak}</Text>
-          <Text style={styles.statLabel}>Day Streak</Text>
+          <Text style={[styles.statValue, { color: theme.textPrimary }]}>{streak}</Text>
+          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Day Streak</Text>
         </View>
       </View>
 
@@ -112,7 +123,7 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ history }) => {
               <View
                 style={[
                   styles.gridCell,
-                  isActive ? styles.cellActive : styles.cellInactive,
+                  isActive ? styles.cellActive : { backgroundColor: theme.cellInactive },
                 ]}
               />
             </View>
@@ -121,14 +132,14 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ history }) => {
       </ScrollView>
 
       {/* Legend Block */}
-      <View style={styles.legendRow}>
+      <View style={[styles.legendRow, { borderTopColor: theme.borderColor }]}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendCell, styles.cellInactive]} />
-          <Text style={styles.legendText}>No Activity</Text>
+          <View style={[styles.legendCell, { backgroundColor: theme.cellInactive }]} />
+          <Text style={[styles.legendText, { color: theme.textSecondary }]}>No Activity</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendCell, styles.cellActive]} />
-          <Text style={styles.legendText}>Active</Text>
+          <Text style={[styles.legendText, { color: theme.textSecondary }]}>Active</Text>
         </View>
       </View>
     </View>

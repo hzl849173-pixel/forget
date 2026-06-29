@@ -573,11 +573,9 @@ export default function SinglePageLandingScreen() {
           {/* Landing Header */}
           <View style={styles.header}>
             <View style={styles.headerRow}>
-              <View>
-                <Text style={[styles.greeting, { color: theme.textPrimary }]}>Workout Journal</Text>
-                <Text style={[styles.dateSub, { color: theme.textSecondary }]}>
-                  we remember so you can <Text style={{ fontWeight: '900', color: '#3B82F6' }}>FORGET</Text>
-                </Text>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={[styles.headerSlogan, { color: theme.textSecondary }]}>WE REMEMBER SO YOU CAN</Text>
+                <Text style={[styles.headerBrand, { color: theme.textPrimary }]}>FORGET</Text>
               </View>
               {/* Dark/Light Mode Toggle */}
               <TouchableOpacity
@@ -725,7 +723,7 @@ export default function SinglePageLandingScreen() {
 
               {/* Consistency Graph */}
               <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>ACTIVITY TRACKER</Text>
-              <ProgressGrid history={history} />
+              <ProgressGrid history={history} isDarkMode={isDarkMode} />
 
               {/* Recent Workouts list matching screenshot */}
               <View style={styles.recentWorkoutsHeader}>
@@ -1212,17 +1210,17 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     alignItems: 'flex-start',
   },
-  greeting: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -0.8,
-  },
-  dateSub: {
-    fontSize: 10,
+  headerSlogan: {
+    fontSize: 9,
     fontWeight: '800',
     color: '#9CA3AF',
-    letterSpacing: 1,
+    letterSpacing: 1.8,
+  },
+  headerBrand: {
+    fontSize: 26,
+    fontWeight: '800',
+    fontFamily: Platform.OS === 'ios' ? 'Arial Rounded MT Bold' : 'sans-serif-medium',
+    letterSpacing: 2,
     marginTop: 4,
   },
   // Segment Selector
