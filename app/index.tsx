@@ -282,7 +282,13 @@ export default function SinglePageLandingScreen() {
     stopTimerSound();
     if (restTimerRef.current) clearInterval(restTimerRef.current);
     setRestTimerRunning(false);
-    setRestTimerSeconds(0);
+  };
+
+  const resetRestTimer = () => {
+    stopTimerSound();
+    if (restTimerRef.current) clearInterval(restTimerRef.current);
+    setRestTimerRunning(false);
+    setRestTimerSeconds(restTimerDuration);
   };
 
   // Weekly calendar state
@@ -1442,15 +1448,15 @@ export default function SinglePageLandingScreen() {
                   }}
                   ListHeaderComponent={() => (
                     <TouchableOpacity
-                      style={[styles.addExerciseBtn, { borderColor: theme.borderColor }]}
+                      style={styles.addExerciseBtn}
                       onPress={() => {
                         setNewExerciseName('');
                         setAddExerciseVisible(true);
                       }}
-                      activeOpacity={0.7}
+                      activeOpacity={0.5}
                     >
-                      <Plus size={18} color="#10B981" strokeWidth={2.5} />
-                      <Text style={styles.addExerciseBtnText}>ADD EXERCISE</Text>
+                      <Plus size={14} color="#6B7280" strokeWidth={2} />
+                      <Text style={styles.addExerciseBtnText}>Add Exercise</Text>
                     </TouchableOpacity>
                   )}
                 />
@@ -1553,21 +1559,39 @@ export default function SinglePageLandingScreen() {
 
             <View style={styles.timerActions}>
               {restTimerRunning ? (
-                <TouchableOpacity
-                  style={[styles.timerActionBtn, { backgroundColor: '#EF444420' }]}
-                  onPress={stopRestTimer}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.timerActionText, { color: '#EF4444' }]}>STOP</Text>
-                </TouchableOpacity>
+                <>
+                  <TouchableOpacity
+                    style={[styles.timerActionBtn, { backgroundColor: '#EF444420' }]}
+                    onPress={stopRestTimer}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.timerActionText, { color: '#EF4444' }]}>STOP</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.timerActionBtn, { backgroundColor: '#6B728020' }]}
+                    onPress={resetRestTimer}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.timerActionText, { color: '#6B7280' }]}>RESET</Text>
+                  </TouchableOpacity>
+                </>
               ) : (
-                <TouchableOpacity
-                  style={[styles.timerActionBtn, { backgroundColor: '#10B98120' }]}
-                  onPress={() => startRestTimer(restTimerSeconds > 0 ? restTimerSeconds : restTimerDuration)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.timerActionText, { color: '#10B981' }]}>START</Text>
-                </TouchableOpacity>
+                <>
+                  <TouchableOpacity
+                    style={[styles.timerActionBtn, { backgroundColor: '#10B98120' }]}
+                    onPress={() => startRestTimer(restTimerSeconds > 0 ? restTimerSeconds : restTimerDuration)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.timerActionText, { color: '#10B981' }]}>START</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.timerActionBtn, { backgroundColor: '#6B728020' }]}
+                    onPress={resetRestTimer}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.timerActionText, { color: '#6B7280' }]}>RESET</Text>
+                  </TouchableOpacity>
+                </>
               )}
             </View>
 
@@ -3229,18 +3253,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    marginTop: 8,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderStyle: 'dashed',
+    gap: 6,
+    paddingVertical: 10,
+    marginTop: 6,
   },
   addExerciseBtnText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#10B981',
-    letterSpacing: 0.5,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6B7280',
+    letterSpacing: 0.3,
   },
   addExerciseOverlay: {
     flex: 1,
