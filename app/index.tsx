@@ -215,6 +215,7 @@ export default function SinglePageLandingScreen() {
   const [templateModalVisible, setTemplateModalVisible] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [templateExercises, setTemplateExercises] = useState<LoggedExercise[]>([]);
+  const [isSavingActiveSessionAsTemplate, setIsSavingActiveSessionAsTemplate] = useState(false);
   const [templateListVisible, setTemplateListVisible] = useState(false);
   const [templateListExercises, setTemplateListExercises] = useState<LoggedExercise[]>([]);
   const [fromTemplateList, setFromTemplateList] = useState(false);
@@ -735,43 +736,18 @@ export default function SinglePageLandingScreen() {
           },
         },
         {
-          text: 'Save & Create Template',
+          text: 'Create Template',
           style: 'default',
           onPress: async () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            
-            const elapsedMinutes = sessionStartTime > 0
-              ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
-              : 15;
-
-            const detectedPrs = await addCompletedWorkout(suggestedTitle, activeSessionExercises, elapsedMinutes);
-
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setIsSavingActiveSessionAsTemplate(true);
             const exercisesToSave = activeSessionExercises.map((le) => ({
               exerciseId: le.exerciseId,
               sets: le.sets.map((s) => ({ ...s })),
             }));
-            await saveTemplate(suggestedTitle, exercisesToSave);
-
-            // Clear active session
-            setActiveSessionExercises([]);
-            setSessionStartTime(0);
-            await Promise.all([
-              AsyncStorage.removeItem('@active_session_exercises'),
-              AsyncStorage.removeItem('@session_start_time'),
-            ]);
-
-            // Reset modal, logger, and views
-            setExpandedExerciseId(null);
-            setActiveSets([]);
-            setSameForAll(true);
-            setSelectedModalMuscle(null);
-            setTemplateListVisible(false);
-            setFromTemplateList(false);
-
-            if (detectedPrs.length > 0) {
-              setNewPrsDetected(detectedPrs);
-              setShowNewPrsAlert(true);
-            }
+            setTemplateExercises(exercisesToSave);
+            setTemplateName(suggestedTitle);
+            setTemplateModalVisible(true);
           },
         },
       ],
@@ -882,13 +858,62 @@ export default function SinglePageLandingScreen() {
     setTemplateModalVisible(true);
   };
 
-  const handleConfirmSaveTemplate = async () => {
-    if (!templateName.trim()) return;
-    await saveTemplate(templateName, templateExercises);
+  const handleCancelSaveTemplate = () => {
     setTemplateModalVisible(false);
     setTemplateName('');
     setTemplateExercises([]);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setIsSavingActiveSessionAsTemplate(false);
+  };
+
+  const handleConfirmSaveTemplate = async () => {
+    if (!templateName.trim()) return;
+
+    if (isSavingActiveSessionAsTemplate) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      
+      const elapsedMinutes = sessionStartTime > 0
+        ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
+        : 15;
+
+      const workoutTitle = templateName.trim();
+      const detectedPrs = await addCompletedWorkout(workoutTitle, activeSessionExercises, elapsedMinutes);
+
+      const exercisesToSave = activeSessionExercises.map((le) => ({
+        exerciseId: le.exerciseId,
+        sets: le.sets.map((s) => ({ ...s })),
+      }));
+      await saveTemplate(workoutTitle, exercisesToSave);
+
+      // Clear active session
+      setActiveSessionExercises([]);
+      setSessionStartTime(0);
+      await Promise.all([
+        AsyncStorage.removeItem('@active_session_exercises'),
+        AsyncStorage.removeItem('@session_start_time'),
+      ]);
+
+      // Reset modal, logger, and views
+      setExpandedExerciseId(null);
+      setActiveSets([]);
+      setSameForAll(true);
+      setSelectedModalMuscle(null);
+      setTemplateListVisible(false);
+      setFromTemplateList(false);
+
+      setIsSavingActiveSessionAsTemplate(false);
+
+      if (detectedPrs.length > 0) {
+        setNewPrsDetected(detectedPrs);
+        setShowNewPrsAlert(true);
+      }
+    } else {
+      await saveTemplate(templateName, templateExercises);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+
+    setTemplateModalVisible(false);
+    setTemplateName('');
+    setTemplateExercises([]);
   };
 
   const handleUseTemplate = (tmpl: WorkoutTemplate) => {
@@ -2517,13 +2542,13 @@ export default function SinglePageLandingScreen() {
         visible={templateModalVisible}
         transparent={true}
         animationType="none"
-        onRequestClose={() => setTemplateModalVisible(false)}
+        onRequestClose={handleCancelSaveTemplate}
       >
         <View style={styles.timerOverlay}>
           <View style={[styles.timerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
             <TouchableOpacity
               style={styles.timerCloseBtn}
-              onPress={() => setTemplateModalVisible(false)}
+              onPress={handleCancelSaveTemplate}
               activeOpacity={0.7}
             >
               <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
@@ -2542,7 +2567,7 @@ export default function SinglePageLandingScreen() {
             <View style={styles.addExerciseActions}>
               <TouchableOpacity
                 style={[styles.addExerciseCancelBtn, { borderColor: theme.borderColor }]}
-                onPress={() => setTemplateModalVisible(false)}
+                onPress={handleCancelSaveTemplate}
                 activeOpacity={0.7}
               >
                 <Text style={[styles.addExerciseCancelText, { color: theme.textSecondary }]}>Cancel</Text>
