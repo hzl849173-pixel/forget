@@ -12,6 +12,7 @@ import {
   TextInput,
   PanResponder,
   Dimensions,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -215,6 +216,7 @@ export default function SinglePageLandingScreen() {
   const [templateListVisible, setTemplateListVisible] = useState(false);
   const [templateListExercises, setTemplateListExercises] = useState<LoggedExercise[]>([]);
   const [fromTemplateList, setFromTemplateList] = useState(false);
+  const [templateReorderMode, setTemplateReorderMode] = useState(false);
   const [sortedExerciseList, setSortedExerciseList] = useState<Exercise[]>([]);
   
   // Expanded exercise state (active logger)
@@ -900,6 +902,7 @@ export default function SinglePageLandingScreen() {
     setTemplateListExercises(exercisesToLoad);
     setTemplateListVisible(true);
     setFromTemplateList(true);
+    setTemplateReorderMode(false);
   };
 
   const handleTemplateExercisePress = (logEx: LoggedExercise) => {
@@ -2545,74 +2548,74 @@ export default function SinglePageLandingScreen() {
         </View>
       </Modal>
 
-      {/* Template Exercise List Modal */}
-      <Modal
-        visible={templateListVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={() => {
-          syncTemplateListToActiveSession();
-          setTemplateListVisible(false);
-          setFromTemplateList(false);
-        }}
-      >
-        <View style={{ flex: 1, backgroundColor: theme.background }}>
+      {templateListVisible && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100, backgroundColor: theme.background }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: theme.borderColor }}>
             <Text style={{ fontSize: 17, fontWeight: '700', color: theme.textPrimary }}>Exercises ({templateListExercises.length})</Text>
-            <TouchableOpacity onPress={() => { syncTemplateListToActiveSession(); setTemplateListVisible(false); setFromTemplateList(false); }} activeOpacity={0.7}>
-              <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+              <TouchableOpacity onPress={() => setTemplateReorderMode(!templateReorderMode)} activeOpacity={0.7}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#10B981', letterSpacing: 0.3 }}>{templateReorderMode ? 'DONE' : 'REORDER'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => { syncTemplateListToActiveSession(); setTemplateListVisible(false); setFromTemplateList(false); setTemplateReorderMode(false); }} activeOpacity={0.7}>
+                <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
           </View>
-          <ScrollView style={{ flex: 1 }}>
-            {templateListExercises.map((item, index) => {
+          <FlatList
+            data={templateListExercises}
+            keyExtractor={(item) => item.exerciseId}
+            renderItem={({ item, index }) => {
               const exName = exercises.find((e) => e.id === item.exerciseId)?.name || item.exerciseId;
               const isFirst = index === 0;
               const isLast = index === templateListExercises.length - 1;
               return (
-                <View key={item.exerciseId} style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 16, paddingRight: 20, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: theme.borderColor }}>
-                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#10B981', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                    <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '800' }}>{index + 1}</Text>
-                  </View>
-                  <TouchableOpacity onPress={() => handleTemplateExercisePress(item)} activeOpacity={0.7}
-                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: theme.borderColor }}>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => handleTemplateExercisePress(item)}
+                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+                  >
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 15, fontWeight: '600', color: theme.textPrimary }}>{exName}</Text>
                       <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 2 }}>{item.sets.length} set{item.sets.length !== 1 ? 's' : ''}</Text>
                     </View>
+                    <ChevronRight size={16} color={theme.textSecondary} strokeWidth={2.5} />
                   </TouchableOpacity>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 8 }}>
-                    <TouchableOpacity
-                      onPress={() => moveTemplateItem(index, -1)}
-                      disabled={isFirst}
-                      activeOpacity={0.6}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: isFirst ? theme.borderColor : '#E5E7EB', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <ChevronUp size={16} color={isFirst ? '#FFFFFF' : theme.textSecondary} strokeWidth={2.5} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => moveTemplateItem(index, 1)}
-                      disabled={isLast}
-                      activeOpacity={0.6}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: isLast ? theme.borderColor : '#E5E7EB', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <ChevronDown size={16} color={isLast ? '#FFFFFF' : theme.textSecondary} strokeWidth={2.5} />
-                    </TouchableOpacity>
-                  </View>
+                  {templateReorderMode && (
+                    <View style={{ flexDirection: 'row', gap: 4, marginLeft: 10 }}>
+                      <TouchableOpacity
+                        onPress={() => moveTemplateItem(index, -1)}
+                        disabled={isFirst}
+                        activeOpacity={0.6}
+                        style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: theme.borderColor, alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <ChevronUp size={16} color={isFirst ? '#9CA3AF' : theme.textPrimary} strokeWidth={2.5} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => moveTemplateItem(index, 1)}
+                        disabled={isLast}
+                        activeOpacity={0.6}
+                        style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: theme.borderColor, alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <ChevronDown size={16} color={isLast ? '#9CA3AF' : theme.textPrimary} strokeWidth={2.5} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
               );
-            })}
-          </ScrollView>
+            }}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 16 }}
+          />
           <TouchableOpacity
-            onPress={() => { syncTemplateListToActiveSession(); setTemplateListVisible(false); setFromTemplateList(false); }}
+            onPress={() => { syncTemplateListToActiveSession(); setTemplateListVisible(false); setFromTemplateList(false); setTemplateReorderMode(false); }}
             activeOpacity={0.8}
             style={{ backgroundColor: '#10B981', paddingVertical: 16, alignItems: 'center', marginHorizontal: 20, marginVertical: 16, borderRadius: 14 }}
           >
             <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '800', letterSpacing: 0.5 }}>DONE</Text>
           </TouchableOpacity>
         </View>
-      </Modal>
+      )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
