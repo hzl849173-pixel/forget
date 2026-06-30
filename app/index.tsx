@@ -216,7 +216,7 @@ export default function SinglePageLandingScreen() {
   const [templateListVisible, setTemplateListVisible] = useState(false);
   const [templateListExercises, setTemplateListExercises] = useState<LoggedExercise[]>([]);
   const [fromTemplateList, setFromTemplateList] = useState(false);
-  const [templateReorderMode, setTemplateReorderMode] = useState(false);
+  const [pickedExerciseIndex, setPickedExerciseIndex] = useState<number | null>(null);
   const [sortedExerciseList, setSortedExerciseList] = useState<Exercise[]>([]);
   
   // Expanded exercise state (active logger)
@@ -902,7 +902,6 @@ export default function SinglePageLandingScreen() {
     setTemplateListExercises(exercisesToLoad);
     setTemplateListVisible(true);
     setFromTemplateList(true);
-    setTemplateReorderMode(false);
   };
 
   const handleTemplateExercisePress = (logEx: LoggedExercise) => {
@@ -943,18 +942,6 @@ export default function SinglePageLandingScreen() {
   const syncTemplateListToActiveSession = () => {
     setActiveSessionExercises(templateListExercises);
     AsyncStorage.setItem('@active_session_exercises', JSON.stringify(templateListExercises));
-  };
-
-  const moveTemplateItem = (index: number, direction: -1 | 1) => {
-    const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= templateListExercises.length) return;
-    setTemplateListExercises((prev) => {
-      const updated = [...prev];
-      const temp = updated[index];
-      updated[index] = updated[newIndex];
-      updated[newIndex] = temp;
-      return updated;
-    });
   };
 
   const handleDeleteTemplate = (id: string, name: string) => {
@@ -2552,63 +2539,60 @@ export default function SinglePageLandingScreen() {
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100, backgroundColor: theme.background }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: theme.borderColor }}>
             <Text style={{ fontSize: 17, fontWeight: '700', color: theme.textPrimary }}>Exercises ({templateListExercises.length})</Text>
-            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-              <TouchableOpacity onPress={() => setTemplateReorderMode(!templateReorderMode)} activeOpacity={0.7}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#10B981', letterSpacing: 0.3 }}>{templateReorderMode ? 'DONE' : 'REORDER'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => { syncTemplateListToActiveSession(); setTemplateListVisible(false); setFromTemplateList(false); setTemplateReorderMode(false); }} activeOpacity={0.7}>
-                <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={() => { syncTemplateListToActiveSession(); setTemplateListVisible(false); setFromTemplateList(false); setPickedExerciseIndex(null); }} activeOpacity={0.7}>
+              <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
+            </TouchableOpacity>
           </View>
           <FlatList
             data={templateListExercises}
             keyExtractor={(item) => item.exerciseId}
             renderItem={({ item, index }) => {
               const exName = exercises.find((e) => e.id === item.exerciseId)?.name || item.exerciseId;
-              const isFirst = index === 0;
-              const isLast = index === templateListExercises.length - 1;
+              const isPicked = pickedExerciseIndex === index;
               return (
-                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: theme.borderColor }}>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => handleTemplateExercisePress(item)}
-                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 15, fontWeight: '600', color: theme.textPrimary }}>{exName}</Text>
-                      <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 2 }}>{item.sets.length} set{item.sets.length !== 1 ? 's' : ''}</Text>
-                    </View>
-                    <ChevronRight size={16} color={theme.textSecondary} strokeWidth={2.5} />
-                  </TouchableOpacity>
-                  {templateReorderMode && (
-                    <View style={{ flexDirection: 'row', gap: 4, marginLeft: 10 }}>
-                      <TouchableOpacity
-                        onPress={() => moveTemplateItem(index, -1)}
-                        disabled={isFirst}
-                        activeOpacity={0.6}
-                        style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: theme.borderColor, alignItems: 'center', justifyContent: 'center' }}
-                      >
-                        <ChevronUp size={16} color={isFirst ? '#9CA3AF' : theme.textPrimary} strokeWidth={2.5} />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => moveTemplateItem(index, 1)}
-                        disabled={isLast}
-                        activeOpacity={0.6}
-                        style={{ width: 34, height: 34, borderRadius: 8, backgroundColor: theme.borderColor, alignItems: 'center', justifyContent: 'center' }}
-                      >
-                        <ChevronDown size={16} color={isLast ? '#9CA3AF' : theme.textPrimary} strokeWidth={2.5} />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    if (pickedExerciseIndex !== null && pickedExerciseIndex !== index) {
+                      setTemplateListExercises((prev) => {
+                        const updated = [...prev];
+                        const temp = updated[index];
+                        updated[index] = updated[pickedExerciseIndex];
+                        updated[pickedExerciseIndex] = temp;
+                        return updated;
+                      });
+                      setPickedExerciseIndex(null);
+                    } else if (isPicked) {
+                      setPickedExerciseIndex(null);
+                    } else {
+                      handleTemplateExercisePress(item);
+                    }
+                  }}
+                  onLongPress={() => setPickedExerciseIndex(index)}
+                  delayLongPress={200}
+                  style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: theme.borderColor, backgroundColor: isPicked ? '#D1FAE5' : 'transparent' }}
+                >
+                  <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: isPicked ? '#10B981' : theme.borderColor, alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+                    {isPicked && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#10B981' }} />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '600', color: theme.textPrimary }}>{exName}</Text>
+                    <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 2 }}>{item.sets.length} set{item.sets.length !== 1 ? 's' : ''}</Text>
+                  </View>
+                  <ChevronRight size={16} color={theme.textSecondary} strokeWidth={2.5} />
+                </TouchableOpacity>
               );
             }}
             style={{ flex: 1 }}
             contentContainerStyle={{ paddingBottom: 16 }}
           />
+          {pickedExerciseIndex !== null && (
+            <View style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#D1FAE5', marginHorizontal: 20, marginBottom: 8, borderRadius: 10 }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#065F46', textAlign: 'center', letterSpacing: 0.3 }}>Tap another exercise to swap positions</Text>
+            </View>
+          )}
           <TouchableOpacity
-            onPress={() => { syncTemplateListToActiveSession(); setTemplateListVisible(false); setFromTemplateList(false); setTemplateReorderMode(false); }}
+            onPress={() => { syncTemplateListToActiveSession(); setTemplateListVisible(false); setFromTemplateList(false); setPickedExerciseIndex(null); }}
             activeOpacity={0.8}
             style={{ backgroundColor: '#10B981', paddingVertical: 16, alignItems: 'center', marginHorizontal: 20, marginVertical: 16, borderRadius: 14 }}
           >
