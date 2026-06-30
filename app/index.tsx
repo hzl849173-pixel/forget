@@ -762,6 +762,29 @@ export default function SinglePageLandingScreen() {
     });
   };
 
+  const getDateGroupLabel = (dateStr: string): string => {
+    const d = new Date(dateStr);
+    const today = new Date();
+    const dateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const diffDays = Math.round((todayOnly.getTime() - dateOnly.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+
+    const dayOfWeek = todayOnly.getDay();
+    const monday = new Date(todayOnly);
+    monday.setDate(todayOnly.getDate() - ((dayOfWeek + 6) % 7));
+
+    if (dateOnly >= monday) return 'This Week';
+
+    const lastMonday = new Date(monday);
+    lastMonday.setDate(monday.getDate() - 7);
+    if (dateOnly >= lastMonday) return 'Last Week';
+
+    return 'Earlier';
+  };
+
   // Filter the snapshotted sorted exercise list by search query inside the modal popup
   const displayedExercises = sortedExerciseList.filter((ex) =>
     ex.name.toLowerCase().includes(search.toLowerCase())
@@ -797,6 +820,20 @@ export default function SinglePageLandingScreen() {
         return false;
       })
     : history;
+
+  const GROUP_ORDER = ['Today', 'Yesterday', 'This Week', 'Last Week', 'Earlier'];
+  const source = historySearch ? filteredHistory : history;
+  const groupedHistory = source.reduce<{ title: string; data: WorkoutSession[] }[]>((groups, item) => {
+    const label = getDateGroupLabel(item.date);
+    const existing = groups.find((g) => g.title === label);
+    if (existing) {
+      existing.data.push(item);
+    } else {
+      groups.push({ title: label, data: [item] });
+    }
+    return groups;
+  }, []);
+  groupedHistory.sort((a, b) => GROUP_ORDER.indexOf(a.title) - GROUP_ORDER.indexOf(b.title));
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
@@ -1135,7 +1172,7 @@ export default function SinglePageLandingScreen() {
                   />
                 </View>
               )}
-              {(historySearch ? filteredHistory : history).length === 0 ? (
+              {source.length === 0 ? (
                 <Card style={[styles.welcomeCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
                   <Calendar size={32} color="#10B981" strokeWidth={1.5} />
                   <Text style={[styles.welcomeTitle, { color: theme.textPrimary }]}>
@@ -1146,76 +1183,82 @@ export default function SinglePageLandingScreen() {
                   </Text>
                 </Card>
               ) : (
-                (historySearch ? filteredHistory : history).map((item) => {
-                  const sessionMuscles = getSessionMuscles(item);
-                  const muscleSets: Record<string, number> = {};
-                  item.exercises.forEach((logEx) => {
-                    const details = exercises.find((e) => e.id === logEx.exerciseId);
-                    if (details) {
-                      muscleSets[details.muscleGroup] = (muscleSets[details.muscleGroup] || 0) + logEx.sets.length;
-                    }
-                  });
-                  const muscleSetsString = Object.entries(muscleSets)
-                    .sort(([a], [b]) => sessionMuscles.indexOf(a as any) - sessionMuscles.indexOf(b as any))
-                    .map(([muscle, sets]) => `${muscle} ${sets}`)
-                    .join(' · ');
-                  return (
-                    <TouchableOpacity
-                      key={item.id}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setSelectedHistoryItem(item);
-                      }}
-                      activeOpacity={0.85}
-                    >
-                      <Card
-                        style={[
-                          styles.historyLogCard,
-                          {
-                            borderLeftWidth: 4,
-                            borderLeftColor: categoryColors[sessionMuscles[0] || 'Chest'] || '#10B981',
-                            backgroundColor: theme.cardBg,
-                            borderColor: theme.borderColor,
-                            shadowColor: '#000000',
-                            shadowOffset: { width: 0, height: 1 },
-                            shadowOpacity: isDarkMode ? 0 : 0.05,
-                            shadowRadius: 2,
-                            elevation: 1,
-                          }
-                        ]}
-                      >
-                        <View style={styles.historyCardHeader}>
-                          <View style={styles.historyTitleCol}>
-                            <Text style={[styles.historySessionName, { color: theme.textPrimary }]}>{item.name}</Text>
-                            <Text style={[styles.historyDate, { color: theme.textSecondary }]}>{formatHistoryDate(item.date).toUpperCase()}</Text>
-                          </View>
-                          <TouchableOpacity
-                            style={styles.deleteLogBtn}
-                            onPress={() => handleDeleteHistoryLog(item.id, item.name)}
-                            activeOpacity={0.6}
+                groupedHistory.map((group) => (
+                  <View key={group.title}>
+                    <Text style={[styles.historySectionHeader, { color: theme.textSecondary }]}>
+                      {group.title.toUpperCase()}
+                    </Text>
+                    {group.data.map((item) => {
+                      const sessionMuscles = getSessionMuscles(item);
+                      const muscleSets: Record<string, number> = {};
+                      item.exercises.forEach((logEx) => {
+                        const details = exercises.find((e) => e.id === logEx.exerciseId);
+                        if (details) {
+                          muscleSets[details.muscleGroup] = (muscleSets[details.muscleGroup] || 0) + logEx.sets.length;
+                        }
+                      });
+                      const muscleSetsString = Object.entries(muscleSets)
+                        .sort(([a], [b]) => sessionMuscles.indexOf(a as any) - sessionMuscles.indexOf(b as any))
+                        .map(([muscle, sets]) => `${muscle} ${sets}`)
+                        .join(' · ');
+                      return (
+                        <TouchableOpacity
+                          key={item.id}
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setSelectedHistoryItem(item);
+                          }}
+                          activeOpacity={0.85}
+                        >
+                          <Card
+                            style={[
+                              styles.historyLogCard,
+                              {
+                                borderLeftWidth: 4,
+                                borderLeftColor: categoryColors[sessionMuscles[0] || 'Chest'] || '#10B981',
+                                backgroundColor: theme.cardBg,
+                                borderColor: theme.borderColor,
+                                shadowColor: '#000000',
+                                shadowOffset: { width: 0, height: 1 },
+                                shadowOpacity: isDarkMode ? 0 : 0.05,
+                                shadowRadius: 2,
+                                elevation: 1,
+                              }
+                            ]}
                           >
-                            <Trash2 size={16} color="#EF4444" strokeWidth={2} />
-                          </TouchableOpacity>
-                        </View>
+                            <View style={styles.historyCardHeader}>
+                              <View style={styles.historyTitleCol}>
+                                <Text style={[styles.historySessionName, { color: theme.textPrimary }]}>{item.name}</Text>
+                                <Text style={[styles.historyDate, { color: theme.textSecondary }]}>{formatHistoryDate(item.date).toUpperCase()}</Text>
+                              </View>
+                              <TouchableOpacity
+                                style={styles.deleteLogBtn}
+                                onPress={() => handleDeleteHistoryLog(item.id, item.name)}
+                                activeOpacity={0.6}
+                              >
+                                <Trash2 size={16} color="#EF4444" strokeWidth={2} />
+                              </TouchableOpacity>
+                            </View>
 
-                        {/* Simplified summary */}
-                        <View style={[styles.historySetsReceipt, { borderTopColor: theme.borderColor }]}>
-                          <Text style={[styles.historySummaryText, { color: theme.textSecondary }]} numberOfLines={1}>
-                            {muscleSetsString}
-                          </Text>
-                        </View>
+                            <View style={[styles.historySetsReceipt, { borderTopColor: theme.borderColor }]}>
+                              <Text style={[styles.historySummaryText, { color: theme.textSecondary }]} numberOfLines={1}>
+                                {muscleSetsString}
+                              </Text>
+                            </View>
 
-                        <View style={[styles.historyFooter, { borderTopColor: theme.borderColor }]}>
-                          <View style={styles.historyBadgeRow}>
-                            {sessionMuscles.map((m) => (
-                              <MuscleBadge key={m} muscleGroup={m} size="sm" />
-                            ))}
-                          </View>
-                        </View>
-                      </Card>
-                    </TouchableOpacity>
-                  );
-                })
+                            <View style={[styles.historyFooter, { borderTopColor: theme.borderColor }]}>
+                              <View style={styles.historyBadgeRow}>
+                                {sessionMuscles.map((m) => (
+                                  <MuscleBadge key={m} muscleGroup={m} size="sm" />
+                                ))}
+                              </View>
+                            </View>
+                          </Card>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                ))
               )}
             </View>
           )}
@@ -2275,6 +2318,13 @@ const styles = StyleSheet.create({
   // History items receipts
   historySection: {
     gap: 12,
+  },
+  historySectionHeader: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 10,
+    marginTop: 4,
   },
   historyLogCard: {
     padding: 18,

@@ -197,3 +197,4 @@ Users should immediately understand how to use it.
 Logging a workout should be extremely quick.
 
 The experience should be enjoyable enough that users prefer it over the Notes app.
+
