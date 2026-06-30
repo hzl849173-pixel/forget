@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -166,6 +166,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { useWorkout, WorkoutSet, WorkoutSession, LoggedExercise, Exercise, PersonalRecord, WorkoutTemplate } from '@/hooks/use-workout-storage';
 import { MUSCLE_GROUPS, MuscleGroup, DEFAULT_EXERCISES, INSTRUMENT_ORDER, SHOULDER_EXERCISE_IDS } from '@/constants/exercises';
+import DragList from 'react-native-draglist';
 import { ProgressGrid } from '@/components/ui/progress-grid';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -216,7 +217,7 @@ export default function SinglePageLandingScreen() {
   const [templateListVisible, setTemplateListVisible] = useState(false);
   const [templateListExercises, setTemplateListExercises] = useState<LoggedExercise[]>([]);
   const [fromTemplateList, setFromTemplateList] = useState(false);
-  const [pickedExerciseIndex, setPickedExerciseIndex] = useState<number | null>(null);
+  
   const [sortedExerciseList, setSortedExerciseList] = useState<Exercise[]>([]);
   
   // Expanded exercise state (active logger)
@@ -2539,42 +2540,36 @@ export default function SinglePageLandingScreen() {
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100, backgroundColor: theme.background }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: theme.borderColor }}>
             <Text style={{ fontSize: 17, fontWeight: '700', color: theme.textPrimary }}>Exercises ({templateListExercises.length})</Text>
-            <TouchableOpacity onPress={() => { syncTemplateListToActiveSession(); setTemplateListVisible(false); setFromTemplateList(false); setPickedExerciseIndex(null); }} activeOpacity={0.7}>
-              <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Text style={{ fontSize: 11, color: theme.textSecondary, letterSpacing: 0.3 }}>Long press to reorder</Text>
+              <TouchableOpacity onPress={() => { syncTemplateListToActiveSession(); setTemplateListVisible(false); setFromTemplateList(false); }} activeOpacity={0.7}>
+                <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
           </View>
-          <FlatList
+          <DragList
+            containerStyle={{ flex: 1 }}
             data={templateListExercises}
             keyExtractor={(item) => item.exerciseId}
-            renderItem={({ item, index }) => {
+            onReordered={(fromIdx, toIdx) => {
+              setTemplateListExercises((prev) => {
+                const updated = [...prev];
+                const [moved] = updated.splice(fromIdx, 1);
+                updated.splice(toIdx, 0, moved);
+                return updated;
+              });
+            }}
+            style={{ flex: 1 }}
+            renderItem={({ item, onDragStart, isActive }) => {
               const exName = exercises.find((e) => e.id === item.exerciseId)?.name || item.exerciseId;
-              const isPicked = pickedExerciseIndex === index;
               return (
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  onPress={() => {
-                    if (pickedExerciseIndex !== null && pickedExerciseIndex !== index) {
-                      setTemplateListExercises((prev) => {
-                        const updated = [...prev];
-                        const temp = updated[index];
-                        updated[index] = updated[pickedExerciseIndex];
-                        updated[pickedExerciseIndex] = temp;
-                        return updated;
-                      });
-                      setPickedExerciseIndex(null);
-                    } else if (isPicked) {
-                      setPickedExerciseIndex(null);
-                    } else {
-                      handleTemplateExercisePress(item);
-                    }
-                  }}
-                  onLongPress={() => setPickedExerciseIndex(index)}
-                  delayLongPress={200}
-                  style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: theme.borderColor, backgroundColor: isPicked ? '#D1FAE5' : 'transparent' }}
+                  onPress={() => handleTemplateExercisePress(item)}
+                  onLongPress={onDragStart}
+                  delayLongPress={150}
+                  style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1 }}
                 >
-                  <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: isPicked ? '#10B981' : theme.borderColor, alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
-                    {isPicked && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#10B981' }} />}
-                  </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 15, fontWeight: '600', color: theme.textPrimary }}>{exName}</Text>
                     <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 2 }}>{item.sets.length} set{item.sets.length !== 1 ? 's' : ''}</Text>
@@ -2583,16 +2578,9 @@ export default function SinglePageLandingScreen() {
                 </TouchableOpacity>
               );
             }}
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 16 }}
           />
-          {pickedExerciseIndex !== null && (
-            <View style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#D1FAE5', marginHorizontal: 20, marginBottom: 8, borderRadius: 10 }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#065F46', textAlign: 'center', letterSpacing: 0.3 }}>Tap another exercise to swap positions</Text>
-            </View>
-          )}
           <TouchableOpacity
-            onPress={() => { syncTemplateListToActiveSession(); setTemplateListVisible(false); setFromTemplateList(false); setPickedExerciseIndex(null); }}
+            onPress={() => { syncTemplateListToActiveSession(); setTemplateListVisible(false); setFromTemplateList(false); }}
             activeOpacity={0.8}
             style={{ backgroundColor: '#10B981', paddingVertical: 16, alignItems: 'center', marginHorizontal: 20, marginVertical: 16, borderRadius: 14 }}
           >
