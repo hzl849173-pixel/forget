@@ -13,6 +13,7 @@ import {
   PanResponder,
   Dimensions,
   FlatList,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -246,11 +247,11 @@ export default function SinglePageLandingScreen() {
   const exercisePanResponder = React.useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 30 && Math.abs(gs.dx) > Math.abs(gs.dy) * 2,
+      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 15 && Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5,
       onPanResponderGrant: (_, gs) => { exerciseSwipeGestureX.current = gs.x0; },
       onPanResponderRelease: (_, gs) => {
-        if (gs.dx < -60) navigateToExerciseRef.current('next');
-        else if (gs.dx > 60) navigateToExerciseRef.current('prev');
+        if (gs.dx < -40) navigateToExerciseRef.current('next');
+        else if (gs.dx > 40) navigateToExerciseRef.current('prev');
       },
     })
   ).current;
@@ -2048,21 +2049,44 @@ export default function SinglePageLandingScreen() {
           }
         }}
       >
-        <View style={styles.exerciseLoggerOverlay}>
-          <View style={[styles.exerciseLoggerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+        <TouchableOpacity
+          style={styles.exerciseLoggerOverlay}
+          activeOpacity={1}
+          onPress={() => {
+            if (fromTemplateList) handleTemplateListBackFromLogger();
+            else { setExpandedExerciseId(null); setActiveSets([]); setSameForAll(true); }
+          }}
+        >
+          <View
+            style={[styles.exerciseLoggerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
+            onStartShouldSetResponder={() => true}
+          >
             {(() => {
               const exItem = expandedExerciseId ? exercises.find((e) => e.id === expandedExerciseId) : null;
               if (!exItem) return null;
               const categoryColor = categoryColors[exItem.muscleGroup] || '#10B981';
-              const currentExIndex = activeSessionExercises.findIndex((le) => le.exerciseId === expandedExerciseId);
+              const exerciseList = fromTemplateList ? templateListExercises : activeSessionExercises;
+              const currentExIndex = exerciseList.findIndex((le) => le.exerciseId === expandedExerciseId);
               const canGoPrev = currentExIndex > 0;
-              const canGoNext = currentExIndex < activeSessionExercises.length - 1;
+              const canGoNext = currentExIndex < exerciseList.length - 1;
 
               const navigateToExercise = (direction: 'prev' | 'next') => {
-                const nextIndex = direction === 'next' ? currentExIndex + 1 : currentExIndex - 1;
-                const nextEx = activeSessionExercises[nextIndex];
+                const exerciseList = fromTemplateList ? templateListExercises : activeSessionExercises;
+                const curIdx = exerciseList.findIndex((le) => le.exerciseId === expandedExerciseId);
+                const nextIndex = direction === 'next' ? curIdx + 1 : curIdx - 1;
+                const nextEx = exerciseList[nextIndex];
                 if (!nextEx) return;
-                handleSaveWorkout(exItem.id);
+                if (fromTemplateList) {
+                  if (expandedExerciseId && activeSets.length > 0) {
+                    setTemplateListExercises((prev) =>
+                      prev.map((ex) =>
+                        ex.exerciseId === expandedExerciseId ? { ...ex, sets: activeSets } : ex
+                      )
+                    );
+                  }
+                } else {
+                  handleSaveWorkout(exItem.id);
+                }
                 setExpandedExerciseId(nextEx.exerciseId);
                 setActiveSets(nextEx.sets.map((s) => ({
                   id: s.id,
@@ -2245,7 +2269,7 @@ export default function SinglePageLandingScreen() {
               );
             })()}
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
 
       {/* Custom Modern Alert Modal */}
