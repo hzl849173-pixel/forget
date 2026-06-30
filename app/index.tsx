@@ -169,6 +169,7 @@ import { useWorkout, WorkoutSet, WorkoutSession, LoggedExercise, Exercise, Perso
 import { MUSCLE_GROUPS, MuscleGroup, DEFAULT_EXERCISES, INSTRUMENT_ORDER, SHOULDER_EXERCISE_IDS } from '@/constants/exercises';
 import DragList from 'react-native-draglist';
 import { ProgressGrid } from '@/components/ui/progress-grid';
+import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { IncrementInput } from '@/components/ui/input';
@@ -181,7 +182,6 @@ export default function SinglePageLandingScreen() {
     exercises,
     history,
     favoriteOrder,
-    prs,
     templates,
     addCompletedWorkout,
     createCustomExercise,
@@ -192,7 +192,6 @@ export default function SinglePageLandingScreen() {
     getPreviousWorkoutForExercise,
     getPreviousSessionForExercise,
     getExercisePR,
-    getWorkoutInsights,
     saveTemplate,
     deleteTemplate,
   } = useWorkout();
@@ -820,37 +819,7 @@ export default function SinglePageLandingScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
-  const getStreak = (): number => {
-    if (history.length === 0) return 0;
-    const dates = [...new Set(history.map((s) => s.date.split('T')[0]))].sort().reverse();
-    let streak = 1;
-    const today = new Date().toISOString().split('T')[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    if (dates[0] !== today && dates[0] !== yesterday) return 0;
-    for (let i = 1; i < dates.length; i++) {
-      const prev = new Date(dates[i - 1]);
-      const curr = new Date(dates[i]);
-      const diff = (prev.getTime() - curr.getTime()) / 86400000;
-      if (diff <= 1.5) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-    return streak;
-  };
 
-  const getTotalVolume = (): number => {
-    let volume = 0;
-    for (const session of history) {
-      for (const logEx of session.exercises) {
-        for (const set of logEx.sets) {
-          volume += set.weight * set.reps;
-        }
-      }
-    }
-    return volume;
-  };
 
   const handleOpenSaveTemplate = (exercisesToSave: LoggedExercise[], suggestedName: string) => {
     setTemplateExercises(exercisesToSave);
@@ -1152,9 +1121,9 @@ export default function SinglePageLandingScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.segmentScrollContent}>
             {([
               { key: 'log', label: 'Log' },
-              { key: 'progress', label: 'Progress' },
               { key: 'templates', label: 'Templates' },
               { key: 'history', label: 'History' },
+              { key: 'progress', label: 'Progress' },
             ] as const).map((seg) => {
               const isActive = activeSegment === seg.key;
               return (
@@ -1416,82 +1385,6 @@ export default function SinglePageLandingScreen() {
               <ProgressGrid history={history} isDarkMode={isDarkMode} />
 
             </>
-          ) : activeSegment === 'progress' ? (
-            /* Progress View Section */
-            <View style={styles.historySection}>
-              {(() => {
-                const insights = getWorkoutInsights();
-                const streak = getStreak();
-                const totalVolume = getTotalVolume();
-                const sortedPrs = [...prs].sort((a, b) => b.estimatedOneRM - a.estimatedOneRM);
-                return (
-                  <>
-                    <Text style={[styles.historySectionHeader, { color: theme.textSecondary }]}>STATS</Text>
-                    <View style={styles.progressStatsGrid}>
-                      <View style={[styles.progressStatCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                        <Text style={[styles.progressStatValue, { color: theme.textPrimary }]}>{totalWorkoutDays}</Text>
-                        <Text style={[styles.progressStatLabel, { color: theme.textSecondary }]}>Total Workouts</Text>
-                      </View>
-                      <View style={[styles.progressStatCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                        <Text style={[styles.progressStatValue, { color: theme.textPrimary }]}>{totalVolume.toLocaleString()}</Text>
-                        <Text style={[styles.progressStatLabel, { color: theme.textSecondary }]}>Total Volume (kg)</Text>
-                      </View>
-                      <View style={[styles.progressStatCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                        <Text style={[styles.progressStatValue, { color: '#10B981' }]}>{streak}</Text>
-                        <Text style={[styles.progressStatLabel, { color: theme.textSecondary }]}>Day Streak</Text>
-                      </View>
-                      <View style={[styles.progressStatCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                        <Text style={[styles.progressStatValue, { color: theme.textPrimary }]}>{insights.totalWorkoutsThisMonth}</Text>
-                        <Text style={[styles.progressStatLabel, { color: theme.textSecondary }]}>This Month</Text>
-                      </View>
-                    </View>
-
-                    <Text style={[styles.historySectionHeader, { color: theme.textSecondary }]}>INSIGHTS</Text>
-                    <Card style={[styles.insightCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                      {insights.mostTrainedMuscle && (
-                        <View style={styles.insightRow}>
-                          <Text style={[styles.insightLabel, { color: theme.textSecondary }]}>Most Trained</Text>
-                          <Text style={[styles.insightValue, { color: theme.textPrimary }]}>{insights.mostTrainedMuscle.muscle} ({insights.mostTrainedMuscle.count} sets)</Text>
-                        </View>
-                      )}
-                      {insights.mostPerformedExercise && (
-                        <View style={styles.insightRow}>
-                          <Text style={[styles.insightLabel, { color: theme.textSecondary }]}>Top Exercise</Text>
-                          <Text style={[styles.insightValue, { color: theme.textPrimary }]}>{insights.mostPerformedExercise.name} ({insights.mostPerformedExercise.count} sets)</Text>
-                        </View>
-                      )}
-                      <View style={styles.insightRow}>
-                        <Text style={[styles.insightLabel, { color: theme.textSecondary }]}>Total Sets</Text>
-                        <Text style={[styles.insightValue, { color: theme.textPrimary }]}>
-                          {history.reduce((sum, s) => sum + s.exercises.reduce((es, e) => es + e.sets.length, 0), 0)}
-                        </Text>
-                      </View>
-                    </Card>
-
-                    {sortedPrs.length > 0 && (
-                      <>
-                        <Text style={[styles.historySectionHeader, { color: theme.textSecondary }]}>PERSONAL RECORDS</Text>
-                        {sortedPrs.slice(0, 10).map((pr) => {
-                          const ex = exercises.find((e) => e.id === pr.exerciseId);
-                          return (
-                            <Card key={pr.exerciseId} style={[styles.prCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                              <View style={styles.prHeader}>
-                                <Text style={[styles.prExerciseName, { color: theme.textPrimary }]}>{ex?.name || 'Unknown'}</Text>
-                                <Text style={[styles.prDate, { color: theme.textSecondary }]}>{new Date(pr.date).toLocaleDateString()}</Text>
-                              </View>
-                              <View style={styles.prDetails}>
-                                <Text style={[styles.prValue, { color: '#10B981' }]}>{pr.weight} kg × {pr.reps}</Text>
-                                <Text style={[styles.prE1rm, { color: theme.textSecondary }]}>e1RM: {pr.estimatedOneRM} kg</Text>
-                              </View>
-                            </Card>
-                          );
-                        })}
-                      </>
-                    )}
-                  </>
-                );
-              })()}
-            </View>
           ) : activeSegment === 'templates' ? (
             /* Templates View Section */
             <View style={styles.historySection}>
@@ -1557,7 +1450,7 @@ export default function SinglePageLandingScreen() {
                 })
               )}
             </View>
-          ) : (
+          ) : activeSegment === 'history' ? (
             /* History View Section */
             <View style={styles.historySection}>
               {history.length > 0 && (
@@ -1668,6 +1561,9 @@ export default function SinglePageLandingScreen() {
                 ))
               )}
             </View>
+          ) : (
+            /* Progress View Section */
+            <ProgressDashboard />
           )}
         </ScrollView>
 
