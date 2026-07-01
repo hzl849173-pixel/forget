@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useWorkout, WorkoutSession } from '../../hooks/use-workout-storage';
+import { SHOULDER_EXERCISE_IDS } from '../../constants/exercises';
 
 interface ProgressGridProps {
   history: WorkoutSession[];
@@ -26,7 +27,9 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ history, isDarkMode 
         session.exercises.forEach((logEx) => {
           const details = exercises.find((e) => e.id === logEx.exerciseId);
           if (details) {
-            const muscle = details.muscleGroup;
+            const muscle = details.muscleGroup === 'Abs & Shoulders'
+              ? (SHOULDER_EXERCISE_IDS.has(logEx.exerciseId) ? 'Shoulders' : 'Abs')
+              : details.muscleGroup;
             muscleSets[muscle] = (muscleSets[muscle] || 0) + logEx.sets.length;
           }
         });

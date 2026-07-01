@@ -34,6 +34,8 @@ const categoryColors: Record<string, string> = {
   Back: '#A855F7',
   Legs: '#FF8A00',
   'Abs & Shoulders': '#22C55E',
+  Abs: '#22C55E',
+  Shoulders: '#22C55E',
 };
 
 const ALT_COLORS = [
@@ -204,6 +206,7 @@ export default function SinglePageLandingScreen() {
 
   // Workout logging states
   const [selectedModalMuscle, setSelectedModalMuscle] = useState<MuscleGroup | null>(null);
+  const [selectedSubGroup, setSelectedSubGroup] = useState<'Abs' | 'Shoulders' | null>(null);
   const [search, setSearch] = useState('');
   const [historySearch, setHistorySearch] = useState('');
   const [editingHistoryWorkoutId, setEditingHistoryWorkoutId] = useState<string | null>(null);
@@ -219,6 +222,7 @@ export default function SinglePageLandingScreen() {
   const [fromTemplateList, setFromTemplateList] = useState(false);
   
   const [sortedExerciseList, setSortedExerciseList] = useState<Exercise[]>([]);
+  const [customShoulderIds, setCustomShoulderIds] = useState<Set<string>>(new Set());
   
   // Expanded exercise state (active logger)
   const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(null);
@@ -402,6 +406,12 @@ export default function SinglePageLandingScreen() {
         setSessionStartTime(Number(val));
       }
     });
+
+    AsyncStorage.getItem('@custom_shoulder_ids').then((val) => {
+      if (val !== null) {
+        setCustomShoulderIds(new Set(JSON.parse(val)));
+      }
+    });
   }, []);
 
   React.useEffect(() => {
@@ -480,6 +490,7 @@ export default function SinglePageLandingScreen() {
   const handleSelectMuscleCard = (muscle: MuscleGroup) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedModalMuscle(muscle);
+    setSelectedSubGroup(muscle === 'Abs & Shoulders' ? 'Shoulders' : null);
     setSearch('');
     setExpandedExerciseId(null);
     setActiveSets([]);
@@ -716,6 +727,7 @@ export default function SinglePageLandingScreen() {
             setActiveSets([]);
             setSameForAll(true);
             setSelectedModalMuscle(null);
+            setSelectedSubGroup(null);
             setTemplateListVisible(false);
             setFromTemplateList(false);
 
@@ -857,6 +869,7 @@ export default function SinglePageLandingScreen() {
       setActiveSets([]);
       setSameForAll(true);
       setSelectedModalMuscle(null);
+      setSelectedSubGroup(null);
       setTemplateListVisible(false);
       setFromTemplateList(false);
 
@@ -941,12 +954,16 @@ export default function SinglePageLandingScreen() {
     );
   };
 
-  const getSessionMuscles = (session: WorkoutSession): MuscleGroup[] => {
-    const muscles = new Set<MuscleGroup>();
+  const getSessionMuscles = (session: WorkoutSession): string[] => {
+    const muscles = new Set<string>();
     session.exercises.forEach((logEx) => {
       const details = exercises.find((e) => e.id === logEx.exerciseId);
       if (details) {
-        muscles.add(details.muscleGroup);
+        if (details.muscleGroup === 'Abs & Shoulders') {
+          muscles.add(SHOULDER_EXERCISE_IDS.has(logEx.exerciseId) ? 'Shoulders' : 'Abs');
+        } else {
+          muscles.add(details.muscleGroup);
+        }
       }
     });
     return Array.from(muscles);
@@ -992,8 +1009,15 @@ export default function SinglePageLandingScreen() {
     return 'Earlier';
   };
 
-  // Filter the snapshotted sorted exercise list by search query inside the modal popup
-  const displayedExercises = sortedExerciseList.filter((ex) =>
+  // Filter the snapshotted sorted exercise list by sub-group and search query
+  const subGroupFiltered = selectedSubGroup
+    ? sortedExerciseList.filter((ex) =>
+        selectedSubGroup === 'Shoulders'
+          ? SHOULDER_EXERCISE_IDS.has(ex.id) || customShoulderIds.has(ex.id)
+          : !SHOULDER_EXERCISE_IDS.has(ex.id) && !customShoulderIds.has(ex.id)
+      )
+    : sortedExerciseList;
+  const displayedExercises = subGroupFiltered.filter((ex) =>
     ex.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -1573,7 +1597,7 @@ export default function SinglePageLandingScreen() {
           visible={selectedModalMuscle !== null}
           animationType="none"
           presentationStyle="fullScreen"
-          onRequestClose={() => setSelectedModalMuscle(null)}
+          onRequestClose={() => { setSelectedModalMuscle(null); setSelectedSubGroup(null); }}
         >
           <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
             <SafeAreaView style={styles.modalInnerContainer} edges={['top', 'bottom', 'left', 'right']}>
@@ -1589,13 +1613,13 @@ export default function SinglePageLandingScreen() {
                       numberOfLines={1} 
                       adjustsFontSizeToFit
                     >
-                      {(selectedModalMuscle || '').toUpperCase()} WORKOUTS
+                      {(selectedSubGroup || selectedModalMuscle || '').toUpperCase()} WORKOUTS
                     </Text>
                     <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>Select an exercise to log completed sets</Text>
                   </View>
                   <TouchableOpacity
                     style={[styles.modalCloseBtn, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
-                    onPress={() => setSelectedModalMuscle(null)}
+                    onPress={() => { setSelectedModalMuscle(null); setSelectedSubGroup(null); }}
                     activeOpacity={0.7}
                   >
                     <Text style={styles.modalCloseBtnText}>Close</Text>
@@ -1610,13 +1634,24 @@ export default function SinglePageLandingScreen() {
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.modalSwitcherScroll}
                   >
-                    {MUSCLE_GROUPS.map((muscle) => {
-                      const isActive = selectedModalMuscle === muscle;
-                      const activeColor = categoryColors[muscle] || '#10B981';
+                    {(() => {
+                      const pills: { display: string; actual: MuscleGroup }[] = [];
+                      MUSCLE_GROUPS.forEach((m) => {
+                        if (m === 'Abs & Shoulders') {
+                          pills.push({ display: 'Abs', actual: m });
+                          pills.push({ display: 'Shoulders', actual: m });
+                        } else {
+                          pills.push({ display: m, actual: m });
+                        }
+                      });
+                      return pills;
+                    })().map((pill) => {
+                      const isActive = selectedModalMuscle === pill.actual && (pill.actual !== 'Abs & Shoulders' || selectedSubGroup === pill.display);
+                      const activeColor = categoryColors[pill.actual] || '#10B981';
 
                       return (
                         <TouchableOpacity
-                          key={muscle}
+                          key={pill.display}
                           style={[
                             styles.modalSwitcherPill,
                             { backgroundColor: theme.cardBg, borderColor: theme.borderColor },
@@ -1627,10 +1662,11 @@ export default function SinglePageLandingScreen() {
                           ]}
                           onPress={() => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            setSelectedModalMuscle(muscle);
-                            setSearch(''); // Clear search on switch
-                            setExpandedExerciseId(null); // Collapse open details
-                            setSortedExerciseList(sortExercisesForMuscle(muscle));
+                            setSelectedModalMuscle(pill.actual);
+                            setSelectedSubGroup(pill.actual === 'Abs & Shoulders' ? (pill.display as 'Abs' | 'Shoulders') : null);
+                            setSearch('');
+                            setExpandedExerciseId(null);
+                            setSortedExerciseList(sortExercisesForMuscle(pill.actual));
                           }}
                           activeOpacity={0.8}
                         >
@@ -1641,7 +1677,7 @@ export default function SinglePageLandingScreen() {
                               isActive && { color: activeColor, fontWeight: '800' },
                             ]}
                           >
-                            {muscle.toUpperCase()}
+                            {pill.display.toUpperCase()}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -1709,6 +1745,7 @@ export default function SinglePageLandingScreen() {
                               setSameForAll(true);
                               setExpandedExerciseId(item.id);
                               setSelectedModalMuscle(null);
+                              setSelectedSubGroup(null);
                             }}
                             activeOpacity={0.85}
                           >
@@ -1790,6 +1827,7 @@ export default function SinglePageLandingScreen() {
                       style={[styles.modalFinishBtn, { backgroundColor: '#10B981' }]}
                       onPress={() => {
                         setSelectedModalMuscle(null);
+                        setSelectedSubGroup(null);
                         setTimeout(() => {
                           handleFinishWorkoutDay();
                         }, 400);
@@ -1841,6 +1879,12 @@ export default function SinglePageLandingScreen() {
                   const name = newExerciseName.trim();
                   if (!name || !selectedModalMuscle) return;
                   const created = await createCustomExercise(name, selectedModalMuscle);
+                  if (selectedSubGroup === 'Shoulders') {
+                    const next = new Set(customShoulderIds);
+                    next.add(created.id);
+                    setCustomShoulderIds(next);
+                    AsyncStorage.setItem('@custom_shoulder_ids', JSON.stringify([...next]));
+                  }
                   setNewExerciseName('');
                   setAddExerciseVisible(false);
                   setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle, [created]));

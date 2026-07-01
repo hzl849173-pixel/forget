@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useWorkout, WorkoutSession, PersonalRecord, Exercise, LoggedExercise } from './use-workout-storage';
-import { MuscleGroup } from '../constants/exercises';
+import { MuscleGroup, SHOULDER_EXERCISE_IDS } from '../constants/exercises';
 
 export interface OverallStats {
   totalWorkouts: number;
@@ -148,7 +148,7 @@ export const useWorkoutAnalytics = () => {
       return {
         exerciseId: pr.exerciseId,
         exerciseName: ex?.name || 'Unknown Exercise',
-        muscleGroup: ex?.muscleGroup || 'Other',
+        muscleGroup: (ex?.muscleGroup === 'Abs & Shoulders' ? (SHOULDER_EXERCISE_IDS.has(pr.exerciseId) ? 'Shoulders' : 'Abs') : ex?.muscleGroup) || 'Other',
         weight: pr.weight,
         reps: pr.reps,
         date: pr.date,
@@ -248,7 +248,11 @@ export const useWorkoutAnalytics = () => {
         for (const logEx of session.exercises) {
           const ex = exercises.find((e) => e.id === logEx.exerciseId);
           if (ex) {
-            const muscle = ex.muscleGroup;
+            let muscle = ex.muscleGroup;
+            if (muscle === 'Abs & Shoulders') {
+              // Separate them if we want them shown independently everywhere else
+              muscle = SHOULDER_EXERCISE_IDS.has(ex.id) ? 'Shoulders' : 'Abs';
+            }
             let exVol = 0;
             for (const set of logEx.sets) {
               exVol += set.weight * set.reps;
@@ -261,7 +265,7 @@ export const useWorkoutAnalytics = () => {
       }
 
       const list: MuscleVolumeDistribution[] = [];
-      for (const muscle of ['Chest', 'Triceps', 'Biceps', 'Back', 'Legs', 'Abs & Shoulders'] as MuscleGroup[]) {
+      for (const muscle of ['Chest', 'Triceps', 'Biceps', 'Back', 'Legs', 'Abs', 'Shoulders'] as MuscleGroup[]) {
         const vol = volumeMap[muscle] || 0;
         const sets = setsMap[muscle] || 0;
         const pct = totalPeriodVolume > 0 ? (vol / totalPeriodVolume) * 100 : 0;

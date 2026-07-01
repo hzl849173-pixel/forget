@@ -1,4 +1,4 @@
-export type MuscleGroup = 'Chest' | 'Triceps' | 'Biceps' | 'Back' | 'Legs' | 'Abs & Shoulders';
+export type MuscleGroup = 'Chest' | 'Triceps' | 'Biceps' | 'Back' | 'Legs' | 'Abs & Shoulders' | 'Abs' | 'Shoulders';
 
 export type Instrument = 'Barbell' | 'Dumbbell' | 'Cable' | 'Machine' | 'Bodyweight' | 'Kettlebell' | 'Other';
 
@@ -32,6 +32,7 @@ export const SHOULDER_EXERCISE_IDS = new Set([
   'cable-lateral-raise',
   'face-pull',
   'reverse-pec-deck',
+  'machine-shoulder-press',
 ]);
 
 export const DEFAULT_EXERCISES: ExerciseSeed[] = [
@@ -267,6 +268,7 @@ export const DEFAULT_EXERCISES: ExerciseSeed[] = [
   { id: 'cable-crunch', name: 'Cable Crunch', muscleGroup: 'Abs & Shoulders', instrument: 'Cable', isCustom: false, isFavorite: false },
 
   // -- Machine --
+  { id: 'machine-shoulder-press', name: 'Machine Shoulder Press', muscleGroup: 'Abs & Shoulders', instrument: 'Machine', isCustom: false, isFavorite: false },
   { id: 'reverse-pec-deck', name: 'Reverse Pec Deck Fly', muscleGroup: 'Abs & Shoulders', instrument: 'Machine', isCustom: false, isFavorite: false },
 
   // -- Bodyweight --
