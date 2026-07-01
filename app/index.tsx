@@ -617,6 +617,26 @@ export default function SinglePageLandingScreen() {
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     
+    const newLog = {
+      exerciseId,
+      sets: activeSets.map((s) => ({ ...s, isCompleted: true })),
+    };
+
+    if (fromTemplateList) {
+      setTemplateListExercises((prev) => {
+        const updated = [...prev];
+        const existingIndex = updated.findIndex((le) => le.exerciseId === exerciseId);
+        if (existingIndex > -1) {
+          updated[existingIndex] = newLog;
+        } else {
+          updated.push(newLog);
+        }
+        return updated;
+      });
+      handleTemplateListBackFromLogger(true);
+      return;
+    }
+
     // Set start time if it's the first exercise in the session
     let currentStartTime = sessionStartTime;
     if (activeSessionExercises.length === 0) {
@@ -629,11 +649,6 @@ export default function SinglePageLandingScreen() {
     const updatedExercises = [...activeSessionExercises];
     const existingIndex = updatedExercises.findIndex((le) => le.exerciseId === exerciseId);
     
-    const newLog = {
-      exerciseId,
-      sets: activeSets.map((s) => ({ ...s, isCompleted: true })),
-    };
-
     if (existingIndex > -1) {
       updatedExercises[existingIndex] = newLog;
     } else {
@@ -644,11 +659,11 @@ export default function SinglePageLandingScreen() {
     await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updatedExercises));
 
     // Reset logger states
-    handleCloseActiveExerciseLogger();
+    handleCloseActiveExerciseLogger(true);
   };
 
-  const handleCloseActiveExerciseLogger = async () => {
-    if (expandedExerciseId && activeSets.length > 0) {
+  const handleCloseActiveExerciseLogger = async (skipSave = false) => {
+    if (!skipSave && expandedExerciseId && activeSets.length > 0) {
       const updated = activeSessionExercises.map((le) =>
         le.exerciseId === expandedExerciseId
           ? { ...le, sets: activeSets.map((s) => ({ ...s, isCompleted: true })) }
@@ -921,8 +936,8 @@ export default function SinglePageLandingScreen() {
     setSameForAll(false);
   };  
 
-  const handleTemplateListBackFromLogger = () => {
-    if (expandedExerciseId && activeSets.length > 0) {
+  const handleTemplateListBackFromLogger = (skipSave = false) => {
+    if (!skipSave && expandedExerciseId && activeSets.length > 0) {
       setTemplateListExercises((prev) =>
         prev.map((ex) =>
           ex.exerciseId === expandedExerciseId
@@ -934,6 +949,7 @@ export default function SinglePageLandingScreen() {
     setExpandedExerciseId(null);
     setActiveSets([]);
     setSameForAll(true);
+    setTemplateListVisible(true);
   };
 
   const handleDeleteTemplate = (id: string, name: string) => {
@@ -1609,7 +1625,11 @@ export default function SinglePageLandingScreen() {
           visible={selectedModalMuscle !== null}
           animationType="none"
           presentationStyle="fullScreen"
-          onRequestClose={() => { setSelectedModalMuscle(null); setSelectedSubGroup(null); }}
+          onRequestClose={() => { 
+            setSelectedModalMuscle(null); 
+            setSelectedSubGroup(null);
+            if (fromTemplateList) setTemplateListVisible(true);
+          }}
         >
           <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
             <SafeAreaView style={styles.modalInnerContainer} edges={['top', 'bottom', 'left', 'right']}>
@@ -1630,11 +1650,15 @@ export default function SinglePageLandingScreen() {
                     <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>Select an exercise to log completed sets</Text>
                   </View>
                   <TouchableOpacity
-                    style={[styles.modalCloseBtn, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
-                    onPress={() => { setSelectedModalMuscle(null); setSelectedSubGroup(null); }}
+                    onPress={() => { 
+                      setSelectedModalMuscle(null); 
+                      setSelectedSubGroup(null); 
+                      if (fromTemplateList) setTemplateListVisible(true);
+                    }}
                     activeOpacity={0.7}
+                    style={{ padding: 6 }}
                   >
-                    <Text style={styles.modalCloseBtnText}>Close</Text>
+                    <X size={22} color={theme.textSecondary} strokeWidth={2.5} />
                   </TouchableOpacity>
                 </View>
 
@@ -1737,7 +1761,8 @@ export default function SinglePageLandingScreen() {
                           <TouchableOpacity
                             style={styles.exerciseInfoClick}
                             onPress={() => {
-                              const existingInActive = activeSessionExercises.find((le) => le.exerciseId === item.id);
+                              const targetList = fromTemplateList ? templateListExercises : activeSessionExercises;
+                              const existingInActive = targetList.find((le) => le.exerciseId === item.id);
                               const initialSets: WorkoutSet[] = [];
                               if (existingInActive && existingInActive.sets.length > 0) {
                                 existingInActive.sets.forEach((set) => {
@@ -1756,8 +1781,10 @@ export default function SinglePageLandingScreen() {
                               setActiveSets(initialSets);
                               setSameForAll(true);
                               setExpandedExerciseId(item.id);
-                              setSelectedModalMuscle(null);
-                              setSelectedSubGroup(null);
+                              if (fromTemplateList) {
+                                setSelectedModalMuscle(null);
+                                setSelectedSubGroup(null);
+                              }
                             }}
                             activeOpacity={0.85}
                           >
@@ -1830,7 +1857,7 @@ export default function SinglePageLandingScreen() {
                 />
 
                 {/* Modal Sticky Footer if active session is not empty */}
-                {activeSessionExercises.length > 0 && (
+                {activeSessionExercises.length > 0 && !fromTemplateList && (
                   <View style={[styles.modalStickyFooter, { backgroundColor: theme.cardBg, borderTopColor: theme.borderColor }]}>
                     <Text style={[styles.modalFooterText, { color: theme.textPrimary }]}>
                       {activeSessionExercises.length} Exercise{activeSessionExercises.length > 1 ? 's' : ''} Logged
@@ -2353,13 +2380,12 @@ export default function SinglePageLandingScreen() {
           style={styles.exerciseLoggerOverlay}
           activeOpacity={1}
           onPress={() => {
-            if (fromTemplateList) handleTemplateListBackFromLogger();
-            else handleCloseActiveExerciseLogger();
+            if (fromTemplateList) handleTemplateListBackFromLogger(true);
+            else handleCloseActiveExerciseLogger(true);
           }}
         >
           <View
             style={[styles.exerciseLoggerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
-            onStartShouldSetResponder={() => true}
           >
             {(() => {
               const exItem = expandedExerciseId ? exercises.find((e) => e.id === expandedExerciseId) : null;
@@ -2628,19 +2654,31 @@ export default function SinglePageLandingScreen() {
         onRequestClose={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); }}
       >
         <View style={styles.timerOverlay}>
-          <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+          <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '90%', width: '95%' }]}>
             <View style={styles.editWorkoutHeader}>
               <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Exercises ({templateListExercises.length})</Text>
-              <TouchableOpacity
-                onPress={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); }}
-                activeOpacity={0.6}
-                style={{ padding: 4 }}
-              >
-                <X size={20} color={theme.textSecondary} strokeWidth={2} />
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setTemplateListVisible(false);
+                    setSelectedModalMuscle('Chest');
+                  }}
+                  activeOpacity={0.6}
+                  style={{ padding: 4 }}
+                >
+                  <Plus size={20} color={theme.textPrimary} strokeWidth={2.5} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); }}
+                  activeOpacity={0.6}
+                  style={{ padding: 4 }}
+                >
+                  <X size={24} color={theme.textSecondary} strokeWidth={2} />
+                </TouchableOpacity>
+              </View>
             </View>
             <DragList
-              containerStyle={{ maxHeight: 400 }}
+              containerStyle={{ flex: 1 }}
               data={templateListExercises}
               keyExtractor={(item) => item.exerciseId}
               onReordered={(fromIdx, toIdx) => {
@@ -2651,7 +2689,7 @@ export default function SinglePageLandingScreen() {
                   return updated;
                 });
               }}
-              style={{ maxHeight: 400 }}
+              style={{ flex: 1 }}
               renderItem={({ item, onDragStart, isActive }) => {
                   const details = exercises.find((e) => e.id === item.exerciseId);
                   if (!details) return null;
@@ -4123,8 +4161,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     padding: 24,
-    width: '90%',
-    maxHeight: '80%',
+    width: '95%',
+    maxHeight: '90%',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
