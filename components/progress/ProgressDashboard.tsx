@@ -11,7 +11,12 @@ import { Flame, Trophy, Award, Sparkles, X } from 'lucide-react-native';
 
 type DashboardTab = 'overview' | 'analytics' | 'milestones';
 
-export const ProgressDashboard: React.FC = () => {
+interface ProgressDashboardProps {
+  initialModalTab?: DashboardTab | null;
+  onClearInitialTab?: () => void;
+}
+
+export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ initialModalTab = null, onClearInitialTab }) => {
   const {
     overallStats,
     prs,
@@ -26,7 +31,14 @@ export const ProgressDashboard: React.FC = () => {
   } = useWorkoutAnalytics();
 
   const [activeTab, setActiveTab] = useState<DashboardTab | null>(null);
-  const [modalTab, setModalTab] = useState<DashboardTab | null>(null);
+  const [modalTab, setModalTab] = useState<DashboardTab | null>(initialModalTab);
+
+  useEffect(() => {
+    if (initialModalTab) {
+      setModalTab(initialModalTab);
+      if (onClearInitialTab) onClearInitialTab();
+    }
+  }, [initialModalTab]);
   const modalAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

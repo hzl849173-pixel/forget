@@ -62,8 +62,8 @@ export const MuscleAnalysisView: React.FC<MuscleAnalysisViewProps> = ({ distribu
 
       {/* List with Progress Bars */}
       <View style={styles.listCard}>
-        {currentData.map((item) => (
-          <View key={item.muscleGroup} style={styles.muscleRow}>
+        {currentData.map((item, index) => (
+          <View key={item.muscleGroup} style={[styles.muscleRow, index === currentData.length - 1 && { marginBottom: 0 }]}>
             <View style={styles.rowHeader}>
               <Text style={styles.muscleName}>{item.muscleGroup}</Text>
               <Text style={styles.muscleStats}>

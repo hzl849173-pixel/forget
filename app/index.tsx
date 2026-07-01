@@ -201,6 +201,7 @@ export default function SinglePageLandingScreen() {
 
   // Active view segment: 'log' | 'progress' | 'templates' | 'history'
   const [activeSegment, setActiveSegment] = useState<'log' | 'progress' | 'templates' | 'history'>('log');
+  const [progressInitialTab, setProgressInitialTab] = useState<'overview' | 'analytics' | 'milestones' | null>(null);
 
   const switcherScrollRef = React.useRef<ScrollView>(null);
 
@@ -1406,8 +1407,16 @@ export default function SinglePageLandingScreen() {
               </Card>
 
               {/* Consistency Graph */}
-              <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>ACTIVITY TRACKER</Text>
-              <ProgressGrid history={history} isDarkMode={isDarkMode} />
+              <TouchableOpacity 
+                activeOpacity={0.7} 
+                onPress={() => {
+                  setProgressInitialTab('analytics');
+                  setActiveSegment('progress');
+                }}
+              >
+                <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>ACTIVITY TRACKER</Text>
+                <ProgressGrid history={history} isDarkMode={isDarkMode} />
+              </TouchableOpacity>
 
             </>
           ) : activeSegment === 'templates' ? (
@@ -1588,7 +1597,10 @@ export default function SinglePageLandingScreen() {
             </View>
           ) : (
             /* Progress View Section */
-            <ProgressDashboard />
+            <ProgressDashboard 
+              initialModalTab={progressInitialTab}
+              onClearInitialTab={() => setProgressInitialTab(null)}
+            />
           )}
         </ScrollView>
 
