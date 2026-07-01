@@ -140,7 +140,6 @@ export const ProgressDashboard: React.FC = () => {
           </TouchableOpacity>
           <Animated.View
             style={[styles.modalContentWrapper, { transform: [{ translateY: modalAnim.interpolate({ inputRange: [0, 1], outputRange: [400, 0] }) }] }]}
-            onStartShouldSetResponder={() => true}
           >
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
@@ -169,8 +168,8 @@ export const ProgressDashboard: React.FC = () => {
                 )}
                 {modalTab === 'milestones' && (
                   <>
-                    <AchievementsView achievements={achievements} />
                     <PersonalRecordsView prs={prs} />
+                    <AchievementsView achievements={achievements} />
                   </>
                 )}
               </ScrollView>
