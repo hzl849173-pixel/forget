@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, TextInputProps } from 'react-native';
-import * as Haptics from 'expo-haptics';
+
 import { Plus, Minus } from 'lucide-react-native';
 
 interface InputProps extends TextInputProps {
@@ -57,7 +57,6 @@ export const IncrementInput: React.FC<IncrementInputProps> = ({
 
   const handleDecrement = () => {
     if (value - step >= min) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const newVal = parseFloat((value - step).toFixed(2));
       onChange(newVal);
     }
@@ -65,7 +64,6 @@ export const IncrementInput: React.FC<IncrementInputProps> = ({
 
   const handleIncrement = () => {
     if (value + step <= max) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const newVal = parseFloat((value + step).toFixed(2));
       onChange(newVal);
     }

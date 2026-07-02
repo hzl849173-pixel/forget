@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
-import * as Haptics from 'expo-haptics';
+
 
 interface ButtonProps {
   onPress: () => void;
@@ -25,7 +25,6 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const handlePress = () => {
     if (disabled || loading) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress();
   };
 

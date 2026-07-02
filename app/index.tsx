@@ -145,7 +145,21 @@ const ALT_IMAGES = [
   (color: string) => <KettlebellIcon color={color} />,
   (color: string) => <WeightPlateIcon color={color} />,
 ];
-import * as Haptics from 'expo-haptics';
+const Haptics = {
+  impactAsync: async (...args: any[]) => {},
+  notificationAsync: async (...args: any[]) => {},
+  selectionAsync: async (...args: any[]) => {},
+  ImpactFeedbackStyle: {
+    Light: 'light' as const,
+    Medium: 'medium' as const,
+    Heavy: 'heavy' as const,
+  },
+  NotificationFeedbackType: {
+    Success: 'success' as const,
+    Warning: 'warning' as const,
+    Error: 'error' as const,
+  },
+};
 import {
   Star,
   Flame,
