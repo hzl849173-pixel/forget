@@ -64,6 +64,7 @@ interface WorkoutContextType {
   getExercisePR: (exerciseId: string) => PersonalRecord | undefined;
   getWorkoutInsights: () => WorkoutInsights;
   saveTemplate: (name: string, exercises: LoggedExercise[]) => Promise<void>;
+  updateTemplate: (id: string, exercises: LoggedExercise[]) => Promise<void>;
   deleteTemplate: (id: string) => Promise<void>;
 }
 
@@ -359,6 +360,14 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await AsyncStorage.setItem(STORAGE_KEYS.TEMPLATES, JSON.stringify(newTemplates));
   };
 
+  const updateTemplate = async (id: string, updatedExercises: LoggedExercise[]) => {
+    const newTemplates = templates.map((t) =>
+      t.id === id ? { ...t, exercises: updatedExercises } : t
+    );
+    setTemplates(newTemplates);
+    await AsyncStorage.setItem(STORAGE_KEYS.TEMPLATES, JSON.stringify(newTemplates));
+  };
+
   const deleteCustomExercise = async (exerciseId: string) => {
     const newExercises = exercises.filter((e) => e.id !== exerciseId);
     await saveExercises(newExercises);
@@ -386,6 +395,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         getExercisePR,
         getWorkoutInsights,
         saveTemplate,
+        updateTemplate,
         deleteTemplate,
       }}
     >

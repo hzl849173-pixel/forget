@@ -161,6 +161,7 @@ import {
   Trophy,
   X,
   Timer,
+  Check,
 } from 'lucide-react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -194,6 +195,7 @@ export default function SinglePageLandingScreen() {
     getPreviousSessionForExercise,
     getExercisePR,
     saveTemplate,
+    updateTemplate,
     deleteTemplate,
   } = useWorkout();
 
@@ -221,6 +223,9 @@ export default function SinglePageLandingScreen() {
   const [templateListVisible, setTemplateListVisible] = useState(false);
   const [templateListExercises, setTemplateListExercises] = useState<LoggedExercise[]>([]);
   const [fromTemplateList, setFromTemplateList] = useState(false);
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [templateLogSelectVisible, setTemplateLogSelectVisible] = useState(false);
+  const [templateLogSelectedIds, setTemplateLogSelectedIds] = useState<Set<string>>(new Set());
   
   const [sortedExerciseList, setSortedExerciseList] = useState<Exercise[]>([]);
   const [customShoulderIds, setCustomShoulderIds] = useState<Set<string>>(new Set());
@@ -631,6 +636,10 @@ export default function SinglePageLandingScreen() {
         } else {
           updated.push(newLog);
         }
+        // Persist template changes
+        if (activeTemplateId) {
+          updateTemplate(activeTemplateId, updated);
+        }
         return updated;
       });
       handleTemplateListBackFromLogger(true);
@@ -911,6 +920,7 @@ export default function SinglePageLandingScreen() {
       sets: logEx.sets.map((s) => ({ ...s })),
     }));
     setTemplateListExercises(exercisesToLoad);
+    setActiveTemplateId(tmpl.id);
     setActiveSegment('log');
     setTemplateListVisible(true);
     setFromTemplateList(true);
@@ -930,21 +940,25 @@ export default function SinglePageLandingScreen() {
     setActiveSets(logEx.sets.map((s) => ({
       id: s.id,
       weight: s.weight,
-      reps: 0,
-      isCompleted: true,
+      reps: s.reps,
+      isCompleted: s.isCompleted ?? true,
     })));
     setSameForAll(false);
   };  
 
   const handleTemplateListBackFromLogger = (skipSave = false) => {
     if (!skipSave && expandedExerciseId && activeSets.length > 0) {
-      setTemplateListExercises((prev) =>
-        prev.map((ex) =>
-          ex.exerciseId === expandedExerciseId
-            ? { ...ex, sets: activeSets }
-            : ex
-        )
-      );
+      setTemplateListExercises((prev) => {
+        const exists = prev.find((ex) => ex.exerciseId === expandedExerciseId);
+        if (exists) {
+          return prev.map((ex) =>
+            ex.exerciseId === expandedExerciseId
+              ? { ...ex, sets: activeSets }
+              : ex
+          );
+        }
+        return [...prev, { exerciseId: expandedExerciseId, sets: activeSets }];
+      });
     }
     setExpandedExerciseId(null);
     setActiveSets([]);
@@ -1628,7 +1642,10 @@ export default function SinglePageLandingScreen() {
           onRequestClose={() => { 
             setSelectedModalMuscle(null); 
             setSelectedSubGroup(null);
-            if (fromTemplateList) setTemplateListVisible(true);
+            if (fromTemplateList) {
+              if (activeTemplateId) updateTemplate(activeTemplateId, templateListExercises);
+              setTemplateListVisible(true);
+            }
           }}
         >
           <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
@@ -1653,7 +1670,10 @@ export default function SinglePageLandingScreen() {
                     onPress={() => { 
                       setSelectedModalMuscle(null); 
                       setSelectedSubGroup(null); 
-                      if (fromTemplateList) setTemplateListVisible(true);
+                      if (fromTemplateList) {
+                        if (activeTemplateId) updateTemplate(activeTemplateId, templateListExercises);
+                        setTemplateListVisible(true);
+                      }
                     }}
                     activeOpacity={0.7}
                     style={{ padding: 6 }}
@@ -2434,7 +2454,7 @@ export default function SinglePageLandingScreen() {
                     {fromTemplateList ? (
                       <TouchableOpacity
                         style={styles.exerciseNavArrow}
-                        onPress={handleTemplateListBackFromLogger}
+                        onPress={() => handleTemplateListBackFromLogger()}
                         activeOpacity={0.6}
                       >
                         <ChevronLeft size={18} color={theme.textPrimary} strokeWidth={2.5} />
@@ -2456,7 +2476,7 @@ export default function SinglePageLandingScreen() {
                     {fromTemplateList ? (
                       <TouchableOpacity
                         style={[styles.exerciseLoggerCloseBtn, { backgroundColor: '#F3F4F6', borderColor: theme.borderColor }]}
-                        onPress={handleTemplateListBackFromLogger}
+                        onPress={() => handleTemplateListBackFromLogger()}
                         activeOpacity={0.7}
                       >
                         <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
@@ -2473,7 +2493,7 @@ export default function SinglePageLandingScreen() {
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.exerciseLoggerCloseBtn, { backgroundColor: '#F3F4F6', borderColor: theme.borderColor }]}
-                          onPress={handleCloseActiveExerciseLogger}
+                          onPress={() => handleCloseActiveExerciseLogger()}
                           activeOpacity={0.7}
                         >
                           <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
@@ -2585,7 +2605,7 @@ export default function SinglePageLandingScreen() {
                       <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>ADD SET</Text>
                     </TouchableOpacity>
                     <Button
-                      title="Log Workout"
+                      title={fromTemplateList ? "Save" : "Log Workout"}
                       variant="primary"
                       onPress={() => exItem && handleSaveWorkout(exItem.id)}
                       style={styles.saveWorkoutBtn}
@@ -2651,7 +2671,7 @@ export default function SinglePageLandingScreen() {
         visible={templateListVisible}
         transparent={true}
         animationType="none"
-        onRequestClose={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); }}
+        onRequestClose={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); setActiveTemplateId(null); }}
       >
         <View style={styles.timerOverlay}>
           <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '90%', width: '95%' }]}>
@@ -2669,7 +2689,7 @@ export default function SinglePageLandingScreen() {
                   <Plus size={20} color={theme.textPrimary} strokeWidth={2.5} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); }}
+                  onPress={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); setActiveTemplateId(null); }}
                   activeOpacity={0.6}
                   style={{ padding: 4 }}
                 >
@@ -2678,7 +2698,7 @@ export default function SinglePageLandingScreen() {
               </View>
             </View>
             <DragList
-              containerStyle={{ flex: 1 }}
+              containerStyle={{ maxHeight: 500 }}
               data={templateListExercises}
               keyExtractor={(item) => item.exerciseId}
               onReordered={(fromIdx, toIdx) => {
@@ -2689,7 +2709,7 @@ export default function SinglePageLandingScreen() {
                   return updated;
                 });
               }}
-              style={{ flex: 1 }}
+              style={{ maxHeight: 500 }}
               renderItem={({ item, onDragStart, isActive }) => {
                   const details = exercises.find((e) => e.id === item.exerciseId);
                   if (!details) return null;
@@ -2725,7 +2745,7 @@ export default function SinglePageLandingScreen() {
               />
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
               <TouchableOpacity
-                onPress={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); }}
+                onPress={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); setActiveTemplateId(null); }}
                 activeOpacity={0.7}
                 style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: theme.borderColor }}
               >
@@ -2733,18 +2753,149 @@ export default function SinglePageLandingScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
-                  const now = Date.now();
-                  setActiveSessionExercises(templateListExercises);
-                  setSessionStartTime(now);
-                  setTemplateListVisible(false);
-                  setFromTemplateList(false);
-                  AsyncStorage.setItem('@active_session_exercises', JSON.stringify(templateListExercises));
-                  AsyncStorage.setItem('@session_start_time', String(now));
+                  setTemplateLogSelectedIds(new Set(templateListExercises.map(e => e.exerciseId)));
+                  setTemplateLogSelectVisible(true);
                 }}
                 activeOpacity={0.8}
                 style={{ flex: 1, backgroundColor: '#10B981', paddingVertical: 16, alignItems: 'center', borderRadius: 14 }}
               >
-                <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>Done</Text>
+                <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>LOG</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Template Log Selection Modal */}
+      <Modal
+        visible={templateLogSelectVisible}
+        transparent={true}
+        animationType="none"
+        onRequestClose={() => setTemplateLogSelectVisible(false)}
+      >
+        <View style={styles.timerOverlay}>
+          <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '85%', width: '95%' }]}>
+            <View style={styles.editWorkoutHeader}>
+              <View>
+                <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Select Exercises</Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: '600', marginTop: 2 }}>
+                  {templateLogSelectedIds.size} of {templateListExercises.length} selected
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  if (templateLogSelectedIds.size === templateListExercises.length) {
+                    setTemplateLogSelectedIds(new Set());
+                  } else {
+                    setTemplateLogSelectedIds(new Set(templateListExercises.map(e => e.exerciseId)));
+                  }
+                }}
+                activeOpacity={0.7}
+                style={{ paddingVertical: 4, paddingHorizontal: 10 }}
+              >
+                <Text style={{ color: '#10B981', fontSize: 13, fontWeight: '700' }}>
+                  {templateLogSelectedIds.size === templateListExercises.length ? 'Deselect All' : 'Select All'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+              {templateListExercises.map((logEx) => {
+                const details = exercises.find((e) => e.id === logEx.exerciseId);
+                if (!details) return null;
+                const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
+                const isSelected = templateLogSelectedIds.has(logEx.exerciseId);
+                return (
+                  <TouchableOpacity
+                    key={logEx.exerciseId}
+                    activeOpacity={0.6}
+                    onPress={() => {
+                      setTemplateLogSelectedIds((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(logEx.exerciseId)) {
+                          next.delete(logEx.exerciseId);
+                        } else {
+                          next.add(logEx.exerciseId);
+                        }
+                        return next;
+                      });
+                    }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: 12,
+                      paddingHorizontal: 16,
+                      borderBottomWidth: 1,
+                      borderBottomColor: theme.borderColor,
+                    }}
+                  >
+                    <View style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 6,
+                      borderWidth: 2,
+                      borderColor: isSelected ? '#10B981' : theme.borderColor,
+                      backgroundColor: isSelected ? '#10B981' : 'transparent',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: 14,
+                    }}>
+                      {isSelected && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
+                    </View>
+                    <View style={[styles.editWorkoutItemAccent, { backgroundColor: muscleColor }]} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: isSelected ? theme.textPrimary : theme.textSecondary, fontSize: 15, fontWeight: '600' }}>
+                        {details.name}
+                      </Text>
+                      <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: '500', marginTop: 1 }}>
+                        {details.muscleGroup} · {logEx.sets.length} set{logEx.sets.length > 1 ? 's' : ''}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+              <TouchableOpacity
+                onPress={() => setTemplateLogSelectVisible(false)}
+                activeOpacity={0.7}
+                style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: theme.borderColor }}
+              >
+                <Text style={{ color: theme.textSecondary, fontSize: 14, fontWeight: '700', letterSpacing: 0.3 }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  const selectedExercises = templateListExercises
+                    .filter(e => templateLogSelectedIds.has(e.exerciseId))
+                    .map(e => ({
+                      exerciseId: e.exerciseId,
+                      sets: e.sets.map(s => ({ ...s, id: generateId(), isCompleted: false })),
+                    }));
+                  const now = Date.now();
+                  setActiveSessionExercises(selectedExercises);
+                  setSessionStartTime(now);
+                  setTemplateLogSelectVisible(false);
+                  setTemplateListVisible(false);
+                  setFromTemplateList(false);
+                  setActiveTemplateId(null);
+                  setTemplateListExercises([]);
+                  AsyncStorage.setItem('@active_session_exercises', JSON.stringify(selectedExercises));
+                  AsyncStorage.setItem('@session_start_time', String(now));
+                }}
+                activeOpacity={0.8}
+                disabled={templateLogSelectedIds.size === 0}
+                style={{
+                  flex: 1,
+                  backgroundColor: templateLogSelectedIds.size > 0 ? '#10B981' : theme.borderColor,
+                  paddingVertical: 16,
+                  alignItems: 'center',
+                  borderRadius: 14,
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>
+                  START ({templateLogSelectedIds.size})
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -4161,8 +4312,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     padding: 24,
-    width: '95%',
-    maxHeight: '90%',
+    width: '90%',
+    maxHeight: '80%',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
