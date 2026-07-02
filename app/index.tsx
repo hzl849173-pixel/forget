@@ -2515,10 +2515,11 @@ export default function SinglePageLandingScreen() {
             else handleCloseActiveExerciseLogger(true);
           }}
         >
-          <View
-            style={[styles.exerciseLoggerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
-          >
-            {(() => {
+          <Pressable onPress={() => {}} style={{ width: '100%', maxWidth: 380, maxHeight: '85%' }}>
+            <View
+              style={[styles.exerciseLoggerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '100%', flexShrink: 1 }]}
+            >
+              {(() => {
               const exItem = expandedExerciseId ? exercises.find((e) => e.id === expandedExerciseId) : null;
               if (!exItem) return null;
               const categoryColor = categoryColors[exItem.muscleGroup] || '#10B981';
@@ -2560,7 +2561,7 @@ export default function SinglePageLandingScreen() {
               navigateToExerciseRef.current = navigateToExercise;
 
               return (
-                <ScrollView style={{ maxHeight: 450 }} showsVerticalScrollIndicator={false}>
+                <View style={{ flexShrink: 1, maxHeight: '100%' }}>
                   <View {...exercisePanResponder.panHandlers} style={styles.exerciseLoggerHeader}>
                     {fromTemplateList ? (
                       <TouchableOpacity
@@ -2612,6 +2613,8 @@ export default function SinglePageLandingScreen() {
                       </>
                     )}
                   </View>
+
+                  <ScrollView style={{ flexShrink: 1, marginVertical: 12 }} showsVerticalScrollIndicator={false}>
 
                   {(() => {
                     const prev = expandedExerciseId ? getPreviousSessionForExercise(expandedExerciseId) : null;
@@ -2705,6 +2708,7 @@ export default function SinglePageLandingScreen() {
                       )}
                     </View>
                   ))}
+                  </ScrollView>
 
                   <View style={styles.loggerActions}>
                     <TouchableOpacity
@@ -2722,11 +2726,12 @@ export default function SinglePageLandingScreen() {
                       style={styles.saveWorkoutBtn}
                     />
                   </View>
-                </ScrollView>
+                </View>
               );
             })()}
           </View>
-        </TouchableOpacity>
+        </Pressable>
+      </TouchableOpacity>
       </Modal>
 
       {/* Save as Template Modal */}
@@ -4570,10 +4575,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#000000',
   },
-  // Exercise Logger Modal Styles
   exerciseLoggerOverlay: {
     flex: 1,
-    backgroundColor: '#090A0F', // Solid Midnight Obsidian background to cover background list instantly
+    backgroundColor: 'rgba(9, 10, 15, 0.7)', // Dim/semi-transparent backdrop
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
