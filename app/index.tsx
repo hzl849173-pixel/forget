@@ -163,6 +163,7 @@ import {
   X,
   Timer,
   Check,
+  GripVertical,
 } from 'lucide-react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -2507,18 +2508,17 @@ export default function SinglePageLandingScreen() {
           }
         }}
       >
-        <TouchableOpacity
-          style={styles.exerciseLoggerOverlay}
-          activeOpacity={1}
-          onPress={() => {
-            if (fromTemplateList) handleTemplateListBackFromLogger(true);
-            else handleCloseActiveExerciseLogger(true);
-          }}
-        >
-          <Pressable onPress={() => {}} style={{ width: '100%', maxWidth: 380, maxHeight: '85%' }}>
-            <View
-              style={[styles.exerciseLoggerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '100%', flexShrink: 1 }]}
-            >
+        <View style={styles.exerciseLoggerOverlayContainer}>
+          <Pressable
+            style={styles.exerciseLoggerBackdrop}
+            onPress={() => {
+              if (fromTemplateList) handleTemplateListBackFromLogger(true);
+              else handleCloseActiveExerciseLogger(true);
+            }}
+          />
+          <View
+            style={[styles.exerciseLoggerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '85%', flexShrink: 1 }]}
+          >
               {(() => {
               const exItem = expandedExerciseId ? exercises.find((e) => e.id === expandedExerciseId) : null;
               if (!exItem) return null;
@@ -2730,8 +2730,7 @@ export default function SinglePageLandingScreen() {
               );
             })()}
           </View>
-        </Pressable>
-      </TouchableOpacity>
+        </View>
       </Modal>
 
       {/* Save as Template Modal */}
@@ -2798,7 +2797,14 @@ export default function SinglePageLandingScreen() {
         <View style={styles.timerOverlay}>
           <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '90%', width: '95%' }]}>
             <View style={styles.editWorkoutHeader}>
-              <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Exercises ({templateListExercises.length})</Text>
+              <View>
+                <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Exercises ({templateListExercises.length})</Text>
+                {templateListExercises.length > 1 && (
+                  <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 3, opacity: 0.8, letterSpacing: 0.2 }}>
+                    Drag ⠿ to reorder
+                  </Text>
+                )}
+              </View>
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <TouchableOpacity
                   onPress={() => {
@@ -2866,6 +2872,7 @@ export default function SinglePageLandingScreen() {
                         delayLongPress={150}
                         style={[styles.editWorkoutItem, { borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1 }]}
                       >
+                        <GripVertical size={16} color={theme.textSecondary} opacity={0.4} style={{ marginRight: 10 }} />
                         <View style={[styles.editWorkoutItemAccent, { backgroundColor: muscleColor }]} />
                         <View style={{ flex: 1 }}>
                           <Text style={{ color: theme.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 2 }}>
@@ -4575,12 +4582,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#000000',
   },
-  exerciseLoggerOverlay: {
+  exerciseLoggerOverlayContainer: {
     flex: 1,
-    backgroundColor: 'rgba(9, 10, 15, 0.7)', // Dim/semi-transparent backdrop
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+  },
+  exerciseLoggerBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(9, 10, 15, 0.7)',
   },
   exerciseLoggerCard: {
     width: '100%',
