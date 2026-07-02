@@ -498,6 +498,17 @@ export const useWorkoutAnalytics = () => {
     const longestStreak = overallStats.longestStreak;
     const prsCount = prs.length;
 
+    let activeDaysSpan = 0;
+    if (history.length >= 2) {
+      const dates = history.map(s => new Date(s.date).getTime());
+      const minDate = Math.min(...dates);
+      const maxDate = Math.max(...dates);
+      const diffMs = maxDate - minDate;
+      activeDaysSpan = Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1;
+    } else if (history.length === 1) {
+      activeDaysSpan = 1;
+    }
+
     const addAchievement = (id: string, title: string, description: string, isUnlocked: boolean, progress: number, targetLabel: string) => {
       list.push({ id, title, description, isUnlocked, progress: Math.min(100, Math.round(progress)), targetLabel });
     };
@@ -506,21 +517,51 @@ export const useWorkoutAnalytics = () => {
     addAchievement('wo-10', 'Dedicated Lifter', 'Complete 10 workout sessions', workouts >= 10, (workouts / 10) * 100, '10 workouts');
     addAchievement('wo-25', 'Habit Builder', 'Complete 25 workout sessions', workouts >= 25, (workouts / 25) * 100, '25 workouts');
     addAchievement('wo-50', 'Gym Warrior', 'Complete 50 workout sessions', workouts >= 50, (workouts / 50) * 100, '50 workouts');
+    addAchievement('wo-75', 'Seasoned Athlete', 'Complete 75 workout sessions', workouts >= 75, (workouts / 75) * 100, '75 workouts');
     addAchievement('wo-100', 'Elite Athlete', 'Complete 100 workout sessions', workouts >= 100, (workouts / 100) * 100, '100 workouts');
+    addAchievement('wo-150', 'Century & Beyond', 'Complete 150 workout sessions', workouts >= 150, (workouts / 150) * 100, '150 workouts');
 
     addAchievement('st-7', 'Weekly Rhythm', 'Achieve a 7-day workout streak', longestStreak >= 7, (longestStreak / 7) * 100, '7 days');
     addAchievement('st-30', 'Iron Consistency', 'Achieve a 30-day workout streak', longestStreak >= 30, (longestStreak / 30) * 100, '30 days');
 
+    addAchievement('st-30-span', 'Habit Pioneer', 'Train across a 30-day span', activeDaysSpan >= 30, (activeDaysSpan / 30) * 100, '30 days');
+    addAchievement('st-60-span', 'Consistent Journey', 'Train across a 60-day span', activeDaysSpan >= 60, (activeDaysSpan / 60) * 100, '60 days');
+    addAchievement('st-90-span', 'Three-Month Lifestyle', 'Train consistently for 3 months', activeDaysSpan >= 90, (activeDaysSpan / 90) * 100, '90 days');
+
     addAchievement('pr-1', 'Breaking Limits', 'Record your first Personal Record', prsCount >= 1, prsCount >= 1 ? 100 : 0, '1 PR');
     addAchievement('pr-10', 'Record Collector', 'Record 10 unique Personal Records', prsCount >= 10, (prsCount / 10) * 100, '10 PRs');
+    addAchievement('pr-20', 'PR Enthusiast', 'Record 20 unique Personal Records', prsCount >= 20, (prsCount / 20) * 100, '20 PRs');
+    addAchievement('pr-40', 'PR Titan', 'Record 40 unique Personal Records', prsCount >= 40, (prsCount / 40) * 100, '40 PRs');
 
     addAchievement('vol-5k', 'Iron Initiate', 'Reach 5,000 kg of total training volume', totalVolume >= 5000, (totalVolume / 5000) * 100, '5k kg');
     addAchievement('vol-25k', 'Bronze Beast', 'Reach 25,000 kg of total training volume', totalVolume >= 25000, (totalVolume / 25000) * 100, '25k kg');
     addAchievement('vol-100k', 'Silver Titan', 'Reach 100,000 kg of total training volume', totalVolume >= 100000, (totalVolume / 100000) * 100, '100k kg');
     addAchievement('vol-500k', 'Golden God', 'Reach 500,000 kg of total training volume', totalVolume >= 500000, (totalVolume / 500000) * 100, '500k kg');
+    addAchievement('vol-1m', 'Iron Millionaire', 'Reach 1,000,000 kg of total training volume', totalVolume >= 1000000, (totalVolume / 1000000) * 100, '1M kg');
 
     return list;
   }, [overallStats, history, prs]);
+
+  const frequentExercises = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const session of history) {
+      for (const logEx of session.exercises) {
+        counts[logEx.exerciseId] = (counts[logEx.exerciseId] || 0) + logEx.sets.length;
+      }
+    }
+    return Object.entries(counts)
+      .map(([id, count]) => {
+        const ex = exercises.find(e => e.id === id);
+        return {
+          exerciseId: id,
+          name: ex?.name || 'Unknown Exercise',
+          muscleGroup: ex?.muscleGroup || 'Other',
+          count,
+        };
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+  }, [history, exercises]);
 
   return {
     overallStats,
@@ -533,5 +574,6 @@ export const useWorkoutAnalytics = () => {
     advancedInsights,
     achievements,
     exercises,
+    frequentExercises,
   };
 };

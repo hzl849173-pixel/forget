@@ -1,13 +1,15 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Achievement } from '../../hooks/use-workout-analytics';
-import { Award, Trophy, Flame, Zap } from 'lucide-react-native';
+import { Award, Trophy, Flame, Zap, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react-native';
 
 interface AchievementsViewProps {
   achievements: Achievement[];
 }
 
 export const AchievementsView: React.FC<AchievementsViewProps> = ({ achievements }) => {
+  const [showAll, setShowAll] = useState(false);
+
   const getCategoryIcon = (id: string, isUnlocked: boolean) => {
     const size = 18;
     const strokeWidth = 2.5;
@@ -29,11 +31,47 @@ export const AchievementsView: React.FC<AchievementsViewProps> = ({ achievements
     return <Award size={size} color={color} strokeWidth={strokeWidth} fill={isUnlocked ? '#10B98120' : 'transparent'} />;
   };
 
+  const unlockedCount = achievements.filter((a) => a.isUnlocked).length;
+  const totalCount = achievements.length;
+  const unlockedPercent = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
+
+  // Sort locked achievements by progress closest to completion
+  const lockedAchievements = achievements.filter((a) => !a.isUnlocked).sort((a, b) => b.progress - a.progress);
+  
+  let visibleAchievements: Achievement[] = [];
+  if (showAll) {
+    visibleAchievements = [...achievements].sort((a, b) => (b.isUnlocked ? 1 : 0) - (a.isUnlocked ? 1 : 0));
+  } else {
+    visibleAchievements = lockedAchievements.slice(0, 3);
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.sectionHeader}>ACHIEVEMENTS</Text>
       
-      {achievements.map((ach) => (
+      {/* Summary progress overview card */}
+      <View style={styles.summaryCard}>
+        <View style={styles.summaryInfo}>
+          <Text style={styles.summaryCount}>{unlockedCount} of {totalCount} Unlocked</Text>
+          <Text style={styles.summaryPercent}>{unlockedPercent}%</Text>
+        </View>
+        <View style={styles.summaryTrack}>
+          <View style={[styles.summaryBar, { width: `${unlockedPercent}%` }]} />
+        </View>
+      </View>
+
+      {!showAll && lockedAchievements.length > 0 && (
+        <Text style={styles.subHeader}>NEXT MILESTONES TO REACH</Text>
+      )}
+
+      {visibleAchievements.length === 0 && !showAll && (
+        <View style={styles.emptyCard}>
+          <CheckCircle size={22} color="#10B981" />
+          <Text style={styles.allUnlockedText}>All milestones unlocked! Great job!</Text>
+        </View>
+      )}
+
+      {visibleAchievements.map((ach) => (
         <View
           key={ach.id}
           style={[
@@ -79,6 +117,23 @@ export const AchievementsView: React.FC<AchievementsViewProps> = ({ achievements
           )}
         </View>
       ))}
+
+      {achievements.length > 3 && (
+        <TouchableOpacity
+          style={styles.toggleBtn}
+          onPress={() => setShowAll(!showAll)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.toggleBtnText}>
+            {showAll ? 'Show Less' : `Show All Milestones (${achievements.length})`}
+          </Text>
+          {showAll ? (
+            <ChevronUp size={14} color="#3B82F6" strokeWidth={2.5} />
+          ) : (
+            <ChevronDown size={14} color="#3B82F6" strokeWidth={2.5} />
+          )}
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -95,6 +150,65 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: '#9CA3AF',
     textTransform: 'uppercase',
+  },
+  summaryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 16,
+  },
+  summaryInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  summaryCount: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  summaryPercent: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#10B981',
+  },
+  summaryTrack: {
+    height: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  summaryBar: {
+    height: '100%',
+    backgroundColor: '#10B981',
+    borderRadius: 4,
+  },
+  subHeader: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#9CA3AF',
+    letterSpacing: 0.5,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+  },
+  emptyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  allUnlockedText: {
+    fontSize: 13,
+    color: '#10B981',
+    fontWeight: '700',
+    textAlign: 'center',
   },
   achCard: {
     borderRadius: 16,
@@ -151,7 +265,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 16,
-    paddingLeft: 48, // Align with description text (width of iconCol + gap)
+    paddingLeft: 48,
   },
   progressTrack: {
     flex: 1,
@@ -172,5 +286,18 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     width: 28,
     textAlign: 'right',
+  },
+  toggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  toggleBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#3B82F6',
   },
 });

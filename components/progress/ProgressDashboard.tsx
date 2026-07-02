@@ -28,6 +28,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ initialMod
     advancedInsights,
     achievements,
     exercises,
+    frequentExercises,
   } = useWorkoutAnalytics();
 
   const [activeTab, setActiveTab] = useState<DashboardTab | null>(null);
@@ -132,8 +133,10 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ initialMod
 
       {/* Content area is empty - tabs open in modal */}
 
-      {/* AI Workout Insights Grid - Always Visible */}
-      <WorkoutInsightsView insights={advancedInsights} />
+      {/* AI Workout Insights Grid - Visible when modal is closed */}
+      {modalTab === null && (
+        <WorkoutInsightsView insights={advancedInsights} />
+      )}
 
       {/* Tab Content Modal */}
       <Modal
@@ -151,7 +154,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ initialMod
             <Animated.View style={[styles.modalOverlay, { opacity: modalAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.5] }) }]} />
           </TouchableOpacity>
           <Animated.View
-            style={[styles.modalContentWrapper, { transform: [{ translateY: modalAnim.interpolate({ inputRange: [0, 1], outputRange: [400, 0] }) }] }]}
+            style={[styles.modalContentWrapper, { transform: [{ translateY: modalAnim.interpolate({ inputRange: [0, 1], outputRange: [800, 0] }) }] }]}
           >
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
@@ -324,14 +327,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: -40,
     maxHeight: '85%',
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingBottom: 40,
+    paddingBottom: 80,
   },
   modalHeader: {
     flexDirection: 'row',
