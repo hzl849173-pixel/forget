@@ -637,10 +637,6 @@ export default function SinglePageLandingScreen() {
         } else {
           updated.push(newLog);
         }
-        // Persist template changes
-        if (activeTemplateId) {
-          updateTemplate(activeTemplateId, updated);
-        }
         return updated;
       });
       handleTemplateListBackFromLogger(true);
@@ -1667,7 +1663,6 @@ export default function SinglePageLandingScreen() {
             setSelectedSubGroup(null);
             setSelectedPickerExerciseIds(new Set());
             if (fromTemplateList) {
-              if (activeTemplateId) updateTemplate(activeTemplateId, templateListExercises);
               setTemplateListVisible(true);
             }
           }}
@@ -1696,7 +1691,6 @@ export default function SinglePageLandingScreen() {
                       setSelectedSubGroup(null); 
                       setSelectedPickerExerciseIds(new Set());
                       if (fromTemplateList) {
-                        if (activeTemplateId) updateTemplate(activeTemplateId, templateListExercises);
                         setTemplateListVisible(true);
                       }
                     }}
@@ -1985,9 +1979,6 @@ export default function SinglePageLandingScreen() {
                         if (newExercises.length > 0) {
                           const updatedList = [...templateListExercises, ...newExercises];
                           setTemplateListExercises(updatedList);
-                          if (activeTemplateId) {
-                            await updateTemplate(activeTemplateId, updatedList);
-                          }
                         }
                         
                         setSelectedModalMuscle(null);
@@ -2827,7 +2818,7 @@ export default function SinglePageLandingScreen() {
               </View>
             ) : (
               <DragList
-                containerStyle={{ maxHeight: 500 }}
+                containerStyle={{ maxHeight: 400, flexShrink: 1 }}
                 data={templateListExercises}
                 keyExtractor={(item) => item.exerciseId}
                 onReordered={(fromIdx, toIdx) => {
@@ -2838,7 +2829,7 @@ export default function SinglePageLandingScreen() {
                     return updated;
                   });
                 }}
-                style={{ maxHeight: 500 }}
+                style={{ maxHeight: 400, flexShrink: 1 }}
                 renderItem={({ item, onDragStart, isActive }) => {
                     const details = exercises.find((e) => e.id === item.exerciseId);
                     if (!details) return null;
@@ -2875,11 +2866,20 @@ export default function SinglePageLandingScreen() {
             )}
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
               <TouchableOpacity
-                onPress={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); setActiveTemplateId(null); }}
+                onPress={async () => {
+                  if (activeTemplateId) {
+                    await updateTemplate(activeTemplateId, templateListExercises);
+                  }
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  setTemplateListVisible(false);
+                  setFromTemplateList(false);
+                  setTemplateListExercises([]);
+                  setActiveTemplateId(null);
+                }}
                 activeOpacity={0.7}
-                style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: theme.borderColor }}
+                style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: '#10B981', backgroundColor: 'transparent' }}
               >
-                <Text style={{ color: theme.textSecondary, fontSize: 14, fontWeight: '700', letterSpacing: 0.3 }}>Cancel</Text>
+                <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800', letterSpacing: 0.3 }}>SAVE</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
@@ -4459,6 +4459,7 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '90%',
     maxHeight: '80%',
+    flexShrink: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
