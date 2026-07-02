@@ -85,7 +85,7 @@ export const AchievementsView: React.FC<AchievementsViewProps> = ({ achievements
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 12,
+    marginVertical: 16,
     paddingHorizontal: 16,
   },
   sectionHeader: {
@@ -98,14 +98,14 @@ const styles = StyleSheet.create({
   },
   achCard: {
     borderRadius: 16,
-    padding: 14,
+    padding: 18,
     borderWidth: 1,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
   },
   iconCol: {
     width: 32,
@@ -150,8 +150,8 @@ const styles = StyleSheet.create({
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
-    paddingLeft: 44, // Align with description text (width of iconCol + gap)
+    marginTop: 16,
+    paddingLeft: 48, // Align with description text (width of iconCol + gap)
   },
   progressTrack: {
     flex: 1,

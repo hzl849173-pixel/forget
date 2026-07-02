@@ -177,7 +177,7 @@ export const ExerciseProgressView: React.FC<ExerciseProgressViewProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 12,
+    marginVertical: 16,
     paddingHorizontal: 16,
   },
   sectionHeader: {
@@ -196,9 +196,9 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
     backgroundColor: '#FFFFFF',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   pickerButtonText: {
     fontSize: 15,
@@ -251,20 +251,20 @@ const styles = StyleSheet.create({
   statsContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 16,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
   comparisonGrid: {
     flexDirection: 'column',
-    gap: 10,
-    marginBottom: 18,
+    gap: 14,
+    marginBottom: 22,
   },
   compareCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   },
   trendContainer: {
     flexDirection: 'column',
-    gap: 10,
+    gap: 14,
   },
   trendRow: {
     flexDirection: 'row',

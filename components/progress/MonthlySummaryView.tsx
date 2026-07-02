@@ -73,7 +73,7 @@ export const MonthlySummaryView: React.FC<MonthlySummaryViewProps> = ({ summary 
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 12,
+    marginVertical: 16,
     paddingHorizontal: 16,
   },
   sectionHeader: {
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 16,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     overflow: 'hidden',
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginHorizontal: -8,
-    rowGap: 12,
+    rowGap: 18,
   },
   gridItem: {
     width: '50%',
@@ -138,13 +138,13 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#F3F4F6',
-    marginVertical: 14,
+    marginVertical: 18,
   },
   insightRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 8,
     gap: 12,
   },
   insightHeader: {

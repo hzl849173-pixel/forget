@@ -62,7 +62,7 @@ export const PersonalRecordsView: React.FC<PersonalRecordsViewProps> = ({ prs })
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 12,
+    marginVertical: 16,
     paddingHorizontal: 16,
   },
   sectionHeader: {
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 14,
+    padding: 18,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -99,10 +99,10 @@ const styles = StyleSheet.create({
   prRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
-    gap: 10,
+    gap: 14,
   },
   iconWrapper: {
     width: 28,

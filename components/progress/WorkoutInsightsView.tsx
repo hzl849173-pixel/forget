@@ -25,142 +25,149 @@ export const WorkoutInsightsView: React.FC<WorkoutInsightsViewProps> = ({ insigh
     <View style={styles.container}>
       <Text style={styles.sectionHeader}>WORKOUT INSIGHTS</Text>
 
-      <View style={styles.grid}>
-        
-        {/* Strongest improving */}
-        <TouchableOpacity 
-          style={styles.card} 
-          activeOpacity={0.7}
-          onPress={() => showInfo(
-            'Strongest Improving', 
-            'This shows the exercise where your estimated 1-Rep Max (1RM) has increased the most compared to your past workouts. Keep pushing on this lift!',
-            <TrendingUp size={32} color="#10B981" strokeWidth={2} />
-          )}
-        >
-          <View style={styles.cardHeader}>
-            <View style={[styles.iconWrapper, { backgroundColor: '#10B98112' }]}>
-              <TrendingUp size={16} color="#10B981" strokeWidth={2.5} />
+      <View style={styles.gridContainer}>
+        {/* Row 1 */}
+        <View style={styles.gridRow}>
+          {/* Strongest improving */}
+          <TouchableOpacity 
+            style={styles.card} 
+            activeOpacity={0.7}
+            onPress={() => showInfo(
+              'Strongest Improving', 
+              'This shows the exercise where your estimated 1-Rep Max (1RM) has increased the most compared to your past workouts. Keep pushing on this lift!',
+              <TrendingUp size={32} color="#10B981" strokeWidth={2} />
+            )}
+          >
+            <View style={styles.cardHeader}>
+              <View style={[styles.iconWrapper, { backgroundColor: '#10B98112' }]}>
+                <TrendingUp size={16} color="#10B981" strokeWidth={2.5} />
+              </View>
+              <Text style={styles.label} numberOfLines={1}>Strongest Improving</Text>
             </View>
-            <Text style={styles.label} numberOfLines={1}>Strongest Improving</Text>
-          </View>
-          <Text style={styles.value} numberOfLines={2}>
-            {insights.strongestImprovingExercise
-              ? `${insights.strongestImprovingExercise.name}\n(+${insights.strongestImprovingExercise.pctIncrease}% 1RM)`
-              : 'N/A (needs 2+ logs)'}
-          </Text>
-        </TouchableOpacity>
+            <Text style={styles.value} numberOfLines={2}>
+              {insights.strongestImprovingExercise
+                ? `${insights.strongestImprovingExercise.name}\n(+${insights.strongestImprovingExercise.pctIncrease}% 1RM)`
+                : 'N/A (needs 2+ logs)'}
+            </Text>
+          </TouchableOpacity>
 
-        {/* Longest stagnant */}
-        <TouchableOpacity 
-          style={styles.card} 
-          activeOpacity={0.7}
-          onPress={() => showInfo(
-            'Longest Stagnant', 
-            'This highlights the exercise that has gone the longest number of days without you hitting a new Personal Record (PR). Consider changing the rep range or volume.',
-            <AlertCircle size={32} color="#EF4444" strokeWidth={2} />
-          )}
-        >
-          <View style={styles.cardHeader}>
-            <View style={[styles.iconWrapper, { backgroundColor: '#EF444412' }]}>
-              <AlertCircle size={16} color="#EF4444" strokeWidth={2.5} />
+          {/* Longest stagnant */}
+          <TouchableOpacity 
+            style={styles.card} 
+            activeOpacity={0.7}
+            onPress={() => showInfo(
+              'Longest Stagnant', 
+              'This highlights the exercise that has gone the longest number of days without you hitting a new Personal Record (PR). Consider changing the rep range or volume.',
+              <AlertCircle size={32} color="#EF4444" strokeWidth={2} />
+            )}
+          >
+            <View style={styles.cardHeader}>
+              <View style={[styles.iconWrapper, { backgroundColor: '#EF444412' }]}>
+                <AlertCircle size={16} color="#EF4444" strokeWidth={2.5} />
+              </View>
+              <Text style={styles.label} numberOfLines={1}>Longest Stagnant</Text>
             </View>
-            <Text style={styles.label} numberOfLines={1}>Longest Stagnant</Text>
-          </View>
-          <Text style={styles.value} numberOfLines={2}>
-            {insights.longestStagnantExercise
-              ? `${insights.longestStagnantExercise.name}\n(${insights.longestStagnantExercise.daysStagnant} days no PR)`
-              : 'N/A'}
-          </Text>
-        </TouchableOpacity>
+            <Text style={styles.value} numberOfLines={2}>
+              {insights.longestStagnantExercise
+                ? `${insights.longestStagnantExercise.name}\n(${insights.longestStagnantExercise.daysStagnant} days no PR)`
+                : 'N/A'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-        {/* Most frequent muscle */}
-        <TouchableOpacity 
-          style={styles.card} 
-          activeOpacity={0.7}
-          onPress={() => showInfo(
-            'Most Frequent Muscle', 
-            'This is the muscle group you have trained with the highest number of total sets across all your logged workouts.',
-            <Dumbbell size={32} color="#3B82F6" strokeWidth={2} />
-          )}
-        >
-          <View style={styles.cardHeader}>
-            <View style={[styles.iconWrapper, { backgroundColor: '#3B82F612' }]}>
-              <Dumbbell size={16} color="#3B82F6" strokeWidth={2.5} />
+        {/* Row 2 */}
+        <View style={styles.gridRow}>
+          {/* Most frequent muscle */}
+          <TouchableOpacity 
+            style={styles.card} 
+            activeOpacity={0.7}
+            onPress={() => showInfo(
+              'Most Frequent Muscle', 
+              'This is the muscle group you have trained with the highest number of total sets across all your logged workouts.',
+              <Dumbbell size={32} color="#3B82F6" strokeWidth={2} />
+            )}
+          >
+            <View style={styles.cardHeader}>
+              <View style={[styles.iconWrapper, { backgroundColor: '#3B82F612' }]}>
+                <Dumbbell size={16} color="#3B82F6" strokeWidth={2.5} />
+              </View>
+              <Text style={styles.label} numberOfLines={1}>Most Frequent Muscle</Text>
             </View>
-            <Text style={styles.label} numberOfLines={1}>Most Frequent Muscle</Text>
-          </View>
-          <Text style={styles.value} numberOfLines={2}>
-            {insights.mostFrequentMuscle
-              ? `${insights.mostFrequentMuscle.muscle}\n(${insights.mostFrequentMuscle.count} sets)`
-              : 'N/A'}
-          </Text>
-        </TouchableOpacity>
+            <Text style={styles.value} numberOfLines={2}>
+              {insights.mostFrequentMuscle
+                ? `${insights.mostFrequentMuscle.muscle}\n(${insights.mostFrequentMuscle.count} sets)`
+                : 'N/A'}
+            </Text>
+          </TouchableOpacity>
 
-        {/* Least frequent muscle */}
-        <TouchableOpacity 
-          style={styles.card} 
-          activeOpacity={0.7}
-          onPress={() => showInfo(
-            'Least Frequent Muscle', 
-            'This is the muscle group you have trained the least. Consider adding exercises for this muscle to maintain a balanced and injury-free physique.',
-            <ShieldAlert size={32} color="#F59E0B" strokeWidth={2} />
-          )}
-        >
-          <View style={styles.cardHeader}>
-            <View style={[styles.iconWrapper, { backgroundColor: '#F59E0B12' }]}>
-              <ShieldAlert size={16} color="#F59E0B" strokeWidth={2.5} />
+          {/* Least frequent muscle */}
+          <TouchableOpacity 
+            style={styles.card} 
+            activeOpacity={0.7}
+            onPress={() => showInfo(
+              'Least Frequent Muscle', 
+              'This is the muscle group you have trained the least. Consider adding exercises for this muscle to maintain a balanced and injury-free physique.',
+              <ShieldAlert size={32} color="#F59E0B" strokeWidth={2} />
+            )}
+          >
+            <View style={styles.cardHeader}>
+              <View style={[styles.iconWrapper, { backgroundColor: '#F59E0B12' }]}>
+                <ShieldAlert size={16} color="#F59E0B" strokeWidth={2.5} />
+              </View>
+              <Text style={styles.label} numberOfLines={1}>Least Frequent Muscle</Text>
             </View>
-            <Text style={styles.label} numberOfLines={1}>Least Frequent Muscle</Text>
-          </View>
-          <Text style={styles.value} numberOfLines={2}>
-            {insights.leastFrequentMuscle
-              ? `${insights.leastFrequentMuscle.muscle}\n(${insights.leastFrequentMuscle.count} sets)`
-              : 'N/A'}
-          </Text>
-        </TouchableOpacity>
+            <Text style={styles.value} numberOfLines={2}>
+              {insights.leastFrequentMuscle
+                ? `${insights.leastFrequentMuscle.muscle}\n(${insights.leastFrequentMuscle.count} sets)`
+                : 'N/A'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-        {/* Average workouts per week */}
-        <TouchableOpacity 
-          style={styles.card} 
-          activeOpacity={0.7}
-          onPress={() => showInfo(
-            'Average Workouts', 
-            'This is the average number of workouts you complete per week, based on your entire workout history. Consistency is the key to progress!',
-            <Calendar size={32} color="#8B5CF6" strokeWidth={2} />
-          )}
-        >
-          <View style={styles.cardHeader}>
-            <View style={[styles.iconWrapper, { backgroundColor: '#8B5CF612' }]}>
-              <Calendar size={16} color="#8B5CF6" strokeWidth={2.5} />
+        {/* Row 3 */}
+        <View style={styles.gridRow}>
+          {/* Average workouts per week */}
+          <TouchableOpacity 
+            style={styles.card} 
+            activeOpacity={0.7}
+            onPress={() => showInfo(
+              'Average Workouts', 
+              'This is the average number of workouts you complete per week, based on your entire workout history. Consistency is the key to progress!',
+              <Calendar size={32} color="#8B5CF6" strokeWidth={2} />
+            )}
+          >
+            <View style={styles.cardHeader}>
+              <View style={[styles.iconWrapper, { backgroundColor: '#8B5CF612' }]}>
+                <Calendar size={16} color="#8B5CF6" strokeWidth={2.5} />
+              </View>
+              <Text style={styles.label} numberOfLines={1}>Average Workouts</Text>
             </View>
-            <Text style={styles.label} numberOfLines={1}>Average Workouts</Text>
-          </View>
-          <Text style={styles.value} numberOfLines={2}>
-            {insights.avgWorkoutsPerWeek} / week
-          </Text>
-        </TouchableOpacity>
+            <Text style={styles.value} numberOfLines={2}>
+              {insights.avgWorkoutsPerWeek} / week
+            </Text>
+          </TouchableOpacity>
 
-        {/* Average rest days between workouts */}
-        <TouchableOpacity 
-          style={styles.card} 
-          activeOpacity={0.7}
-          onPress={() => showInfo(
-            'Average Rest Days', 
-            'This is the average number of rest days you take off between your workout sessions. Muscle growth happens during recovery.',
-            <Moon size={32} color="#6B7280" strokeWidth={2} />
-          )}
-        >
-          <View style={styles.cardHeader}>
-            <View style={[styles.iconWrapper, { backgroundColor: '#6B728012' }]}>
-              <Moon size={16} color="#6B7280" strokeWidth={2.5} />
+          {/* Average rest days between workouts */}
+          <TouchableOpacity 
+            style={styles.card} 
+            activeOpacity={0.7}
+            onPress={() => showInfo(
+              'Average Rest Days', 
+              'This is the average number of rest days you take off between your workout sessions. Muscle growth happens during recovery.',
+              <Moon size={32} color="#6B7280" strokeWidth={2} />
+            )}
+          >
+            <View style={styles.cardHeader}>
+              <View style={[styles.iconWrapper, { backgroundColor: '#6B728012' }]}>
+                <Moon size={16} color="#6B7280" strokeWidth={2.5} />
+              </View>
+              <Text style={styles.label} numberOfLines={1}>Average Rest Days</Text>
             </View>
-            <Text style={styles.label} numberOfLines={1}>Average Rest Days</Text>
-          </View>
-          <Text style={styles.value} numberOfLines={2}>
-            {insights.avgRestDays} days
-          </Text>
-        </TouchableOpacity>
-
+            <Text style={styles.value} numberOfLines={2}>
+              {insights.avgRestDays} days
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Premium Info Modal */}
@@ -201,7 +208,7 @@ export const WorkoutInsightsView: React.FC<WorkoutInsightsViewProps> = ({ insigh
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 12,
+    marginVertical: 16,
     paddingHorizontal: 16,
   },
   sectionHeader: {
@@ -212,26 +219,29 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textTransform: 'uppercase',
   },
-  grid: {
+  gridContainer: {
+    flexDirection: 'column',
+    gap: 12,
+  },
+  gridRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 8,
   },
   card: {
-    width: '48%',
+    width: '48.5%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    minHeight: 100,
+    minHeight: 116,
+    justifyContent: 'space-between',
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   iconWrapper: {
     width: 28,
@@ -249,10 +259,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   value: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
     color: '#1F2937',
-    lineHeight: 18,
+    lineHeight: 20,
   },
 
   // Modal Styles

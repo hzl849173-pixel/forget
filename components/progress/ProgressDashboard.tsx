@@ -132,7 +132,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ initialMod
 
       {/* Content area is empty - tabs open in modal */}
 
-      {/* AI Workout Insights Carousel - Always Visible */}
+      {/* AI Workout Insights Grid - Always Visible */}
       <WorkoutInsightsView insights={advancedInsights} />
 
       {/* Tab Content Modal */}
@@ -200,15 +200,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   contentContainer: {
-    paddingVertical: 14,
-    gap: 0,
+    paddingVertical: 20,
+    gap: 12,
   },
   heroBanner: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 18,
+    marginBottom: 20,
+    padding: 22,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     shadowColor: '#000',
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#F3F4F6',
-    marginVertical: 14,
+    marginVertical: 18,
   },
   summaryStatsRow: {
     flexDirection: 'row',
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 3,
     marginHorizontal: 16,
-    marginBottom: 6,
+    marginBottom: 16,
   },
   tabButton: {
     flex: 1,
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingBottom: 32,
+    paddingBottom: 40,
   },
   modalHeader: {
     flexDirection: 'row',

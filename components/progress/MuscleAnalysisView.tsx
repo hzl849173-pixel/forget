@@ -83,7 +83,7 @@ export const MuscleAnalysisView: React.FC<MuscleAnalysisViewProps> = ({ distribu
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 12,
+    marginVertical: 16,
     paddingHorizontal: 16,
   },
   sectionHeader: {
@@ -96,13 +96,13 @@ const styles = StyleSheet.create({
   },
   highlightRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 12,
+    gap: 12,
+    marginBottom: 16,
   },
   highlightCard: {
     flex: 1,
     borderRadius: 12,
-    padding: 12,
+    padding: 16,
     borderWidth: 1,
     justifyContent: 'space-between',
   },
@@ -155,12 +155,12 @@ const styles = StyleSheet.create({
   listCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 16,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
   muscleRow: {
-    marginBottom: 14,
+    marginBottom: 18,
   },
   rowHeader: {
     flexDirection: 'row',
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     height: 8,
     backgroundColor: '#F3F4F6',
     borderRadius: 4,
-    marginTop: 8,
+    marginTop: 10,
     overflow: 'hidden',
   },
   progressBar: {
