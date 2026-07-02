@@ -230,6 +230,8 @@ export default function SinglePageLandingScreen() {
   const [historySearch, setHistorySearch] = useState('');
   const [editingHistoryWorkoutId, setEditingHistoryWorkoutId] = useState<string | null>(null);
   const [historyEditSets, setHistoryEditSets] = useState<Record<string, WorkoutSet[]>>({});
+  const [exerciseNote, setExerciseNote] = useState('');
+  const [historyEditNotes, setHistoryEditNotes] = useState<Record<string, string>>({});
   const [newPrsDetected, setNewPrsDetected] = useState<PersonalRecord[]>([]);
   const [showNewPrsAlert, setShowNewPrsAlert] = useState(false);
   const [templateModalVisible, setTemplateModalVisible] = useState(false);
@@ -562,7 +564,9 @@ export default function SinglePageLandingScreen() {
             isCompleted: true,
           });
         });
+        setExerciseNote(existingInActive.notes || '');
       } else {
+        setExerciseNote('');
         const previousLog = getPreviousWorkoutForExercise(exerciseId);
         if (previousLog && previousLog.sets.length > 0) {
           previousLog.sets.forEach((set) => {
@@ -658,6 +662,7 @@ export default function SinglePageLandingScreen() {
     const newLog = {
       exerciseId,
       sets: activeSets.map((s) => ({ ...s, isCompleted: true })),
+      notes: exerciseNote.trim() || undefined,
     };
 
     if (fromTemplateList) {
@@ -704,7 +709,7 @@ export default function SinglePageLandingScreen() {
     if (!skipSave && expandedExerciseId && activeSets.length > 0) {
       const updated = activeSessionExercises.map((le) =>
         le.exerciseId === expandedExerciseId
-          ? { ...le, sets: activeSets.map((s) => ({ ...s, isCompleted: true })) }
+          ? { ...le, sets: activeSets.map((s) => ({ ...s, isCompleted: true })), notes: exerciseNote.trim() || undefined }
           : le
       );
       setActiveSessionExercises(updated);
@@ -717,6 +722,7 @@ export default function SinglePageLandingScreen() {
     setExpandedExerciseId(null);
     setActiveSets([]);
     setSameForAll(true);
+    setExerciseNote('');
   };
 
   const suggestWorkoutTitle = (loggedExs: LoggedExercise[]) => {
@@ -859,20 +865,31 @@ export default function SinglePageLandingScreen() {
   const handleEditHistoryWorkout = (session: WorkoutSession) => {
     setEditingHistoryWorkoutId(session.id);
     const setsMap: Record<string, WorkoutSet[]> = {};
+    const notesMap: Record<string, string> = {};
     session.exercises.forEach((logEx) => {
       setsMap[logEx.exerciseId] = logEx.sets.map((s) => ({ ...s }));
+      notesMap[logEx.exerciseId] = logEx.notes || '';
     });
     setHistoryEditSets(setsMap);
+    setHistoryEditNotes(notesMap);
   };
 
   const handleSaveHistoryEdit = async (session: WorkoutSession) => {
     const updatedExercises = session.exercises.map((logEx) => ({
       exerciseId: logEx.exerciseId,
       sets: historyEditSets[logEx.exerciseId] || logEx.sets,
+      notes: historyEditNotes[logEx.exerciseId] !== undefined
+        ? (historyEditNotes[logEx.exerciseId].trim() || undefined)
+        : logEx.notes,
     }));
     await updateWorkout(session.id, { exercises: updatedExercises });
     setEditingHistoryWorkoutId(null);
     setHistoryEditSets({});
+    setHistoryEditNotes({});
+    setSelectedHistoryItem({
+      ...session,
+      exercises: updatedExercises,
+    });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
@@ -953,6 +970,7 @@ export default function SinglePageLandingScreen() {
     const exercisesToLoad = tmpl.exercises.map((logEx) => ({
       exerciseId: logEx.exerciseId,
       sets: logEx.sets.map((s) => ({ ...s })),
+      notes: logEx.notes,
     }));
     setTemplateListExercises(exercisesToLoad);
     setActiveTemplateId(tmpl.id);
@@ -965,7 +983,7 @@ export default function SinglePageLandingScreen() {
       setTemplateListExercises((prev) =>
         prev.map((ex) =>
           ex.exerciseId === expandedExerciseId
-            ? { ...ex, sets: activeSets }
+            ? { ...ex, sets: activeSets, notes: exerciseNote.trim() || undefined }
             : ex
         )
       );
@@ -977,6 +995,7 @@ export default function SinglePageLandingScreen() {
       reps: s.reps,
       isCompleted: s.isCompleted ?? true,
     })));
+    setExerciseNote(logEx.notes || '');
     setSameForAll(false);
   };  
 
@@ -987,16 +1006,17 @@ export default function SinglePageLandingScreen() {
         if (exists) {
           return prev.map((ex) =>
             ex.exerciseId === expandedExerciseId
-              ? { ...ex, sets: activeSets }
+              ? { ...ex, sets: activeSets, notes: exerciseNote.trim() || undefined }
               : ex
           );
         }
-        return [...prev, { exerciseId: expandedExerciseId, sets: activeSets }];
+        return [...prev, { exerciseId: expandedExerciseId, sets: activeSets, notes: exerciseNote.trim() || undefined }];
       });
     }
     setExpandedExerciseId(null);
     setActiveSets([]);
     setSameForAll(true);
+    setExerciseNote('');
   };
 
   const handleDeleteTemplate = (id: string, name: string) => {
@@ -1018,8 +1038,8 @@ export default function SinglePageLandingScreen() {
     );
   };
 
-  const getSessionMuscles = (session: WorkoutSession): string[] => {
-    const muscles = new Set<string>();
+  const getSessionMuscles = (session: WorkoutSession): MuscleGroup[] => {
+    const muscles = new Set<MuscleGroup>();
     session.exercises.forEach((logEx) => {
       const details = exercises.find((e) => e.id === logEx.exerciseId);
       if (details) {
@@ -1318,7 +1338,7 @@ export default function SinglePageLandingScreen() {
                         {muscle.toUpperCase()}
                       </Text>
                       <Image
-                        source={MUSCLE_IMAGES[muscle]}
+                        source={MUSCLE_IMAGES[muscle as keyof typeof MUSCLE_IMAGES]}
                         style={[styles.muscleImage, { opacity: isDarkMode ? 0.85 : 1.0 }]}
                         contentFit="contain"
                       />
@@ -1862,6 +1882,7 @@ export default function SinglePageLandingScreen() {
                               }
                               setActiveSets(initialSets);
                               setSameForAll(true);
+                              setExerciseNote(existingInActive?.notes || '');
                               setExpandedExerciseId(item.id);
                               if (fromTemplateList) {
                                 setSelectedModalMuscle(null);
@@ -2355,6 +2376,44 @@ export default function SinglePageLandingScreen() {
                             {exDetails?.name || 'Unknown'}
                           </Text>
                         </View>
+                        {isEditing ? (
+                          <View style={{ paddingLeft: 12, paddingRight: 4, marginBottom: 12 }}>
+                            <TextInput
+                              style={{
+                                backgroundColor: theme.inputBg,
+                                borderColor: theme.borderColor,
+                                borderWidth: 1,
+                                borderRadius: 8,
+                                paddingHorizontal: 10,
+                                paddingVertical: 6,
+                                color: theme.textPrimary,
+                                fontSize: 13,
+                                minHeight: 36,
+                                textAlignVertical: 'top',
+                              }}
+                              placeholder="Exercise note..."
+                              placeholderTextColor={theme.inputPlaceholder}
+                              value={historyEditNotes[logEx.exerciseId] || ''}
+                              onChangeText={(text) => {
+                                setHistoryEditNotes((prev) => ({
+                                  ...prev,
+                                  [logEx.exerciseId]: text,
+                                }));
+                              }}
+                              multiline
+                              maxLength={150}
+                            />
+                          </View>
+                        ) : (
+                          logEx.notes ? (
+                            <View style={{ paddingLeft: 12, paddingBottom: 10 }}>
+                              <Text style={{ fontSize: 13, color: '#10B981', fontStyle: 'italic', lineHeight: 17 }}>
+                                Note: {logEx.notes}
+                              </Text>
+                            </View>
+                          ) : null
+                        )}
+
                         {(isEditing && editSets ? editSets : logEx.sets).map((set, setIndex) => (
                           <View key={set.id} style={styles.detailSetRow}>
                             <Text style={[styles.detailSetLabel, { color: theme.textSecondary }]}>SET {setIndex + 1}</Text>
@@ -2552,7 +2611,7 @@ export default function SinglePageLandingScreen() {
                   const save = (prev: LoggedExercise[]) =>
                     prev.map((ex) =>
                       ex.exerciseId === expandedExerciseId
-                        ? { ...ex, sets: activeSets.map((s) => ({ ...s, isCompleted: true })) }
+                        ? { ...ex, sets: activeSets.map((s) => ({ ...s, isCompleted: true })), notes: exerciseNote.trim() || undefined }
                         : ex
                     );
                   if (fromTemplateList) {
@@ -2570,6 +2629,7 @@ export default function SinglePageLandingScreen() {
                   reps: s.reps,
                   isCompleted: true,
                 })));
+                setExerciseNote(nextEx.notes || '');
                 setSameForAll(false);
               };
               navigateToExerciseRef.current = navigateToExercise;
@@ -2645,6 +2705,13 @@ export default function SinglePageLandingScreen() {
                             <Text style={[styles.prevWorkoutSetDetail, { color: theme.textPrimary }]}>{s.weight} kg × {s.reps}</Text>
                           </View>
                         ))}
+                        {prev.log.notes && (
+                          <View style={{ marginTop: 8, paddingHorizontal: 4 }}>
+                            <Text style={{ fontSize: 11, color: '#10B981', fontStyle: 'italic', lineHeight: 15 }}>
+                              Note: {prev.log.notes}
+                            </Text>
+                          </View>
+                        )}
                         {exercisePr && (
                           <View style={styles.prevWorkoutPrBadge}>
                             <Text style={{ fontSize: 10, fontWeight: '800', color: '#10B981', letterSpacing: 0.3 }}>PR: {exercisePr.weight} kg × {exercisePr.reps}</Text>
@@ -2722,6 +2789,32 @@ export default function SinglePageLandingScreen() {
                       )}
                     </View>
                   ))}
+
+                  <View style={{ marginTop: 16, marginBottom: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.borderColor, paddingTop: 16 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textSecondary, marginBottom: 6, letterSpacing: 0.5 }}>
+                      EXERCISE NOTE
+                    </Text>
+                    <TextInput
+                      style={{
+                        backgroundColor: theme.inputBg,
+                        borderColor: theme.borderColor,
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        color: theme.textPrimary,
+                        fontSize: 13,
+                        minHeight: 48,
+                        textAlignVertical: 'top',
+                      }}
+                      placeholder="Add an optional exercise note..."
+                      placeholderTextColor={theme.inputPlaceholder}
+                      value={exerciseNote}
+                      onChangeText={setExerciseNote}
+                      multiline
+                      maxLength={150}
+                    />
+                  </View>
                   </ScrollView>
 
                   <View style={styles.loggerActions}>
@@ -3046,6 +3139,7 @@ export default function SinglePageLandingScreen() {
                     .map(e => ({
                       exerciseId: e.exerciseId,
                       sets: e.sets.map(s => ({ ...s, id: generateId(), isCompleted: false })),
+                      notes: e.notes,
                     }));
                   const now = Date.now();
                   setActiveSessionExercises(selectedExercises);
