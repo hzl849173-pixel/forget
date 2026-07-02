@@ -226,6 +226,7 @@ export default function SinglePageLandingScreen() {
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [templateLogSelectVisible, setTemplateLogSelectVisible] = useState(false);
   const [templateLogSelectedIds, setTemplateLogSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedPickerExerciseIds, setSelectedPickerExerciseIds] = useState<Set<string>>(new Set());
   
   const [sortedExerciseList, setSortedExerciseList] = useState<Exercise[]>([]);
   const [customShoulderIds, setCustomShoulderIds] = useState<Set<string>>(new Set());
@@ -905,8 +906,14 @@ export default function SinglePageLandingScreen() {
         setShowNewPrsAlert(true);
       }
     } else {
-      await saveTemplate(templateName, templateExercises);
+      const newTmpl = await saveTemplate(templateName, templateExercises);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      
+      // Open the new template immediately in the Template Details modal
+      setTemplateListExercises([]);
+      setActiveTemplateId(newTmpl.id);
+      setTemplateListVisible(true);
+      setFromTemplateList(true);
     }
 
     setTemplateModalVisible(false);
@@ -1452,6 +1459,22 @@ export default function SinglePageLandingScreen() {
           ) : activeSegment === 'templates' ? (
             /* Templates View Section */
             <View style={styles.historySection}>
+              <TouchableOpacity
+                style={[styles.createTemplateButton, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
+                onPress={() => {
+                  setTemplateName('');
+                  setTemplateExercises([]);
+                  setIsSavingActiveSessionAsTemplate(false);
+                  setTemplateModalVisible(true);
+                }}
+                activeOpacity={0.7}
+              >
+                <Plus size={16} color="#10B981" strokeWidth={2.5} />
+                <Text style={[styles.createTemplateButtonText, { color: theme.textPrimary }]}>
+                  CREATE CUSTOM TEMPLATE
+                </Text>
+              </TouchableOpacity>
+              
               {templates.length === 0 ? (
                 <Card style={[styles.welcomeCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
                   <Calendar size={32} color="#10B981" strokeWidth={1.5} />
@@ -1642,6 +1665,7 @@ export default function SinglePageLandingScreen() {
           onRequestClose={() => { 
             setSelectedModalMuscle(null); 
             setSelectedSubGroup(null);
+            setSelectedPickerExerciseIds(new Set());
             if (fromTemplateList) {
               if (activeTemplateId) updateTemplate(activeTemplateId, templateListExercises);
               setTemplateListVisible(true);
@@ -1670,6 +1694,7 @@ export default function SinglePageLandingScreen() {
                     onPress={() => { 
                       setSelectedModalMuscle(null); 
                       setSelectedSubGroup(null); 
+                      setSelectedPickerExerciseIds(new Set());
                       if (fromTemplateList) {
                         if (activeTemplateId) updateTemplate(activeTemplateId, templateListExercises);
                         setTemplateListVisible(true);
@@ -1781,6 +1806,19 @@ export default function SinglePageLandingScreen() {
                           <TouchableOpacity
                             style={styles.exerciseInfoClick}
                             onPress={() => {
+                              if (fromTemplateList) {
+                                setSelectedPickerExerciseIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(item.id)) {
+                                    next.delete(item.id);
+                                  } else {
+                                    next.add(item.id);
+                                  }
+                                  return next;
+                                });
+                                return;
+                              }
+                              
                               const targetList = fromTemplateList ? templateListExercises : activeSessionExercises;
                               const existingInActive = targetList.find((le) => le.exerciseId === item.id);
                               const initialSets: WorkoutSet[] = [];
@@ -1808,6 +1846,21 @@ export default function SinglePageLandingScreen() {
                             }}
                             activeOpacity={0.85}
                           >
+                            {fromTemplateList && (
+                              <View style={{
+                                width: 20,
+                                height: 20,
+                                borderRadius: 6,
+                                borderWidth: 2,
+                                borderColor: selectedPickerExerciseIds.has(item.id) ? '#10B981' : theme.borderColor,
+                                backgroundColor: selectedPickerExerciseIds.has(item.id) ? '#10B981' : 'transparent',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginRight: 12,
+                              }}>
+                                {selectedPickerExerciseIds.has(item.id) && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
+                              </View>
+                            )}
                             {(() => {
                                const exerciseColor = ALT_COLORS[index % 4];
                                const renderExerciseIcon = ALT_IMAGES[index % 5];
@@ -1894,6 +1947,58 @@ export default function SinglePageLandingScreen() {
                       activeOpacity={0.8}
                     >
                       <Text style={styles.modalFinishBtnText}>FINISH DAY</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Modal Sticky Footer if fromTemplateList is true */}
+                {fromTemplateList && (
+                  <View style={[styles.modalStickyFooter, { backgroundColor: theme.cardBg, borderTopColor: theme.borderColor }]}>
+                    <Text style={[styles.modalFooterText, { color: theme.textPrimary }]}>
+                      {selectedPickerExerciseIds.size} Exercise{selectedPickerExerciseIds.size !== 1 ? 's' : ''} Selected
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.modalFinishBtn, { backgroundColor: selectedPickerExerciseIds.size > 0 ? '#10B981' : theme.borderColor }]}
+                      onPress={async () => {
+                        if (selectedPickerExerciseIds.size === 0) return;
+                        
+                        const newExercises: LoggedExercise[] = [];
+                        selectedPickerExerciseIds.forEach((id) => {
+                          // Check if already exists in template to avoid duplicates
+                          if (templateListExercises.some(e => e.exerciseId === id)) return;
+                          
+                          const previousLog = getPreviousWorkoutForExercise(id);
+                          const initialSets: WorkoutSet[] = [];
+                          if (previousLog && previousLog.sets.length > 0) {
+                            previousLog.sets.forEach((set) => {
+                              initialSets.push({ id: generateId(), weight: set.weight, reps: set.reps, isCompleted: false });
+                            });
+                          } else {
+                            initialSets.push({ id: generateId(), weight: 0, reps: 0, isCompleted: false });
+                          }
+                          newExercises.push({
+                            exerciseId: id,
+                            sets: initialSets,
+                          });
+                        });
+                        
+                        if (newExercises.length > 0) {
+                          const updatedList = [...templateListExercises, ...newExercises];
+                          setTemplateListExercises(updatedList);
+                          if (activeTemplateId) {
+                            await updateTemplate(activeTemplateId, updatedList);
+                          }
+                        }
+                        
+                        setSelectedModalMuscle(null);
+                        setSelectedSubGroup(null);
+                        setTemplateListVisible(true);
+                        setSelectedPickerExerciseIds(new Set());
+                      }}
+                      disabled={selectedPickerExerciseIds.size === 0}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.modalFinishBtnText}>ADD TO TEMPLATE</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -2681,7 +2786,7 @@ export default function SinglePageLandingScreen() {
                 <TouchableOpacity
                   onPress={() => {
                     setTemplateListVisible(false);
-                    setSelectedModalMuscle('Chest');
+                    handleSelectMuscleCard('Chest');
                   }}
                   activeOpacity={0.6}
                   style={{ padding: 4 }}
@@ -2697,52 +2802,77 @@ export default function SinglePageLandingScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-            <DragList
-              containerStyle={{ maxHeight: 500 }}
-              data={templateListExercises}
-              keyExtractor={(item) => item.exerciseId}
-              onReordered={(fromIdx, toIdx) => {
-                setTemplateListExercises((prev) => {
-                  const updated = [...prev];
-                  const [moved] = updated.splice(fromIdx, 1);
-                  updated.splice(toIdx, 0, moved);
-                  return updated;
-                });
-              }}
-              style={{ maxHeight: 500 }}
-              renderItem={({ item, onDragStart, isActive }) => {
-                  const details = exercises.find((e) => e.id === item.exerciseId);
-                  if (!details) return null;
-                  const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
-                  return (
-                    <TouchableOpacity
-                      activeOpacity={0.6}
-                      onPress={() => handleTemplateExercisePress(item)}
-                      onLongPress={onDragStart}
-                      delayLongPress={150}
-                      style={[styles.editWorkoutItem, { borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1 }]}
-                    >
-                      <View style={[styles.editWorkoutItemAccent, { backgroundColor: muscleColor }]} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ color: theme.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 2 }}>
-                          {details.name}
-                        </Text>
-                        <View style={styles.editWorkoutItemMeta}>
-                          <View style={[styles.editWorkoutMuscleBadge, { backgroundColor: `${muscleColor}15` }]}>
-                            <Text style={[styles.editWorkoutMuscleBadgeText, { color: muscleColor }]}>
-                              {details.muscleGroup.toUpperCase()}
+            {templateListExercises.length === 0 ? (
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 12 }}>
+                <Dumbbell size={36} color={theme.textSecondary} opacity={0.5} strokeWidth={1.5} />
+                <Text style={{ color: theme.textSecondary, fontSize: 14, fontWeight: '600', textAlign: 'center' }}>
+                  No exercises in this template yet.
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setTemplateListVisible(false);
+                    handleSelectMuscleCard('Chest');
+                  }}
+                  activeOpacity={0.7}
+                  style={{
+                    backgroundColor: '#10B981',
+                    paddingVertical: 10,
+                    paddingHorizontal: 20,
+                    borderRadius: 10,
+                    marginTop: 8,
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800' }}>ADD EXERCISE</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <DragList
+                containerStyle={{ maxHeight: 500 }}
+                data={templateListExercises}
+                keyExtractor={(item) => item.exerciseId}
+                onReordered={(fromIdx, toIdx) => {
+                  setTemplateListExercises((prev) => {
+                    const updated = [...prev];
+                    const [moved] = updated.splice(fromIdx, 1);
+                    updated.splice(toIdx, 0, moved);
+                    return updated;
+                  });
+                }}
+                style={{ maxHeight: 500 }}
+                renderItem={({ item, onDragStart, isActive }) => {
+                    const details = exercises.find((e) => e.id === item.exerciseId);
+                    if (!details) return null;
+                    const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
+                    return (
+                      <TouchableOpacity
+                        activeOpacity={0.6}
+                        onPress={() => handleTemplateExercisePress(item)}
+                        onLongPress={onDragStart}
+                        delayLongPress={150}
+                        style={[styles.editWorkoutItem, { borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1 }]}
+                      >
+                        <View style={[styles.editWorkoutItemAccent, { backgroundColor: muscleColor }]} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ color: theme.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 2 }}>
+                            {details.name}
+                          </Text>
+                          <View style={styles.editWorkoutItemMeta}>
+                            <View style={[styles.editWorkoutMuscleBadge, { backgroundColor: `${muscleColor}15` }]}>
+                              <Text style={[styles.editWorkoutMuscleBadgeText, { color: muscleColor }]}>
+                                {details.muscleGroup.toUpperCase()}
+                              </Text>
+                            </View>
+                            <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
+                              {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
                             </Text>
                           </View>
-                          <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
-                            {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
-                          </Text>
                         </View>
-                      </View>
-                      <ChevronRight size={18} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
-                    </TouchableOpacity>
-                  );
-                }}
-              />
+                        <ChevronRight size={18} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
+                      </TouchableOpacity>
+                    );
+                  }}
+                />
+            )}
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
               <TouchableOpacity
                 onPress={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); setActiveTemplateId(null); }}
@@ -2910,6 +3040,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#090A0F', // Midnight Obsidian background
+  },
+  createTemplateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 8,
+  },
+  createTemplateButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   inner: {
     flex: 1,

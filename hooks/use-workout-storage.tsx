@@ -63,7 +63,7 @@ interface WorkoutContextType {
   getPreviousSessionForExercise: (exerciseId: string) => { session: WorkoutSession; log: LoggedExercise } | null;
   getExercisePR: (exerciseId: string) => PersonalRecord | undefined;
   getWorkoutInsights: () => WorkoutInsights;
-  saveTemplate: (name: string, exercises: LoggedExercise[]) => Promise<void>;
+  saveTemplate: (name: string, exercises: LoggedExercise[]) => Promise<WorkoutTemplate>;
   updateTemplate: (id: string, exercises: LoggedExercise[]) => Promise<void>;
   deleteTemplate: (id: string) => Promise<void>;
 }
@@ -352,6 +352,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const newTemplates = [...templates, newTemplate];
     setTemplates(newTemplates);
     await AsyncStorage.setItem(STORAGE_KEYS.TEMPLATES, JSON.stringify(newTemplates));
+    return newTemplate;
   };
 
   const deleteTemplate = async (id: string) => {
