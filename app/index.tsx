@@ -556,12 +556,13 @@ export default function SinglePageLandingScreen() {
       const initialSets: WorkoutSet[] = [];
 
       if (existingInActive && existingInActive.sets.length > 0) {
+        const isLogged = existingInActive.sets.every(s => s.isCompleted);
         existingInActive.sets.forEach((set) => {
           initialSets.push({
             id: set.id,
-            weight: set.weight,
-            reps: set.reps,
-            isCompleted: true,
+            weight: isLogged ? 0 : set.weight,
+            reps: isLogged ? 0 : set.reps,
+            isCompleted: isLogged ? false : set.isCompleted,
           });
         });
         setExerciseNote(existingInActive.notes || '');
@@ -572,8 +573,8 @@ export default function SinglePageLandingScreen() {
           previousLog.sets.forEach((set) => {
             initialSets.push({
               id: generateId(),
-              weight: set.weight,
-              reps: set.reps,
+              weight: 0,
+              reps: 0,
               isCompleted: false,
             });
           });
@@ -1867,14 +1868,25 @@ export default function SinglePageLandingScreen() {
                               const existingInActive = targetList.find((le) => le.exerciseId === item.id);
                               const initialSets: WorkoutSet[] = [];
                               if (existingInActive && existingInActive.sets.length > 0) {
+                                const isLogged = existingInActive.sets.every(s => s.isCompleted);
                                 existingInActive.sets.forEach((set) => {
-                                  initialSets.push({ id: set.id, weight: set.weight, reps: set.reps, isCompleted: true });
+                                  initialSets.push({
+                                    id: set.id,
+                                    weight: fromTemplateList ? set.weight : (isLogged ? 0 : set.weight),
+                                    reps: fromTemplateList ? set.reps : (isLogged ? 0 : set.reps),
+                                    isCompleted: fromTemplateList ? true : (isLogged ? false : set.isCompleted),
+                                  });
                                 });
                               } else {
                                 const previousLog = getPreviousWorkoutForExercise(item.id);
                                 if (previousLog && previousLog.sets.length > 0) {
                                   previousLog.sets.forEach((set) => {
-                                    initialSets.push({ id: generateId(), weight: set.weight, reps: set.reps, isCompleted: false });
+                                    initialSets.push({
+                                      id: generateId(),
+                                      weight: fromTemplateList ? set.weight : 0,
+                                      reps: fromTemplateList ? set.reps : 0,
+                                      isCompleted: false,
+                                    });
                                   });
                                 } else {
                                   initialSets.push({ id: generateId(), weight: 0, reps: 0, isCompleted: false });
@@ -2623,11 +2635,12 @@ export default function SinglePageLandingScreen() {
                   }
                 }
                 setExpandedExerciseId(nextEx.exerciseId);
+                const isLogged = nextEx.sets.every(s => s.isCompleted);
                 setActiveSets(nextEx.sets.map((s) => ({
                   id: s.id,
-                  weight: s.weight,
-                  reps: s.reps,
-                  isCompleted: true,
+                  weight: fromTemplateList ? s.weight : (isLogged ? 0 : s.weight),
+                  reps: fromTemplateList ? s.reps : (isLogged ? 0 : s.reps),
+                  isCompleted: fromTemplateList ? true : (isLogged ? false : s.isCompleted),
                 })));
                 setExerciseNote(nextEx.notes || '');
                 setSameForAll(false);
