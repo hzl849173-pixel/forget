@@ -45,7 +45,7 @@ export const ExerciseProgressView: React.FC<ExerciseProgressViewProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionHeader}>EXERCISE PROGRESS</Text>
+      <Text style={styles.sectionHeader}>WORKOUT PROGRESS</Text>
       
       {/* Exercise Picker Button */}
       <TouchableOpacity
@@ -54,7 +54,7 @@ export const ExerciseProgressView: React.FC<ExerciseProgressViewProps> = ({
         activeOpacity={0.7}
       >
         <Text style={styles.pickerButtonText}>
-          {selectedExercise ? selectedExercise.name : 'Select Exercise...'}
+          {selectedExercise ? selectedExercise.name : 'Select Workout...'}
         </Text>
         <ChevronDown size={18} color="#6B7280" />
       </TouchableOpacity>
@@ -68,7 +68,7 @@ export const ExerciseProgressView: React.FC<ExerciseProgressViewProps> = ({
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Choose Exercise</Text>
+            <Text style={styles.modalTitle}>Choose Workout</Text>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
               <Text style={styles.closeBtn}>Close</Text>
             </TouchableOpacity>
@@ -162,13 +162,13 @@ export const ExerciseProgressView: React.FC<ExerciseProgressViewProps> = ({
         ) : (
           <View style={styles.emptyCard}>
             <HelpCircle size={24} color="#9CA3AF" />
-            <Text style={styles.noHistory}>No logged history for this exercise.</Text>
+            <Text style={styles.noHistory}>No logged history for this workout.</Text>
           </View>
         )
       ) : (
         <View style={styles.emptyCard}>
           <TrendingUp size={24} color="#9CA3AF" />
-          <Text style={styles.noHistory}>Select an exercise to analyze its progress.</Text>
+          <Text style={styles.noHistory}>Select a workout to analyze its progress.</Text>
         </View>
       )}
     </View>

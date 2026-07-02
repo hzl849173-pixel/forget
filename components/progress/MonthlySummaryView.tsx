@@ -59,7 +59,7 @@ export const MonthlySummaryView: React.FC<MonthlySummaryViewProps> = ({ summary 
           <View style={styles.insightRow}>
             <View style={styles.insightHeader}>
               <Dumbbell size={14} color="#6B7280" />
-              <Text style={styles.insightLabel}>Top Exercise</Text>
+              <Text style={styles.insightLabel}>Top Workout</Text>
             </View>
             <Text style={styles.insightVal} numberOfLines={1}>
               {summary.mostFrequentExercise.name} ({summary.mostFrequentExercise.count} sets)

@@ -34,7 +34,7 @@ export const WorkoutInsightsView: React.FC<WorkoutInsightsViewProps> = ({ insigh
             activeOpacity={0.7}
             onPress={() => showInfo(
               'Strongest Improving', 
-              'This shows the exercise where your estimated 1-Rep Max (1RM) has increased the most compared to your past workouts. Keep pushing on this lift!',
+              'This shows the workout where your estimated 1-Rep Max (1RM) has increased the most compared to your past workouts. Keep pushing on this lift!',
               <TrendingUp size={32} color="#10B981" strokeWidth={2} />
             )}
           >
@@ -57,7 +57,7 @@ export const WorkoutInsightsView: React.FC<WorkoutInsightsViewProps> = ({ insigh
             activeOpacity={0.7}
             onPress={() => showInfo(
               'Longest Stagnant', 
-              'This highlights the exercise that has gone the longest number of days without you hitting a new Personal Record (PR). Consider changing the rep range or volume.',
+              'This highlights the workout that has gone the longest number of days without you hitting a new Personal Record (PR). Consider changing the rep range or volume.',
               <AlertCircle size={32} color="#EF4444" strokeWidth={2} />
             )}
           >
@@ -106,7 +106,7 @@ export const WorkoutInsightsView: React.FC<WorkoutInsightsViewProps> = ({ insigh
             activeOpacity={0.7}
             onPress={() => showInfo(
               'Least Frequent Muscle', 
-              'This is the muscle group you have trained the least. Consider adding exercises for this muscle to maintain a balanced and injury-free physique.',
+              'This is the muscle group you have trained the least. Consider adding workouts for this muscle to maintain a balanced and injury-free physique.',
               <ShieldAlert size={32} color="#F59E0B" strokeWidth={2} />
             )}
           >

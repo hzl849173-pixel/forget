@@ -746,7 +746,7 @@ export default function SinglePageLandingScreen() {
     if (activeSessionExercises.length === 0) {
       showCustomAlert(
         'Active Session',
-        'You have not logged any exercises in the active session yet.',
+        'You have not logged any workouts in the active session yet.',
         [{ text: 'OK' }],
         <Dumbbell size={28} color="#3B82F6" />
       );
@@ -1297,7 +1297,7 @@ export default function SinglePageLandingScreen() {
                     })}
                   </View>
 
-                  <Text style={[styles.activeSessionHint, { color: theme.textSecondary }]}>Tap an exercise to edit</Text>
+                  <Text style={[styles.activeSessionHint, { color: theme.textSecondary }]}>Tap a workout to edit</Text>
 
                   <TouchableOpacity
                     style={[styles.finishSessionBtn, { backgroundColor: '#10B981' }]}
@@ -1745,7 +1745,7 @@ export default function SinglePageLandingScreen() {
                     >
                       {(selectedSubGroup || selectedModalMuscle || '').toUpperCase()} WORKOUTS
                     </Text>
-                    <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>Select an exercise to log completed sets</Text>
+                    <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>Select a workout to log completed sets</Text>
                   </View>
                   <TouchableOpacity
                     onPress={() => { 
@@ -1826,7 +1826,7 @@ export default function SinglePageLandingScreen() {
                 <View style={styles.searchContainer}>
                   <TextInput
                     style={[styles.searchInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
-                    placeholder="Search exercises..."
+                    placeholder="Search workouts..."
                     placeholderTextColor={theme.inputPlaceholder}
                     value={search}
                     onChangeText={setSearch}
@@ -1992,7 +1992,7 @@ export default function SinglePageLandingScreen() {
                       activeOpacity={0.5}
                     >
                       <Plus size={14} color="#6B7280" strokeWidth={2} />
-                      <Text style={styles.addExerciseBtnText}>Add Exercise</Text>
+                      <Text style={styles.addExerciseBtnText}>Add Workout</Text>
                     </TouchableOpacity>
                   )}
                 />
@@ -2081,13 +2081,13 @@ export default function SinglePageLandingScreen() {
       >
         <View style={styles.addExerciseOverlay}>
           <View style={[styles.addExerciseCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-            <Text style={[styles.addExerciseTitle, { color: theme.textPrimary }]}>ADD EXERCISE</Text>
+            <Text style={[styles.addExerciseTitle, { color: theme.textPrimary }]}>ADD WORKOUT</Text>
             <Text style={[styles.addExerciseSubtitle, { color: theme.textSecondary }]}>
               {selectedModalMuscle?.toUpperCase()}
             </Text>
             <TextInput
               style={[styles.addExerciseInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
-              placeholder="Exercise name"
+              placeholder="Workout name"
               placeholderTextColor={theme.inputPlaceholder}
               value={newExerciseName}
               onChangeText={setNewExerciseName}
@@ -2414,7 +2414,7 @@ export default function SinglePageLandingScreen() {
                                 minHeight: 36,
                                 textAlignVertical: 'top',
                               }}
-                              placeholder="Exercise note..."
+                              placeholder="Workout note..."
                               placeholderTextColor={theme.inputPlaceholder}
                               value={historyEditNotes[logEx.exerciseId] || ''}
                               onChangeText={(text) => {
@@ -2838,7 +2838,7 @@ export default function SinglePageLandingScreen() {
                         minHeight: 48,
                         textAlignVertical: 'top',
                       }}
-                      placeholder="Add an optional exercise note..."
+                      placeholder="Add an optional workout note..."
                       placeholderTextColor={theme.inputPlaceholder}
                       value={exerciseNote}
                       onChangeText={setExerciseNote}
@@ -2936,7 +2936,7 @@ export default function SinglePageLandingScreen() {
           <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '90%', width: '95%' }]}>
             <View style={styles.editWorkoutHeader}>
               <View>
-                <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Exercises ({templateListExercises.length})</Text>
+                <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Workouts ({templateListExercises.length})</Text>
                 {templateListExercises.length > 1 && (
                   <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 3, opacity: 0.8, letterSpacing: 0.2 }}>
                     Drag ⠿ to reorder
@@ -2981,7 +2981,7 @@ export default function SinglePageLandingScreen() {
                     marginTop: 8,
                   }}
                 >
-                  <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800' }}>ADD EXERCISE</Text>
+                  <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800' }}>ADD WORKOUT</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -3076,7 +3076,7 @@ export default function SinglePageLandingScreen() {
           <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '85%', width: '95%' }]}>
             <View style={styles.editWorkoutHeader}>
               <View>
-                <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Select Exercises</Text>
+                <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Select Workouts</Text>
                 <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: '600', marginTop: 2 }}>
                   {templateLogSelectedIds.size} of {templateListExercises.length} selected
                 </Text>
