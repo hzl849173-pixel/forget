@@ -2669,8 +2669,15 @@ export default function SinglePageLandingScreen() {
                       </TouchableOpacity>
                     )}
                     <View style={styles.exerciseLoggerTitleCol}>
-                      <Text style={[styles.exerciseLoggerName, { color: theme.textPrimary }]}>{exItem.name}</Text>
-                      <Text style={[styles.exerciseLoggerMuscle, { color: categoryColor }]}>{exItem.muscleGroup.toUpperCase()}</Text>
+                      <Text style={[styles.exerciseLoggerName, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>{exItem.name}</Text>
+                      <Text style={[styles.exerciseLoggerMuscle, { color: categoryColor }]}>
+                        {exItem.muscleGroup.toUpperCase()}
+                        {activeSets.length > 2 && (
+                          <Text style={{ fontSize: 9, fontWeight: '700', color: theme.textSecondary }}>
+                            {"  "}·{"  "}SCROLL ↕ FOR SETS & NOTE
+                          </Text>
+                        )}
+                      </Text>
                     </View>
                     {fromTemplateList ? (
                       <TouchableOpacity
