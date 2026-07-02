@@ -213,6 +213,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     padding: 22,
     borderWidth: 1,
+    borderLeftWidth: 4,
+    borderLeftColor: '#10B981',
     borderColor: '#E5E7EB',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

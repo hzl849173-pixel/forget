@@ -30,7 +30,7 @@ export const WorkoutInsightsView: React.FC<WorkoutInsightsViewProps> = ({ insigh
         <View style={styles.gridRow}>
           {/* Strongest improving */}
           <TouchableOpacity 
-            style={styles.card} 
+            style={[styles.card, { borderLeftColor: '#10B981' }]} 
             activeOpacity={0.7}
             onPress={() => showInfo(
               'Strongest Improving', 
@@ -53,7 +53,7 @@ export const WorkoutInsightsView: React.FC<WorkoutInsightsViewProps> = ({ insigh
 
           {/* Longest stagnant */}
           <TouchableOpacity 
-            style={styles.card} 
+            style={[styles.card, { borderLeftColor: '#EF4444' }]} 
             activeOpacity={0.7}
             onPress={() => showInfo(
               'Longest Stagnant', 
@@ -79,7 +79,7 @@ export const WorkoutInsightsView: React.FC<WorkoutInsightsViewProps> = ({ insigh
         <View style={styles.gridRow}>
           {/* Most frequent muscle */}
           <TouchableOpacity 
-            style={styles.card} 
+            style={[styles.card, { borderLeftColor: '#3B82F6' }]} 
             activeOpacity={0.7}
             onPress={() => showInfo(
               'Most Frequent Muscle', 
@@ -102,7 +102,7 @@ export const WorkoutInsightsView: React.FC<WorkoutInsightsViewProps> = ({ insigh
 
           {/* Least frequent muscle */}
           <TouchableOpacity 
-            style={styles.card} 
+            style={[styles.card, { borderLeftColor: '#F59E0B' }]} 
             activeOpacity={0.7}
             onPress={() => showInfo(
               'Least Frequent Muscle', 
@@ -128,7 +128,7 @@ export const WorkoutInsightsView: React.FC<WorkoutInsightsViewProps> = ({ insigh
         <View style={styles.gridRow}>
           {/* Average workouts per week */}
           <TouchableOpacity 
-            style={styles.card} 
+            style={[styles.card, { borderLeftColor: '#8B5CF6' }]} 
             activeOpacity={0.7}
             onPress={() => showInfo(
               'Average Workouts', 
@@ -149,7 +149,7 @@ export const WorkoutInsightsView: React.FC<WorkoutInsightsViewProps> = ({ insigh
 
           {/* Average rest days between workouts */}
           <TouchableOpacity 
-            style={styles.card} 
+            style={[styles.card, { borderLeftColor: '#6B7280' }]} 
             activeOpacity={0.7}
             onPress={() => showInfo(
               'Average Rest Days', 
@@ -234,6 +234,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    borderLeftWidth: 4,
     minHeight: 116,
     justifyContent: 'space-between',
   },

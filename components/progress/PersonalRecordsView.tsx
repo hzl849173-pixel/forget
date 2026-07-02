@@ -133,6 +133,8 @@ const styles = StyleSheet.create({
     padding: 18,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    borderLeftWidth: 4,
+    borderLeftColor: '#F59E0B',
   },
   emptyCard: {
     backgroundColor: '#FFFFFF',

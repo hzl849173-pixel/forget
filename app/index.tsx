@@ -1546,7 +1546,18 @@ export default function SinglePageLandingScreen() {
                     .map(([muscle, sets]) => `${muscle} ${sets}`)
                     .join(' · ');
                   return (
-                    <Card key={tmpl.id} style={[styles.historyLogCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                    <Card
+                      key={tmpl.id}
+                      style={[
+                        styles.historyLogCard,
+                        {
+                          borderLeftWidth: 4,
+                          borderLeftColor: categoryColors[sessionMuscles[0] || 'Chest'] || '#10B981',
+                          backgroundColor: theme.cardBg,
+                          borderColor: theme.borderColor
+                        }
+                      ]}
+                    >
                       <View style={styles.historyCardHeader}>
                         <View style={styles.historyTitleCol}>
                           <Text style={[styles.historySessionName, { color: theme.textPrimary }]}>{tmpl.name}</Text>

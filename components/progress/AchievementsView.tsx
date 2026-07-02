@@ -71,17 +71,27 @@ export const AchievementsView: React.FC<AchievementsViewProps> = ({ achievements
         </View>
       )}
 
-      {visibleAchievements.map((ach) => (
-        <View
-          key={ach.id}
-          style={[
-            styles.achCard,
-            {
-              backgroundColor: ach.isUnlocked ? '#10B98106' : '#FFFFFF',
-              borderColor: ach.isUnlocked ? '#10B98125' : '#E5E7EB',
-            }
-          ]}
-        >
+      {visibleAchievements.map((ach) => {
+        const getLeftBorderColor = (id: string, isUnlocked: boolean) => {
+          if (!isUnlocked) return '#D1D5DB';
+          if (id.startsWith('st-')) return '#F59E0B';
+          if (id.startsWith('pr-')) return '#EAB308';
+          if (id.startsWith('vol-')) return '#8B5CF6';
+          return '#10B981';
+        };
+
+        return (
+          <View
+            key={ach.id}
+            style={[
+              styles.achCard,
+              {
+                backgroundColor: ach.isUnlocked ? '#10B98106' : '#FFFFFF',
+                borderColor: ach.isUnlocked ? '#10B98125' : '#E5E7EB',
+                borderLeftColor: getLeftBorderColor(ach.id, ach.isUnlocked),
+              }
+            ]}
+          >
           <View style={styles.header}>
             <View style={styles.iconCol}>
               {getCategoryIcon(ach.id, ach.isUnlocked)}
@@ -116,7 +126,8 @@ export const AchievementsView: React.FC<AchievementsViewProps> = ({ achievements
             </View>
           )}
         </View>
-      ))}
+      );
+    })}
 
       {achievements.length > 3 && (
         <TouchableOpacity
@@ -214,6 +225,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 18,
     borderWidth: 1,
+    borderLeftWidth: 4,
     marginBottom: 12,
   },
   header: {
