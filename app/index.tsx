@@ -924,7 +924,6 @@ export default function SinglePageLandingScreen() {
     }));
     setTemplateListExercises(exercisesToLoad);
     setActiveTemplateId(tmpl.id);
-    setActiveSegment('log');
     setTemplateListVisible(true);
     setFromTemplateList(true);
   };
@@ -947,7 +946,6 @@ export default function SinglePageLandingScreen() {
       isCompleted: s.isCompleted ?? true,
     })));
     setSameForAll(false);
-    setTemplateListVisible(false);
   };  
 
   const handleTemplateListBackFromLogger = (skipSave = false) => {
@@ -967,7 +965,6 @@ export default function SinglePageLandingScreen() {
     setExpandedExerciseId(null);
     setActiveSets([]);
     setSameForAll(true);
-    setTemplateListVisible(true);
   };
 
   const handleDeleteTemplate = (id: string, name: string) => {
@@ -1984,8 +1981,8 @@ export default function SinglePageLandingScreen() {
                         
                         setSelectedModalMuscle(null);
                         setSelectedSubGroup(null);
-                        setTemplateListVisible(true);
                         setSelectedPickerExerciseIds(new Set());
+                        setTemplateListVisible(true);
                       }}
                       disabled={selectedPickerExerciseIds.size === 0}
                       activeOpacity={0.8}
@@ -2777,7 +2774,6 @@ export default function SinglePageLandingScreen() {
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <TouchableOpacity
                   onPress={() => {
-                    setTemplateListVisible(false);
                     handleSelectMuscleCard('Chest');
                   }}
                   activeOpacity={0.6}
@@ -2802,7 +2798,6 @@ export default function SinglePageLandingScreen() {
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
-                    setTemplateListVisible(false);
                     handleSelectMuscleCard('Chest');
                   }}
                   activeOpacity={0.7}
@@ -3011,6 +3006,7 @@ export default function SinglePageLandingScreen() {
                   setFromTemplateList(false);
                   setActiveTemplateId(null);
                   setTemplateListExercises([]);
+                  setActiveSegment('log');
                   AsyncStorage.setItem('@active_session_exercises', JSON.stringify(selectedExercises));
                   AsyncStorage.setItem('@session_start_time', String(now));
                 }}
@@ -4554,7 +4550,7 @@ const styles = StyleSheet.create({
   // Exercise Logger Modal Styles
   exerciseLoggerOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    backgroundColor: '#090A0F', // Solid Midnight Obsidian background to cover background list instantly
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
