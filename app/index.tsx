@@ -947,6 +947,7 @@ export default function SinglePageLandingScreen() {
       isCompleted: s.isCompleted ?? true,
     })));
     setSameForAll(false);
+    setTemplateListVisible(false);
   };  
 
   const handleTemplateListBackFromLogger = (skipSave = false) => {
