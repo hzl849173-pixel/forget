@@ -14,6 +14,7 @@ import {
   Dimensions,
   FlatList,
   Pressable,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -393,6 +394,22 @@ export default function SinglePageLandingScreen() {
     setCustomAlertIcon(icon || null);
     setCustomAlertVisible(true);
   };
+
+  React.useEffect(() => {
+    const handleBackButton = () => {
+      if (templateListVisible) {
+        setTemplateListVisible(false);
+        setFromTemplateList(false);
+        setTemplateListExercises([]);
+        setActiveTemplateId(null);
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', handleBackButton);
+    return () => subscription.remove();
+  }, [templateListVisible]);
 
   React.useEffect(() => {
     return () => {
@@ -2760,12 +2777,18 @@ export default function SinglePageLandingScreen() {
         </View>
       </Modal>
 
-      {/* Template Exercise List Modal */}
-      <Modal
-        visible={templateListVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); setActiveTemplateId(null); }}
+      {/* Template Exercise List Overlay */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: templateListVisible ? 1000 : -1,
+          opacity: templateListVisible ? 1 : 0,
+          pointerEvents: templateListVisible ? 'auto' : 'none',
+        }}
       >
         <View style={styles.timerOverlay}>
           <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '90%', width: '95%' }]}>
@@ -2890,7 +2913,7 @@ export default function SinglePageLandingScreen() {
             </View>
           </View>
         </View>
-      </Modal>
+      </View>
 
       {/* Template Log Selection Modal */}
       <Modal
