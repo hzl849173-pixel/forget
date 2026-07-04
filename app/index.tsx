@@ -366,12 +366,12 @@ export default function SinglePageLandingScreen() {
     const now = new Date();
     now.setDate(now.getDate() + offset * 7);
     const dayOfWeek = now.getDay();
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
+    const sunday = new Date(now);
+    sunday.setDate(now.getDate() - dayOfWeek);
     const week: Date[] = [];
     for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
+      const d = new Date(sunday);
+      d.setDate(sunday.getDate() + i);
       week.push(d);
     }
     return week;
@@ -1082,14 +1082,14 @@ export default function SinglePageLandingScreen() {
     if (diffDays === 1) return 'Yesterday';
 
     const dayOfWeek = todayOnly.getDay();
-    const monday = new Date(todayOnly);
-    monday.setDate(todayOnly.getDate() - ((dayOfWeek + 6) % 7));
+    const sunday = new Date(todayOnly);
+    sunday.setDate(todayOnly.getDate() - dayOfWeek);
 
-    if (dateOnly >= monday) return 'This Week';
+    if (dateOnly >= sunday) return 'This Week';
 
-    const lastMonday = new Date(monday);
-    lastMonday.setDate(monday.getDate() - 7);
-    if (dateOnly >= lastMonday) return 'Last Week';
+    const lastSunday = new Date(sunday);
+    lastSunday.setDate(sunday.getDate() - 7);
+    if (dateOnly >= lastSunday) return 'Last Week';
 
     return 'Earlier';
   };
@@ -1383,7 +1383,7 @@ export default function SinglePageLandingScreen() {
                 <View style={styles.weekDaysRow}>
                   {(() => {
                     const dates = getWeekDates(currentWeekOffset);
-                    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                     const todayLocal = new Date();
                     const todayLocalStr = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth() + 1).padStart(2, '0')}-${String(todayLocal.getDate()).padStart(2, '0')}`;
                     return dates.map((date, i) => {

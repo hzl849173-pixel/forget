@@ -12,10 +12,10 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ history, isDarkMode 
   const { exercises } = useWorkout();
 
   const getWeeklyMuscleSets = () => {
-    // Start of current week (Monday)
+    // Start of current week (Sunday)
     const now = new Date();
     const day = now.getDay();
-    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const diff = now.getDate() - day;
     const startOfWeek = new Date(now.setDate(diff));
     startOfWeek.setHours(0, 0, 0, 0);
 
