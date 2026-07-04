@@ -53,6 +53,8 @@ interface WorkoutContextType {
   favoriteOrder: string[];
   prs: PersonalRecord[];
   templates: WorkoutTemplate[];
+  weekStartDay: number;
+  setWeekStartDay: (day: number) => Promise<void>;
   addCompletedWorkout: (name: string, loggedExercises: LoggedExercise[], durationMinutes: number) => Promise<PersonalRecord[]>;
   createCustomExercise: (name: string, muscleGroup: MuscleGroup, instrument?: Instrument) => Promise<Exercise>;
   toggleFavoriteExercise: (exerciseId: string) => Promise<void>;
@@ -76,6 +78,7 @@ const STORAGE_KEYS = {
   FAVORITE_ORDER: '@workout_journal_favorite_order',
   PRS: '@workout_journal_prs_v1',
   TEMPLATES: '@workout_journal_templates_v1',
+  WEEK_START_DAY: '@workout_journal_week_start_day',
 };
 
 const generateId = () => Date.now().toString() + Math.random().toString(36).substring(2, 9);
@@ -86,6 +89,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [favoriteOrder, setFavoriteOrder] = useState<string[]>([]);
   const [prs, setPrs] = useState<PersonalRecord[]>([]);
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
+  const [weekStartDay, setWeekStartDayState] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load initial data
@@ -151,6 +155,11 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         if (storedTemplates) {
           setTemplates(JSON.parse(storedTemplates));
+        }
+
+        const storedWeekStart = await AsyncStorage.getItem(STORAGE_KEYS.WEEK_START_DAY);
+        if (storedWeekStart !== null) {
+          setWeekStartDayState(Number(storedWeekStart));
         }
       } catch (error) {
         console.error('Failed to load local storage workout data:', error);
@@ -369,6 +378,11 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await AsyncStorage.setItem(STORAGE_KEYS.TEMPLATES, JSON.stringify(newTemplates));
   };
 
+  const setWeekStartDay = async (day: number) => {
+    setWeekStartDayState(day);
+    await AsyncStorage.setItem(STORAGE_KEYS.WEEK_START_DAY, String(day));
+  };
+
   const deleteCustomExercise = async (exerciseId: string) => {
     const newExercises = exercises.filter((e) => e.id !== exerciseId);
     await saveExercises(newExercises);
@@ -385,6 +399,8 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         favoriteOrder,
         prs,
         templates,
+        weekStartDay,
+        setWeekStartDay,
         addCompletedWorkout,
         createCustomExercise,
         toggleFavoriteExercise,

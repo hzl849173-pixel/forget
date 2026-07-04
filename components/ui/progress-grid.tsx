@@ -6,17 +6,18 @@ import { SHOULDER_EXERCISE_IDS } from '../../constants/exercises';
 interface ProgressGridProps {
   history: WorkoutSession[];
   isDarkMode?: boolean;
+  weekStartDay?: number;
 }
 
-export const ProgressGrid: React.FC<ProgressGridProps> = ({ history, isDarkMode = true }) => {
+export const ProgressGrid: React.FC<ProgressGridProps> = ({ history, isDarkMode = true, weekStartDay = 0 }) => {
   const { exercises } = useWorkout();
 
   const getWeeklyMuscleSets = () => {
-    // Start of current week (Sunday)
     const now = new Date();
     const day = now.getDay();
-    const diff = now.getDate() - day;
-    const startOfWeek = new Date(now.setDate(diff));
+    const diff = (day - weekStartDay + 7) % 7;
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - diff);
     startOfWeek.setHours(0, 0, 0, 0);
 
     const muscleSets: Record<string, number> = {};

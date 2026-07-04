@@ -213,6 +213,8 @@ export default function SinglePageLandingScreen() {
     saveTemplate,
     updateTemplate,
     deleteTemplate,
+    weekStartDay,
+    setWeekStartDay,
   } = useWorkout();
 
   const totalWorkoutDays = new Set(history.map(session => session.date.split('T')[0])).size;
@@ -362,16 +364,17 @@ export default function SinglePageLandingScreen() {
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-  const getWeekDates = (offset: number) => {
+  const getWeekDates = (offset: number, firstDay: number = weekStartDay) => {
     const now = new Date();
     now.setDate(now.getDate() + offset * 7);
     const dayOfWeek = now.getDay();
-    const sunday = new Date(now);
-    sunday.setDate(now.getDate() - dayOfWeek);
+    const diff = (dayOfWeek - firstDay + 7) % 7;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - diff);
     const week: Date[] = [];
     for (let i = 0; i < 7; i++) {
-      const d = new Date(sunday);
-      d.setDate(sunday.getDate() + i);
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
       week.push(d);
     }
     return week;
@@ -1071,7 +1074,7 @@ export default function SinglePageLandingScreen() {
     });
   };
 
-  const getDateGroupLabel = (dateStr: string): string => {
+  const getDateGroupLabel = (dateStr: string, firstDay: number = weekStartDay): string => {
     const d = new Date(dateStr);
     const today = new Date();
     const dateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -1082,14 +1085,15 @@ export default function SinglePageLandingScreen() {
     if (diffDays === 1) return 'Yesterday';
 
     const dayOfWeek = todayOnly.getDay();
-    const sunday = new Date(todayOnly);
-    sunday.setDate(todayOnly.getDate() - dayOfWeek);
+    const diff = (dayOfWeek - firstDay + 7) % 7;
+    const weekStart = new Date(todayOnly);
+    weekStart.setDate(todayOnly.getDate() - diff);
 
-    if (dateOnly >= sunday) return 'This Week';
+    if (dateOnly >= weekStart) return 'This Week';
 
-    const lastSunday = new Date(sunday);
-    lastSunday.setDate(sunday.getDate() - 7);
-    if (dateOnly >= lastSunday) return 'Last Week';
+    const lastWeekStart = new Date(weekStart);
+    lastWeekStart.setDate(weekStart.getDate() - 7);
+    if (dateOnly >= lastWeekStart) return 'Last Week';
 
     return 'Earlier';
   };
@@ -1369,6 +1373,42 @@ export default function SinglePageLandingScreen() {
                       return `${m} ${y}`;
                     })()}
                   </Text>
+                  <View style={styles.weekStartToggle}>
+                    <TouchableOpacity
+                      onPress={() => setWeekStartDay(0)}
+                      activeOpacity={0.6}
+                      style={[
+                        styles.weekStartToggleOption,
+                        { backgroundColor: weekStartDay === 0 ? '#3B82F6' : 'transparent' },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.weekStartToggleText,
+                          { color: weekStartDay === 0 ? '#FFFFFF' : theme.textSecondary },
+                        ]}
+                      >
+                        SUN
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setWeekStartDay(1)}
+                      activeOpacity={0.6}
+                      style={[
+                        styles.weekStartToggleOption,
+                        { backgroundColor: weekStartDay === 1 ? '#3B82F6' : 'transparent' },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.weekStartToggleText,
+                          { color: weekStartDay === 1 ? '#FFFFFF' : theme.textSecondary },
+                        ]}
+                      >
+                        MON
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                   <TouchableOpacity
                     onPress={() => {
                       setCurrentWeekOffset(currentWeekOffset + 1);
@@ -1383,7 +1423,8 @@ export default function SinglePageLandingScreen() {
                 <View style={styles.weekDaysRow}>
                   {(() => {
                     const dates = getWeekDates(currentWeekOffset);
-                    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const baseLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const dayLabels = [...baseLabels.slice(weekStartDay), ...baseLabels.slice(0, weekStartDay)];
                     const todayLocal = new Date();
                     const todayLocalStr = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth() + 1).padStart(2, '0')}-${String(todayLocal.getDate()).padStart(2, '0')}`;
                     return dates.map((date, i) => {
@@ -1499,7 +1540,7 @@ export default function SinglePageLandingScreen() {
                 }}
               >
                 <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>ACTIVITY TRACKER</Text>
-                <ProgressGrid history={history} isDarkMode={isDarkMode} />
+                <ProgressGrid history={history} isDarkMode={isDarkMode} weekStartDay={weekStartDay} />
               </TouchableOpacity>
 
             </>
@@ -3348,6 +3389,23 @@ const styles = StyleSheet.create({
   weeklyTitle: {
     fontSize: 12,
     fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  weekStartToggle: {
+    flexDirection: 'row',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#3B82F660',
+    overflow: 'hidden',
+    marginRight: 4,
+  },
+  weekStartToggleOption: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  weekStartToggleText: {
+    fontSize: 9,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
   weekDaysRow: {
