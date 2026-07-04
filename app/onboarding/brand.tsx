@@ -116,7 +116,7 @@ export default function BrandingScreen() {
                 duration: 450,
                 useNativeDriver: true,
             }).start(() => {
-                router.replace('/onboarding/height');
+                router.replace('/onboarding/name');
             });
         }, 3250);
 
@@ -161,7 +161,7 @@ export default function BrandingScreen() {
                 </View>
 
                 {/* Optional tap-to-skip for testing */}
-                <Pressable onPress={() => router.replace('/onboarding/height')} style={stylesMemo.debugTap} />
+                <Pressable onPress={() => router.replace('/onboarding/name')} style={stylesMemo.debugTap} />
             </Animated.View>
         </SafeAreaView>
     );

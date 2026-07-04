@@ -3,6 +3,7 @@ import type { FitnessGoal, OnboardingProfile } from '@/lib/profile/profileStorag
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 
 export interface UserProfileDocument {
+    name: string;
     heightCm: number;
     weightKg: number;
     goal: FitnessGoal;
@@ -16,6 +17,7 @@ export async function saveProfileToFirestore(
     const ref = doc(db, 'users', uid);
 
     const payload = {
+        name: profile.name || '',
         heightCm: profile.heightCm,
         weightKg: profile.weightKg,
         goal: profile.goal,

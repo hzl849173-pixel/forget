@@ -58,6 +58,7 @@ export default function SignInScreen() {
             const p = await loadLocalProfile();
             if (user?.uid && p) {
                 await saveProfileToFirestore(user.uid, {
+                    name: p.name,
                     heightCm: p.heightCm,
                     weightKg: p.weightKg,
                     goal: p.goal,

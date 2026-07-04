@@ -10,7 +10,7 @@ import { isOnboardingCompleted } from '@/lib/profile/profileStorage';
 import React, { useEffect, useState } from 'react';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: 'index',
 };
 
 export default function RootLayout() {
@@ -52,6 +52,7 @@ export default function RootLayout() {
           <Stack>
             {/* onboarding routes */}
             <Stack.Screen name="onboarding/brand" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding/name" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/height" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/weight" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/goal" options={{ headerShown: false }} />

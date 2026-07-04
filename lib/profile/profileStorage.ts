@@ -9,6 +9,7 @@ export type FitnessGoal =
     | 'Improve Overall Health';
 
 export interface OnboardingProfile {
+    name: string;
     heightCm: number;
     weightKg: number;
     goal: FitnessGoal;
@@ -18,6 +19,7 @@ export interface OnboardingProfile {
 const KEYS = {
     ONBOARDING_COMPLETED: '@workout_journal_onboarding_completed_v1',
     SIGNED_IN: '@workout_journal_user_signed_in_v1',
+    NAME: '@workout_journal_profile_name_v1',
     HEIGHT_CM: '@workout_journal_profile_height_cm_v1',
     WEIGHT_KG: '@workout_journal_profile_weight_kg_v1',
     GOAL: '@workout_journal_profile_goal_v1',
@@ -43,6 +45,7 @@ export async function isSignedInFlag() {
 
 export async function saveLocalProfile(profile: Omit<OnboardingProfile, 'updatedAt'>) {
     await AsyncStorage.multiSet([
+        [KEYS.NAME, profile.name],
         [KEYS.HEIGHT_CM, String(profile.heightCm)],
         [KEYS.WEIGHT_KG, String(profile.weightKg)],
         [KEYS.GOAL, profile.goal],
@@ -50,19 +53,21 @@ export async function saveLocalProfile(profile: Omit<OnboardingProfile, 'updated
 }
 
 export async function loadLocalProfile(): Promise<OnboardingProfile | null> {
-    const [h, w, g] = await Promise.all([
+    const [n, h, w, g] = await Promise.all([
+        AsyncStorage.getItem(KEYS.NAME),
         AsyncStorage.getItem(KEYS.HEIGHT_CM),
         AsyncStorage.getItem(KEYS.WEIGHT_KG),
         AsyncStorage.getItem(KEYS.GOAL),
     ]);
 
-    if (!h || !w || !g) return null;
+    if (h === null || w === null || g === null) return null;
 
     const heightCm = Number(h);
     const weightKg = Number(w);
     if (!Number.isFinite(heightCm) || !Number.isFinite(weightKg)) return null;
 
     return {
+        name: n || '',
         heightCm,
         weightKg,
         goal: g as FitnessGoal,
@@ -75,9 +80,14 @@ export async function upsertProfileFirestoreShape(
     profile: OnboardingProfile
 ): Promise<Record<string, any>> {
     return {
+        name: profile.name,
         heightCm: profile.heightCm,
         weightKg: profile.weightKg,
         goal: profile.goal,
         updatedAt: profile.updatedAt,
     };
+}
+
+export async function setSignedOut() {
+    await AsyncStorage.setItem(KEYS.SIGNED_IN, 'false');
 }

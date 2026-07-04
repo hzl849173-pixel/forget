@@ -23,11 +23,12 @@ const GOALS: GoalOption[] = [
 export default function GoalScreen() {
     const router = useRouter();
 
-    const [selected, setSelected] = useState<FitnessGoal>('Balanced Fitness');
+    const [selected, setSelected] = useState<FitnessGoal | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const [heightCm, setHeightCm] = useState<number>(170);
-    const [weightKg, setWeightKg] = useState<number>(70);
+    const [name, setName] = useState('');
+    const [heightCm, setHeightCm] = useState<number>(0);
+    const [weightKg, setWeightKg] = useState<number>(0);
 
     useEffect(() => {
         let mounted = true;
@@ -36,6 +37,7 @@ export default function GoalScreen() {
             if (!mounted) return;
 
             if (p) {
+                setName(p.name);
                 setSelected(p.goal);
                 setHeightCm(p.heightCm);
                 setWeightKg(p.weightKg);
@@ -48,8 +50,12 @@ export default function GoalScreen() {
         };
     }, []);
 
+    const canContinue = selected !== null;
+
     const onNext = async () => {
+        if (!canContinue || !selected) return;
         const next: Omit<OnboardingProfile, 'updatedAt'> = {
+            name,
             heightCm,
             weightKg,
             goal: selected,
@@ -97,13 +103,21 @@ export default function GoalScreen() {
                 </View>
 
                 <TouchableOpacity
-                    style={[styles.primaryBtn, loading && styles.primaryBtnDisabled]}
+                    style={[styles.primaryBtn, (!canContinue || loading) && styles.primaryBtnDisabled]}
                     onPress={onNext}
-                    disabled={loading}
+                    disabled={!canContinue || loading}
                     activeOpacity={0.85}
                 >
                     <Text style={styles.primaryBtnText}>NEXT</Text>
                 </TouchableOpacity>
+
+                <View style={styles.footer}>
+                    <View style={styles.progressDots}>
+                        <View style={styles.dot} />
+                        <View style={styles.dot} />
+                        <View style={[styles.dot, styles.activeDot]} />
+                    </View>
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -137,8 +151,29 @@ const styles = StyleSheet.create({
         backgroundColor: '#10B981',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 10,
     },
     primaryBtnDisabled: { backgroundColor: '#D1D5DB' },
     primaryBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900', letterSpacing: 0.6 },
+    footer: {
+        marginTop: 'auto',
+        paddingBottom: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    progressDots: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    dot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#E5E7EB',
+    },
+    activeDot: {
+        backgroundColor: '#10B981',
+        width: 24,
+    },
 });

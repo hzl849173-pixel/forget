@@ -1,23 +1,39 @@
-import React, { useState, useRef } from 'react';
+import { Image } from 'expo-image';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  SectionList,
-  KeyboardAvoidingView,
-  Platform,
-  Modal,
-  TextInput,
-  PanResponder,
-  Dimensions,
-  FlatList,
-  Pressable,
+  Award,
+  Calendar,
+  Check,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Dumbbell,
+  Flame,
+  GripVertical,
+  Plus,
+  Star,
+  Timer,
+  Trash2,
+  Trophy,
+  User,
+  X
+} from 'lucide-react-native';
+import React, { useState } from 'react';
+import {
   BackHandler,
+  KeyboardAvoidingView,
+  Modal,
+  PanResponder,
+  Platform,
+  Pressable,
+  ScrollView,
+  SectionList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
 
 const MUSCLE_IMAGES = {
   Chest: require('@/assets/images/muscle_chest.png'),
@@ -146,9 +162,9 @@ const ALT_IMAGES = [
   (color: string) => <WeightPlateIcon color={color} />,
 ];
 const Haptics = {
-  impactAsync: async (...args: any[]) => {},
-  notificationAsync: async (...args: any[]) => {},
-  selectionAsync: async (...args: any[]) => {},
+  impactAsync: async (...args: any[]) => { },
+  notificationAsync: async (...args: any[]) => { },
+  selectionAsync: async (...args: any[]) => { },
   ImpactFeedbackStyle: {
     Light: 'light' as const,
     Medium: 'medium' as const,
@@ -160,38 +176,24 @@ const Haptics = {
     Error: 'error' as const,
   },
 };
-import {
-  Star,
-  Flame,
-  Dumbbell,
-  Trash2,
-  Calendar,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  Search,
-  Filter,
-  Trophy,
-  X,
-  Timer,
-  Check,
-  GripVertical,
-} from 'lucide-react-native';
 
+import { auth } from '@/lib/firebase/firebaseConfig';
+import { loadLocalProfile, OnboardingProfile, setSignedOut } from '@/lib/profile/profileStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { signOut } from 'firebase/auth';
 
-import { useWorkout, WorkoutSet, WorkoutSession, LoggedExercise, Exercise, PersonalRecord, WorkoutTemplate } from '@/hooks/use-workout-storage';
-import { MUSCLE_GROUPS, MuscleGroup, DEFAULT_EXERCISES, INSTRUMENT_ORDER, SHOULDER_EXERCISE_IDS } from '@/constants/exercises';
-import DragList from 'react-native-draglist';
-import { ProgressGrid } from '@/components/ui/progress-grid';
 import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { IncrementInput } from '@/components/ui/input';
 import { MuscleBadge } from '@/components/ui/muscle-badge';
+import { ProgressGrid } from '@/components/ui/progress-grid';
+import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS } from '@/constants/exercises';
+import { useWorkoutAnalytics } from '@/hooks/use-workout-analytics';
+import { Exercise, LoggedExercise, PersonalRecord, useWorkout, WorkoutSession, WorkoutSet, WorkoutTemplate } from '@/hooks/use-workout-storage';
+import DragList from 'react-native-draglist';
 
 const generateId = () => Date.now().toString() + Math.random().toString(36).substring(2, 9);
 
@@ -217,6 +219,12 @@ export default function SinglePageLandingScreen() {
     setWeekStartDay,
   } = useWorkout();
 
+  const {
+    overallStats,
+    prs,
+    achievements,
+  } = useWorkoutAnalytics();
+
   const totalWorkoutDays = new Set(history.map(session => session.date.split('T')[0])).size;
 
   // Active view segment: 'log' | 'progress' | 'templates' | 'history'
@@ -224,6 +232,58 @@ export default function SinglePageLandingScreen() {
   const [progressInitialTab, setProgressInitialTab] = useState<'overview' | 'analytics' | 'milestones' | null>(null);
 
   const switcherScrollRef = React.useRef<ScrollView>(null);
+
+  // Profile Modal states
+  const router = useRouter();
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [userProfile, setUserProfile] = useState<OnboardingProfile | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
+
+  const getInitials = (name: string | null, email: string | null): string => {
+    if (name) {
+      const parts = name.split(' ').filter(Boolean);
+      if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      return name.slice(0, 2).toUpperCase();
+    }
+    if (email) return email[0].toUpperCase();
+    return 'G';
+  };
+
+  const handleOpenProfile = async () => {
+    try {
+      const p = await loadLocalProfile();
+      setUserProfile(p);
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        setUserEmail(currentUser.email);
+        setUserDisplayName(currentUser.displayName);
+      } else {
+        setUserEmail(null);
+        setUserDisplayName(null);
+      }
+      setProfileModalVisible(true);
+    } catch (e) {
+      console.log('Error opening profile', e);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      await setSignedOut();
+      setUserEmail(null);
+      setUserDisplayName(null);
+      setProfileModalVisible(false);
+    } catch (e) {
+      console.log('Error signing out', e);
+    }
+  };
+
+  const handleRedirectToSignIn = () => {
+    setProfileModalVisible(false);
+    router.replace('/onboarding/signin');
+  };
 
   // Workout logging states
   const [selectedModalMuscle, setSelectedModalMuscle] = useState<MuscleGroup | null>(null);
@@ -247,10 +307,10 @@ export default function SinglePageLandingScreen() {
   const [templateLogSelectVisible, setTemplateLogSelectVisible] = useState(false);
   const [templateLogSelectedIds, setTemplateLogSelectedIds] = useState<Set<string>>(new Set());
   const [selectedPickerExerciseIds, setSelectedPickerExerciseIds] = useState<Set<string>>(new Set());
-  
+
   const [sortedExerciseList, setSortedExerciseList] = useState<Exercise[]>([]);
   const [customShoulderIds, setCustomShoulderIds] = useState<Set<string>>(new Set());
-  
+
   // Expanded exercise state (active logger)
   const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(null);
   const [activeSets, setActiveSets] = useState<WorkoutSet[]>([]);
@@ -275,7 +335,7 @@ export default function SinglePageLandingScreen() {
   const restTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const soundObjectRef = React.useRef<any>(null);
   const exerciseSwipeGestureX = React.useRef(0);
-  const navigateToExerciseRef = React.useRef<(direction: 'prev' | 'next') => void>(() => {});
+  const navigateToExerciseRef = React.useRef<(direction: 'prev' | 'next') => void>(() => { });
   const exercisePanResponder = React.useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
@@ -306,8 +366,8 @@ export default function SinglePageLandingScreen() {
 
   const stopTimerSound = async () => {
     if (soundObjectRef.current) {
-      try { await soundObjectRef.current.stopAsync(); } catch {}
-      try { await soundObjectRef.current.unloadAsync(); } catch {}
+      try { await soundObjectRef.current.stopAsync(); } catch { }
+      try { await soundObjectRef.current.unloadAsync(); } catch { }
       soundObjectRef.current = null;
     }
   };
@@ -545,7 +605,7 @@ export default function SinglePageLandingScreen() {
   // Auto-populate sets when expanding an exercise
   const handleToggleExpand = (exerciseId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
+
     if (expandedExerciseId === exerciseId) {
       setExpandedExerciseId(null);
       setActiveSets([]);
@@ -596,15 +656,15 @@ export default function SinglePageLandingScreen() {
 
   const handleAddSet = (exerciseId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
+
     let newWeight = 0;
     let newReps = 0;
-    
+
     if (sameForAll && activeSets.length > 0) {
       newWeight = activeSets[0].weight;
       newReps = activeSets[0].reps;
     }
-    
+
     setActiveSets([
       ...activeSets,
       {
@@ -662,7 +722,7 @@ export default function SinglePageLandingScreen() {
     }
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
+
     const newLog = {
       exerciseId,
       sets: activeSets.map((s) => ({ ...s, isCompleted: true })),
@@ -695,7 +755,7 @@ export default function SinglePageLandingScreen() {
     // Add or replace the logged exercise in activeSessionExercises
     const updatedExercises = [...activeSessionExercises];
     const existingIndex = updatedExercises.findIndex((le) => le.exerciseId === exerciseId);
-    
+
     if (existingIndex > -1) {
       updatedExercises[existingIndex] = newLog;
     } else {
@@ -771,7 +831,7 @@ export default function SinglePageLandingScreen() {
           style: 'default',
           onPress: async () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            
+
             const elapsedMinutes = sessionStartTime > 0
               ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
               : 15;
@@ -917,7 +977,7 @@ export default function SinglePageLandingScreen() {
 
     if (isSavingActiveSessionAsTemplate) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      
+
       const elapsedMinutes = sessionStartTime > 0
         ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
         : 15;
@@ -957,7 +1017,7 @@ export default function SinglePageLandingScreen() {
     } else {
       const newTmpl = await saveTemplate(templateName, templateExercises);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      
+
       // Open the new template immediately in the Template Details modal
       setTemplateListExercises([]);
       setActiveTemplateId(newTmpl.id);
@@ -1001,7 +1061,7 @@ export default function SinglePageLandingScreen() {
     })));
     setExerciseNote(logEx.notes || '');
     setSameForAll(false);
-  };  
+  };
 
   const handleTemplateListBackFromLogger = (skipSave = false) => {
     if (!skipSave && expandedExerciseId && activeSets.length > 0) {
@@ -1101,10 +1161,10 @@ export default function SinglePageLandingScreen() {
   // Filter the snapshotted sorted exercise list by sub-group and search query
   const subGroupFiltered = selectedSubGroup
     ? sortedExerciseList.filter((ex) =>
-        selectedSubGroup === 'Shoulders'
-          ? SHOULDER_EXERCISE_IDS.has(ex.id) || customShoulderIds.has(ex.id)
-          : !SHOULDER_EXERCISE_IDS.has(ex.id) && !customShoulderIds.has(ex.id)
-      )
+      selectedSubGroup === 'Shoulders'
+        ? SHOULDER_EXERCISE_IDS.has(ex.id) || customShoulderIds.has(ex.id)
+        : !SHOULDER_EXERCISE_IDS.has(ex.id) && !customShoulderIds.has(ex.id)
+    )
     : sortedExerciseList;
   const displayedExercises = subGroupFiltered.filter((ex) =>
     ex.name.toLowerCase().includes(search.toLowerCase())
@@ -1129,16 +1189,16 @@ export default function SinglePageLandingScreen() {
 
   const filteredHistory = historySearch.trim()
     ? history.filter((item) => {
-        const q = historySearch.toLowerCase();
-        if (item.name.toLowerCase().includes(q)) return true;
-        if (formatHistoryDate(item.date).toLowerCase().includes(q)) return true;
-        const hasMatchingExercise = item.exercises.some((logEx) => {
-          const details = exercises.find((e) => e.id === logEx.exerciseId);
-          return details?.name.toLowerCase().includes(q);
-        });
-        if (hasMatchingExercise) return true;
-        return false;
-      })
+      const q = historySearch.toLowerCase();
+      if (item.name.toLowerCase().includes(q)) return true;
+      if (formatHistoryDate(item.date).toLowerCase().includes(q)) return true;
+      const hasMatchingExercise = item.exercises.some((logEx) => {
+        const details = exercises.find((e) => e.id === logEx.exerciseId);
+        return details?.name.toLowerCase().includes(q);
+      });
+      if (hasMatchingExercise) return true;
+      return false;
+    })
     : history;
 
   const GROUP_ORDER = ['Today', 'Yesterday', 'This Week', 'Last Week', 'Earlier'];
@@ -1206,6 +1266,24 @@ export default function SinglePageLandingScreen() {
                       {formatRestTime(restTimerSeconds)}
                     </Text>
                   ) : null}
+                </TouchableOpacity>
+
+                {/* Profile Badge */}
+                <TouchableOpacity
+                  style={[
+                    styles.profileBadge,
+                    { backgroundColor: userEmail || auth.currentUser ? '#10B981' : theme.cardBg, borderColor: userEmail || auth.currentUser ? '#10B981' : theme.borderColor }
+                  ]}
+                  onPress={handleOpenProfile}
+                  activeOpacity={0.7}
+                >
+                  {userEmail || auth.currentUser ? (
+                    <Text style={styles.profileBadgeInitials}>
+                      {getInitials(auth.currentUser?.displayName ?? null, auth.currentUser?.email ?? null)}
+                    </Text>
+                  ) : (
+                    <User size={14} color={theme.textSecondary} strokeWidth={2.5} />
+                  )}
                 </TouchableOpacity>
 
               </View>
@@ -1444,13 +1522,13 @@ export default function SinglePageLandingScreen() {
                               backgroundColor: isSelected
                                 ? '#3B82F6'
                                 : hasWorkout
-                                ? '#10B98120'
-                                : theme.background,
+                                  ? '#10B98120'
+                                  : theme.background,
                               borderColor: isSelected
                                 ? '#3B82F6'
                                 : isToday
-                                ? '#3B82F660'
-                                : theme.borderColor,
+                                  ? '#3B82F660'
+                                  : theme.borderColor,
                               opacity: isFuture ? 0.3 : 1,
                             },
                           ]}
@@ -1532,8 +1610,8 @@ export default function SinglePageLandingScreen() {
               </Card>
 
               {/* Consistency Graph */}
-              <TouchableOpacity 
-                activeOpacity={0.7} 
+              <TouchableOpacity
+                activeOpacity={0.7}
                 onPress={() => {
                   setProgressInitialTab('analytics');
                   setActiveSegment('progress');
@@ -1562,7 +1640,7 @@ export default function SinglePageLandingScreen() {
                   CREATE CUSTOM TEMPLATE
                 </Text>
               </TouchableOpacity>
-              
+
               {templates.length === 0 ? (
                 <Card style={[styles.welcomeCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
                   <Calendar size={32} color="#10B981" strokeWidth={1.5} />
@@ -1749,7 +1827,7 @@ export default function SinglePageLandingScreen() {
             </View>
           ) : (
             /* Progress View Section */
-            <ProgressDashboard 
+            <ProgressDashboard
               initialModalTab={progressInitialTab}
               onClearInitialTab={() => setProgressInitialTab(null)}
             />
@@ -1761,8 +1839,8 @@ export default function SinglePageLandingScreen() {
           visible={selectedModalMuscle !== null}
           animationType="none"
           presentationStyle="fullScreen"
-          onRequestClose={() => { 
-            setSelectedModalMuscle(null); 
+          onRequestClose={() => {
+            setSelectedModalMuscle(null);
             setSelectedSubGroup(null);
             setSelectedPickerExerciseIds(new Set());
             if (fromTemplateList) {
@@ -1779,9 +1857,9 @@ export default function SinglePageLandingScreen() {
                 {/* Modal Header */}
                 <View style={[styles.modalHeader, { borderBottomColor: theme.borderColor }]}>
                   <View style={{ flex: 1, marginRight: 12 }}>
-                    <Text 
-                      style={[styles.modalTitle, { color: theme.textPrimary }]} 
-                      numberOfLines={1} 
+                    <Text
+                      style={[styles.modalTitle, { color: theme.textPrimary }]}
+                      numberOfLines={1}
                       adjustsFontSizeToFit
                     >
                       {(selectedSubGroup || selectedModalMuscle || '').toUpperCase()} WORKOUTS
@@ -1789,9 +1867,9 @@ export default function SinglePageLandingScreen() {
                     <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>Select a workout to log completed sets</Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => { 
-                      setSelectedModalMuscle(null); 
-                      setSelectedSubGroup(null); 
+                    onPress={() => {
+                      setSelectedModalMuscle(null);
+                      setSelectedSubGroup(null);
                       setSelectedPickerExerciseIds(new Set());
                       if (fromTemplateList) {
                         setTemplateListVisible(true);
@@ -1915,7 +1993,7 @@ export default function SinglePageLandingScreen() {
                                 });
                                 return;
                               }
-                              
+
                               const targetList = fromTemplateList ? templateListExercises : activeSessionExercises;
                               const existingInActive = targetList.find((le) => le.exerciseId === item.id);
                               const initialSets: WorkoutSet[] = [];
@@ -1971,17 +2049,17 @@ export default function SinglePageLandingScreen() {
                               </View>
                             )}
                             {(() => {
-                               const exerciseColor = ALT_COLORS[index % 4];
-                               const renderExerciseIcon = ALT_IMAGES[index % 5];
-                               return (
-                                 <View style={[
-                                   styles.exerciseBadgeCircle,
-                                   { backgroundColor: `${exerciseColor}12` }
-                                 ]}>
-                                   {renderExerciseIcon(exerciseColor)}
-                                 </View>
-                               );
-                             })()}
+                              const exerciseColor = ALT_COLORS[index % 4];
+                              const renderExerciseIcon = ALT_IMAGES[index % 5];
+                              return (
+                                <View style={[
+                                  styles.exerciseBadgeCircle,
+                                  { backgroundColor: `${exerciseColor}12` }
+                                ]}>
+                                  {renderExerciseIcon(exerciseColor)}
+                                </View>
+                              );
+                            })()}
                             <Text
                               style={[styles.exerciseName, { color: theme.textPrimary }]}
                               numberOfLines={2}
@@ -2070,12 +2148,12 @@ export default function SinglePageLandingScreen() {
                       style={[styles.modalFinishBtn, { backgroundColor: selectedPickerExerciseIds.size > 0 ? '#10B981' : theme.borderColor }]}
                       onPress={async () => {
                         if (selectedPickerExerciseIds.size === 0) return;
-                        
+
                         const newExercises: LoggedExercise[] = [];
                         selectedPickerExerciseIds.forEach((id) => {
                           // Check if already exists in template to avoid duplicates
                           if (templateListExercises.some(e => e.exerciseId === id)) return;
-                          
+
                           const previousLog = getPreviousWorkoutForExercise(id);
                           const initialSets: WorkoutSet[] = [];
                           if (previousLog && previousLog.sets.length > 0) {
@@ -2090,12 +2168,12 @@ export default function SinglePageLandingScreen() {
                             sets: initialSets,
                           });
                         });
-                        
+
                         if (newExercises.length > 0) {
                           const updatedList = [...templateListExercises, ...newExercises];
                           setTemplateListExercises(updatedList);
                         }
-                        
+
                         setSelectedModalMuscle(null);
                         setSelectedSubGroup(null);
                         setSelectedPickerExerciseIds(new Set());
@@ -2113,933 +2191,933 @@ export default function SinglePageLandingScreen() {
           </View>
         </Modal>
 
-      {/* Add Exercise Modal */}
-      <Modal
-        visible={addExerciseVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={() => setAddExerciseVisible(false)}
-      >
-        <View style={styles.addExerciseOverlay}>
-          <View style={[styles.addExerciseCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-            <Text style={[styles.addExerciseTitle, { color: theme.textPrimary }]}>ADD WORKOUT</Text>
-            <Text style={[styles.addExerciseSubtitle, { color: theme.textSecondary }]}>
-              {selectedModalMuscle?.toUpperCase()}
-            </Text>
-            <TextInput
-              style={[styles.addExerciseInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
-              placeholder="Workout name"
-              placeholderTextColor={theme.inputPlaceholder}
-              value={newExerciseName}
-              onChangeText={setNewExerciseName}
-              autoFocus={true}
-              autoCorrect={false}
-            />
-            <View style={styles.addExerciseActions}>
-              <TouchableOpacity
-                style={[styles.addExerciseCancelBtn, { borderColor: theme.borderColor }]}
-                onPress={() => setAddExerciseVisible(false)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.addExerciseCancelText, { color: theme.textSecondary }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.addExerciseConfirmBtn, { backgroundColor: newExerciseName.trim() ? '#10B981' : theme.borderColor }]}
-                onPress={async () => {
-                  const name = newExerciseName.trim();
-                  if (!name || !selectedModalMuscle) return;
-                  const created = await createCustomExercise(name, selectedModalMuscle);
-                  if (selectedSubGroup === 'Shoulders') {
-                    const next = new Set(customShoulderIds);
-                    next.add(created.id);
-                    setCustomShoulderIds(next);
-                    AsyncStorage.setItem('@custom_shoulder_ids', JSON.stringify([...next]));
-                  }
-                  setNewExerciseName('');
-                  setAddExerciseVisible(false);
-                  setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle, [created]));
-                }}
-                activeOpacity={0.8}
-                disabled={!newExerciseName.trim()}
-              >
-                <Text style={styles.addExerciseConfirmText}>Add</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Rest Timer Modal */}
-      <Modal
-        visible={restTimerVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={() => setRestTimerVisible(false)}
-      >
-        <View style={styles.timerOverlay}>
-          <View style={[styles.timerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-            <TouchableOpacity
-              style={styles.timerCloseBtn}
-              onPress={() => setRestTimerVisible(false)}
-              activeOpacity={0.7}
-            >
-              <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
-            </TouchableOpacity>
-
-            <Text style={[styles.timerDisplay, { color: restTimerRunning ? '#10B981' : theme.textPrimary }]}>
-              {formatRestTime(restTimerSeconds)}
-            </Text>
-
-            <View style={styles.timerActions}>
-              {restTimerRunning ? (
-                <>
-                  <TouchableOpacity
-                    style={[styles.timerActionBtn, { backgroundColor: '#EF444420' }]}
-                    onPress={stopRestTimer}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.timerActionText, { color: '#EF4444' }]}>STOP</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.timerActionBtn, { backgroundColor: '#6B728020' }]}
-                    onPress={resetRestTimer}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.timerActionText, { color: '#6B7280' }]}>RESET</Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <>
-                  <TouchableOpacity
-                    style={[styles.timerActionBtn, { backgroundColor: '#10B98120' }]}
-                    onPress={() => startRestTimer(restTimerSeconds > 0 ? restTimerSeconds : restTimerDuration)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.timerActionText, { color: '#10B981' }]}>START</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.timerActionBtn, { backgroundColor: '#6B728020' }]}
-                    onPress={resetRestTimer}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.timerActionText, { color: '#6B7280' }]}>RESET</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-
-            <View style={styles.timerPresets}>
-              {[30, 60, 90, 120, 180, 300].map((sec) => (
+        {/* Add Exercise Modal */}
+        <Modal
+          visible={addExerciseVisible}
+          transparent={true}
+          animationType="none"
+          onRequestClose={() => setAddExerciseVisible(false)}
+        >
+          <View style={styles.addExerciseOverlay}>
+            <View style={[styles.addExerciseCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+              <Text style={[styles.addExerciseTitle, { color: theme.textPrimary }]}>ADD WORKOUT</Text>
+              <Text style={[styles.addExerciseSubtitle, { color: theme.textSecondary }]}>
+                {selectedModalMuscle?.toUpperCase()}
+              </Text>
+              <TextInput
+                style={[styles.addExerciseInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
+                placeholder="Workout name"
+                placeholderTextColor={theme.inputPlaceholder}
+                value={newExerciseName}
+                onChangeText={setNewExerciseName}
+                autoFocus={true}
+                autoCorrect={false}
+              />
+              <View style={styles.addExerciseActions}>
                 <TouchableOpacity
-                  key={sec}
-                  style={[
-                    styles.timerPresetBtn,
-                    {
-                      backgroundColor: restTimerDuration === sec && !restTimerRunning ? '#3B82F620' : theme.background,
-                      borderColor: restTimerDuration === sec && !restTimerRunning ? '#3B82F6' : theme.borderColor,
-                    }
-                  ]}
-                  onPress={() => {
-                    if (!restTimerRunning) {
-                      setRestTimerDuration(sec);
-                      setRestTimerSeconds(sec);
-                    }
-                  }}
+                  style={[styles.addExerciseCancelBtn, { borderColor: theme.borderColor }]}
+                  onPress={() => setAddExerciseVisible(false)}
                   activeOpacity={0.7}
                 >
-                  <Text
-                    style={[
-                      styles.timerPresetText,
-                      { color: restTimerDuration === sec && !restTimerRunning ? '#3B82F6' : theme.textSecondary },
-                    ]}
-                  >
-                    {sec >= 60 ? `${sec / 60} min` : `${sec}s`}
-                  </Text>
+                  <Text style={[styles.addExerciseCancelText, { color: theme.textSecondary }]}>Cancel</Text>
                 </TouchableOpacity>
-              ))}
+                <TouchableOpacity
+                  style={[styles.addExerciseConfirmBtn, { backgroundColor: newExerciseName.trim() ? '#10B981' : theme.borderColor }]}
+                  onPress={async () => {
+                    const name = newExerciseName.trim();
+                    if (!name || !selectedModalMuscle) return;
+                    const created = await createCustomExercise(name, selectedModalMuscle);
+                    if (selectedSubGroup === 'Shoulders') {
+                      const next = new Set(customShoulderIds);
+                      next.add(created.id);
+                      setCustomShoulderIds(next);
+                      AsyncStorage.setItem('@custom_shoulder_ids', JSON.stringify([...next]));
+                    }
+                    setNewExerciseName('');
+                    setAddExerciseVisible(false);
+                    setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle, [created]));
+                  }}
+                  activeOpacity={0.8}
+                  disabled={!newExerciseName.trim()}
+                >
+                  <Text style={styles.addExerciseConfirmText}>Add</Text>
+                </TouchableOpacity>
+              </View>
             </View>
+          </View>
+        </Modal>
 
-            <View style={[styles.timerSoundBox, { borderTopColor: theme.borderColor }]}>
-              <Text style={[styles.timerSoundLabel, { color: theme.textSecondary }]}>SOUND</Text>
-              <View style={styles.timerSoundOptions}>
-                {(['alarm', 'none'] as const).map((opt) => (
+        {/* Rest Timer Modal */}
+        <Modal
+          visible={restTimerVisible}
+          transparent={true}
+          animationType="none"
+          onRequestClose={() => setRestTimerVisible(false)}
+        >
+          <View style={styles.timerOverlay}>
+            <View style={[styles.timerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+              <TouchableOpacity
+                style={styles.timerCloseBtn}
+                onPress={() => setRestTimerVisible(false)}
+                activeOpacity={0.7}
+              >
+                <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
+              </TouchableOpacity>
+
+              <Text style={[styles.timerDisplay, { color: restTimerRunning ? '#10B981' : theme.textPrimary }]}>
+                {formatRestTime(restTimerSeconds)}
+              </Text>
+
+              <View style={styles.timerActions}>
+                {restTimerRunning ? (
+                  <>
+                    <TouchableOpacity
+                      style={[styles.timerActionBtn, { backgroundColor: '#EF444420' }]}
+                      onPress={stopRestTimer}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.timerActionText, { color: '#EF4444' }]}>STOP</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.timerActionBtn, { backgroundColor: '#6B728020' }]}
+                      onPress={resetRestTimer}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.timerActionText, { color: '#6B7280' }]}>RESET</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      style={[styles.timerActionBtn, { backgroundColor: '#10B98120' }]}
+                      onPress={() => startRestTimer(restTimerSeconds > 0 ? restTimerSeconds : restTimerDuration)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.timerActionText, { color: '#10B981' }]}>START</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.timerActionBtn, { backgroundColor: '#6B728020' }]}
+                      onPress={resetRestTimer}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.timerActionText, { color: '#6B7280' }]}>RESET</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+
+              <View style={styles.timerPresets}>
+                {[30, 60, 90, 120, 180, 300].map((sec) => (
                   <TouchableOpacity
-                    key={opt}
+                    key={sec}
                     style={[
-                      styles.timerSoundBtn,
+                      styles.timerPresetBtn,
                       {
-                        backgroundColor: restTimerSound === opt ? '#3B82F620' : theme.background,
-                        borderColor: restTimerSound === opt ? '#3B82F6' : theme.borderColor,
+                        backgroundColor: restTimerDuration === sec && !restTimerRunning ? '#3B82F620' : theme.background,
+                        borderColor: restTimerDuration === sec && !restTimerRunning ? '#3B82F6' : theme.borderColor,
                       }
                     ]}
-                    onPress={() => setRestTimerSound(opt)}
+                    onPress={() => {
+                      if (!restTimerRunning) {
+                        setRestTimerDuration(sec);
+                        setRestTimerSeconds(sec);
+                      }
+                    }}
                     activeOpacity={0.7}
                   >
                     <Text
                       style={[
-                        styles.timerSoundBtnText,
-                        { color: restTimerSound === opt ? '#3B82F6' : theme.textSecondary },
+                        styles.timerPresetText,
+                        { color: restTimerDuration === sec && !restTimerRunning ? '#3B82F6' : theme.textSecondary },
                       ]}
                     >
-                      {opt === 'none' ? 'OFF' : opt.toUpperCase()}
+                      {sec >= 60 ? `${sec / 60} min` : `${sec}s`}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
-
-
-      {/* Custom Modern Alert Modal */}
-      <Modal
-        visible={customAlertVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={() => setCustomAlertVisible(false)}
-      >
-        <View style={styles.alertOverlay}>
-          <View style={[styles.alertCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-            {customAlertIcon && (
-              <View style={[styles.alertIconWrapper, { backgroundColor: isDarkMode ? '#3B82F615' : '#3B82F610' }]}>
-                {customAlertIcon}
-              </View>
-            )}
-            <Text style={[styles.alertTitle, { color: theme.textPrimary }]}>
-              {customAlertTitle}
-            </Text>
-            <Text style={[styles.alertMessage, { color: theme.textSecondary }]}>
-              {customAlertMessage}
-            </Text>
-            <View style={styles.alertButtonsRow}>
-              {customAlertButtons.map((btn, index) => {
-                const isDestructive = btn.style === 'destructive';
-                const isCancel = btn.style === 'cancel';
-                
-                let btnBg = isDarkMode ? '#1E1E28' : '#F3F4F6';
-                let textColor = theme.textPrimary;
-                
-                if (isDestructive) {
-                  btnBg = '#EF444420';
-                  textColor = '#EF4444';
-                } else if (!isCancel) {
-                  btnBg = '#3B82F620';
-                  textColor = '#3B82F6';
-                } else {
-                  btnBg = isDarkMode ? '#212330' : '#E5E7EB';
-                  textColor = theme.textSecondary;
-                }
-
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.alertBtn,
-                      { backgroundColor: btnBg, flex: customAlertButtons.length > 1 ? 1 : 0 }
-                    ]}
-                    onPress={() => {
-                      setCustomAlertVisible(false);
-                      if (btn.onPress) {
-                        setTimeout(btn.onPress, 100);
-                      }
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Text
+              <View style={[styles.timerSoundBox, { borderTopColor: theme.borderColor }]}>
+                <Text style={[styles.timerSoundLabel, { color: theme.textSecondary }]}>SOUND</Text>
+                <View style={styles.timerSoundOptions}>
+                  {(['alarm', 'none'] as const).map((opt) => (
+                    <TouchableOpacity
+                      key={opt}
                       style={[
-                        styles.alertBtnText,
-                        { color: textColor, fontWeight: isCancel ? '600' : '800' }
+                        styles.timerSoundBtn,
+                        {
+                          backgroundColor: restTimerSound === opt ? '#3B82F620' : theme.background,
+                          borderColor: restTimerSound === opt ? '#3B82F6' : theme.borderColor,
+                        }
                       ]}
+                      onPress={() => setRestTimerSound(opt)}
+                      activeOpacity={0.7}
                     >
-                      {btn.text}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+                      <Text
+                        style={[
+                          styles.timerSoundBtnText,
+                          { color: restTimerSound === opt ? '#3B82F6' : theme.textSecondary },
+                        ]}
+                      >
+                        {opt === 'none' ? 'OFF' : opt.toUpperCase()}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      {/* Workout Detail Modal */}
-      <Modal
-        visible={selectedHistoryItem !== null}
-        transparent={true}
-        animationType="none"
-        onRequestClose={() => setSelectedHistoryItem(null)}
-      >
-        <View style={styles.detailOverlay}>
-          <View style={[styles.detailCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-            {/* Floating close button */}
-            <TouchableOpacity
-              style={[styles.detailCloseFloatingBtn, { backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6', borderColor: theme.borderColor }]}
-              onPress={() => setSelectedHistoryItem(null)}
-              activeOpacity={0.7}
-            >
-              <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
-            </TouchableOpacity>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {selectedHistoryItem && (
-                <>
-                  <View style={styles.detailHeader}>
-                    <View style={styles.detailTitleCol}>
-                      <Text style={[styles.detailSessionName, { color: theme.textPrimary }]}>{selectedHistoryItem.name}</Text>
-                      <Text style={[styles.detailDate, { color: theme.textSecondary }]}>{formatHistoryDate(selectedHistoryItem.date).toUpperCase()}</Text>
-                    </View>
-                    <View style={styles.detailHeaderActions}>
-                      <TouchableOpacity
-                        style={[styles.detailActionBtn, { borderColor: theme.borderColor }]}
-                        onPress={() => handleOpenSaveTemplate(selectedHistoryItem.exercises, selectedHistoryItem.name)}
-                        activeOpacity={0.6}
-                      >
-                        <Text style={[styles.detailActionBtnText, { color: theme.textSecondary }]}>SAVE AS TEMPLATE</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.detailActionBtn, { borderColor: theme.borderColor }]}
-                        onPress={() => {
-                          if (editingHistoryWorkoutId === selectedHistoryItem.id) {
-                            handleSaveHistoryEdit(selectedHistoryItem);
-                          } else {
-                            handleEditHistoryWorkout(selectedHistoryItem);
-                          }
-                        }}
-                        activeOpacity={0.6}
-                      >
-                        <Text style={[styles.detailActionBtnText, { color: editingHistoryWorkoutId === selectedHistoryItem.id ? '#10B981' : theme.textSecondary }]}>
-                          {editingHistoryWorkoutId === selectedHistoryItem.id ? 'SAVE' : 'EDIT'}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
 
-                  {selectedHistoryItem.duration > 0 && (
-                    <View style={styles.detailDurationRow}>
-                      <Text style={[styles.detailDurationLabel, { color: theme.textSecondary }]}>
-                        Duration
-                      </Text>
-                      <Text style={[styles.detailDurationValue, { color: theme.textPrimary }]}>
-                        {selectedHistoryItem.duration} min
-                      </Text>
-                    </View>
-                  )}
-
-                  <View style={[styles.detailDivider, { backgroundColor: theme.borderColor }]} />
-
-                  {selectedHistoryItem.exercises.map((logEx) => {
-                    const exDetails = exercises.find((e) => e.id === logEx.exerciseId);
-                    const isEditing = editingHistoryWorkoutId === selectedHistoryItem.id;
-                    const editSets = historyEditSets[logEx.exerciseId];
-                    return (
-                      <View key={logEx.exerciseId} style={styles.detailExerciseGroup}>
-                        <View style={styles.detailExerciseHeader}>
-                          <View style={[styles.detailExerciseDot, { backgroundColor: categoryColors[exDetails?.muscleGroup || ''] || '#10B981' }]} />
-                          <Text style={[styles.detailExerciseName, { color: theme.textPrimary }]}>
-                            {exDetails?.name || 'Unknown'}
-                          </Text>
-                        </View>
-                        {isEditing ? (
-                          <View style={{ paddingLeft: 12, paddingRight: 4, marginBottom: 12 }}>
-                            <TextInput
-                              style={{
-                                backgroundColor: theme.inputBg,
-                                borderColor: theme.borderColor,
-                                borderWidth: 1,
-                                borderRadius: 8,
-                                paddingHorizontal: 10,
-                                paddingVertical: 6,
-                                color: theme.textPrimary,
-                                fontSize: 13,
-                                minHeight: 36,
-                                textAlignVertical: 'top',
-                              }}
-                              placeholder="Workout note..."
-                              placeholderTextColor={theme.inputPlaceholder}
-                              value={historyEditNotes[logEx.exerciseId] || ''}
-                              onChangeText={(text) => {
-                                setHistoryEditNotes((prev) => ({
-                                  ...prev,
-                                  [logEx.exerciseId]: text,
-                                }));
-                              }}
-                              multiline
-                              maxLength={150}
-                            />
-                          </View>
-                        ) : (
-                          logEx.notes ? (
-                            <View style={{ paddingLeft: 12, paddingBottom: 10 }}>
-                              <Text style={{ fontSize: 13, color: '#10B981', fontStyle: 'italic', lineHeight: 17 }}>
-                                Note: {logEx.notes}
-                              </Text>
-                            </View>
-                          ) : null
-                        )}
-
-                        {(isEditing && editSets ? editSets : logEx.sets).map((set, setIndex) => (
-                          <View key={set.id} style={styles.detailSetRow}>
-                            <Text style={[styles.detailSetLabel, { color: theme.textSecondary }]}>SET {setIndex + 1}</Text>
-                            {isEditing ? (
-                              <View style={styles.detailEditSetRow}>
-                                <IncrementInput
-                                  value={set.weight}
-                                  step={2.5}
-                                  onChange={(val) => {
-                                    setHistoryEditSets((prev) => ({
-                                      ...prev,
-                                      [logEx.exerciseId]: (prev[logEx.exerciseId] || logEx.sets.map((s) => ({ ...s }))).map((s, i) =>
-                                        i === setIndex ? { ...s, weight: val } : s
-                                      ),
-                                    }));
-                                  }}
-                                  placeholder="kg"
-                                  accentColor="#10B981"
-                                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, height: 36, minWidth: 80 }}
-                                  textColor={theme.textPrimary}
-                                />
-                                <IncrementInput
-                                  value={set.reps}
-                                  step={1}
-                                  onChange={(val) => {
-                                    setHistoryEditSets((prev) => ({
-                                      ...prev,
-                                      [logEx.exerciseId]: (prev[logEx.exerciseId] || logEx.sets.map((s) => ({ ...s }))).map((s, i) =>
-                                        i === setIndex ? { ...s, reps: val } : s
-                                      ),
-                                    }));
-                                  }}
-                                  placeholder="reps"
-                                  accentColor="#10B981"
-                                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, height: 36, minWidth: 80 }}
-                                  textColor={theme.textPrimary}
-                                />
-                              </View>
-                            ) : (
-                              <Text style={[styles.detailSetValue, { color: theme.textPrimary }]}>{set.weight} kg × {set.reps}</Text>
-                            )}
-                          </View>
-                        ))}
-                      </View>
-                    );
-                  })}
-                </>
+        {/* Custom Modern Alert Modal */}
+        <Modal
+          visible={customAlertVisible}
+          transparent={true}
+          animationType="none"
+          onRequestClose={() => setCustomAlertVisible(false)}
+        >
+          <View style={styles.alertOverlay}>
+            <View style={[styles.alertCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+              {customAlertIcon && (
+                <View style={[styles.alertIconWrapper, { backgroundColor: isDarkMode ? '#3B82F615' : '#3B82F610' }]}>
+                  {customAlertIcon}
+                </View>
               )}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+              <Text style={[styles.alertTitle, { color: theme.textPrimary }]}>
+                {customAlertTitle}
+              </Text>
+              <Text style={[styles.alertMessage, { color: theme.textSecondary }]}>
+                {customAlertMessage}
+              </Text>
+              <View style={styles.alertButtonsRow}>
+                {customAlertButtons.map((btn, index) => {
+                  const isDestructive = btn.style === 'destructive';
+                  const isCancel = btn.style === 'cancel';
 
-      {/* PR Celebration Modal */}
-      <Modal
-        visible={showNewPrsAlert}
-        transparent={true}
-        animationType="none"
-        onRequestClose={() => setShowNewPrsAlert(false)}
-      >
-        <View style={styles.timerOverlay}>
-          <View style={[styles.timerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-            <TouchableOpacity
-              style={styles.timerCloseBtn}
-              onPress={() => setShowNewPrsAlert(false)}
-              activeOpacity={0.7}
-            >
-              <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
-            </TouchableOpacity>
-            <Text style={[styles.prAlertEmoji]}>🏆</Text>
-            <Text style={[styles.prAlertTitle, { color: theme.textPrimary }]}>NEW PR{newPrsDetected.length > 1 ? 'S' : ''}!</Text>
-            <View style={styles.prAlertList}>
-              {newPrsDetected.map((pr) => {
-                const ex = exercises.find((e) => e.id === pr.exerciseId);
-                return (
-                  <View key={pr.exerciseId} style={[styles.prAlertItem, { borderColor: theme.borderColor }]}>
-                    <Text style={[styles.prAlertExName, { color: theme.textPrimary }]}>{ex?.name || 'Unknown'}</Text>
-                    <Text style={[styles.prAlertExValue, { color: '#10B981' }]}>{pr.weight} kg × {pr.reps}</Text>
-                  </View>
-                );
-              })}
-            </View>
-            <TouchableOpacity
-              style={[styles.prAlertBtn, { backgroundColor: '#10B981' }]}
-              onPress={() => setShowNewPrsAlert(false)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.prAlertBtnText}>{"LET'S GO!"}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+                  let btnBg = isDarkMode ? '#1E1E28' : '#F3F4F6';
+                  let textColor = theme.textPrimary;
 
-      {/* Edit Session Exercise Modal */}
-      <Modal
-        visible={editSessionExerciseModalVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={() => setEditSessionExerciseModalVisible(false)}
-      >
-        <View style={styles.timerOverlay}>
-          <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-            <View style={styles.editWorkoutHeader}>
-              <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Edit Workout</Text>
-              <TouchableOpacity
-                onPress={() => setEditSessionExerciseModalVisible(false)}
-                activeOpacity={0.6}
-                style={{ padding: 4 }}
-              >
-                <X size={20} color={theme.textSecondary} strokeWidth={2} />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={{ flexGrow: 0, maxHeight: 400 }} showsVerticalScrollIndicator={false}>
-              {activeSessionExercises.map((le) => {
-                const details = exercises.find((e) => e.id === le.exerciseId);
-                if (!details) return null;
-                const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
-                return (
-                  <TouchableOpacity
-                    key={le.exerciseId}
-                    style={[styles.editWorkoutItem, { borderBottomColor: theme.borderColor }]}
-                    activeOpacity={0.6}
-                    onPress={() => {
-                      handleToggleExpand(le.exerciseId);
-                      setCameFromEditModal(true);
-                      setEditSessionExerciseModalVisible(false);
-                    }}
-                  >
-                    <View style={[styles.editWorkoutItemAccent, { backgroundColor: muscleColor }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: theme.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 2 }}>
-                        {details.name}
-                      </Text>
-                      <View style={styles.editWorkoutItemMeta}>
-                        <View style={[styles.editWorkoutMuscleBadge, { backgroundColor: `${muscleColor}15` }]}>
-                          <Text style={[styles.editWorkoutMuscleBadgeText, { color: muscleColor }]}>
-                            {details.muscleGroup.toUpperCase()}
-                          </Text>
-                        </View>
-                        <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
-                          {le.sets.length} set{le.sets.length > 1 ? 's' : ''}
-                        </Text>
-                      </View>
-                    </View>
-                    <ChevronRight size={18} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Exercise Set Logger Modal */}
-      <Modal
-        visible={expandedExerciseId !== null}
-        transparent={true}
-        animationType="none"
-        onRequestClose={() => {
-          if (fromTemplateList) {
-            handleTemplateListBackFromLogger();
-          } else {
-            handleCloseActiveExerciseLogger();
-          }
-        }}
-      >
-        <View style={styles.exerciseLoggerOverlayContainer}>
-          <Pressable
-            style={styles.exerciseLoggerBackdrop}
-            onPress={() => {
-              if (fromTemplateList) handleTemplateListBackFromLogger(true);
-              else handleCloseActiveExerciseLogger(true);
-            }}
-          />
-          <View
-            style={[styles.exerciseLoggerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '85%', flexShrink: 1 }]}
-          >
-              {(() => {
-              const exItem = expandedExerciseId ? exercises.find((e) => e.id === expandedExerciseId) : null;
-              if (!exItem) return null;
-              const categoryColor = categoryColors[exItem.muscleGroup] || '#10B981';
-              const exerciseList = fromTemplateList ? templateListExercises : activeSessionExercises;
-              const currentExIndex = exerciseList.findIndex((le) => le.exerciseId === expandedExerciseId);
-              const canGoPrev = currentExIndex > 0;
-              const canGoNext = currentExIndex < exerciseList.length - 1;
-
-              const navigateToExercise = (direction: 'prev' | 'next') => {
-                const exerciseList = fromTemplateList ? templateListExercises : activeSessionExercises;
-                const curIdx = exerciseList.findIndex((le) => le.exerciseId === expandedExerciseId);
-                const nextIndex = direction === 'next' ? curIdx + 1 : curIdx - 1;
-                const nextEx = exerciseList[nextIndex];
-                if (!nextEx) return;
-                if (expandedExerciseId && activeSets.length > 0) {
-                  const save = (prev: LoggedExercise[]) =>
-                    prev.map((ex) =>
-                      ex.exerciseId === expandedExerciseId
-                        ? { ...ex, sets: activeSets.map((s) => ({ ...s, isCompleted: true })), notes: exerciseNote.trim() || undefined }
-                        : ex
-                    );
-                  if (fromTemplateList) {
-                    setTemplateListExercises(save);
+                  if (isDestructive) {
+                    btnBg = '#EF444420';
+                    textColor = '#EF4444';
+                  } else if (!isCancel) {
+                    btnBg = '#3B82F620';
+                    textColor = '#3B82F6';
                   } else {
-                    const updated = save(activeSessionExercises);
-                    setActiveSessionExercises(updated);
-                    AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                    btnBg = isDarkMode ? '#212330' : '#E5E7EB';
+                    textColor = theme.textSecondary;
                   }
-                }
-                setExpandedExerciseId(nextEx.exerciseId);
-                const isLogged = nextEx.sets.every(s => s.isCompleted);
-                setActiveSets(nextEx.sets.map((s) => ({
-                  id: s.id,
-                  weight: fromTemplateList ? s.weight : (isLogged ? 0 : s.weight),
-                  reps: fromTemplateList ? s.reps : (isLogged ? 0 : s.reps),
-                  isCompleted: fromTemplateList ? true : (isLogged ? false : s.isCompleted),
-                })));
-                setExerciseNote(nextEx.notes || '');
-                setSameForAll(false);
-              };
-              navigateToExerciseRef.current = navigateToExercise;
 
-              return (
-                <View style={{ flexShrink: 1, maxHeight: '100%' }}>
-                  <View {...exercisePanResponder.panHandlers} style={styles.exerciseLoggerHeader}>
-                    {fromTemplateList ? (
-                      <TouchableOpacity
-                        style={styles.exerciseNavArrow}
-                        onPress={() => handleTemplateListBackFromLogger()}
-                        activeOpacity={0.6}
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.alertBtn,
+                        { backgroundColor: btnBg, flex: customAlertButtons.length > 1 ? 1 : 0 }
+                      ]}
+                      onPress={() => {
+                        setCustomAlertVisible(false);
+                        if (btn.onPress) {
+                          setTimeout(btn.onPress, 100);
+                        }
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.alertBtnText,
+                          { color: textColor, fontWeight: isCancel ? '600' : '800' }
+                        ]}
                       >
-                        <ChevronLeft size={18} color={theme.textPrimary} strokeWidth={2.5} />
-                      </TouchableOpacity>
-                    ) : (
-                      <TouchableOpacity
-                        style={[styles.exerciseNavArrow, { opacity: canGoPrev ? 1 : 0.2 }]}
-                        onPress={() => navigateToExercise('prev')}
-                        disabled={!canGoPrev}
-                        activeOpacity={0.6}
-                      >
-                        <ChevronLeft size={18} color={theme.textPrimary} strokeWidth={2.5} />
-                      </TouchableOpacity>
-                    )}
-                    <View style={styles.exerciseLoggerTitleCol}>
-                      <Text style={[styles.exerciseLoggerName, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>{exItem.name}</Text>
-                      <Text style={[styles.exerciseLoggerMuscle, { color: categoryColor }]}>
-                        {exItem.muscleGroup.toUpperCase()}
-                        {activeSets.length > 2 && (
-                          <Text style={{ fontSize: 9, fontWeight: '700', color: theme.textSecondary }}>
-                            {"  "}·{"  "}SCROLL ↕ FOR SETS & NOTE
-                          </Text>
-                        )}
+                        {btn.text}
                       </Text>
-                    </View>
-                    {fromTemplateList ? (
-                      <TouchableOpacity
-                        style={[styles.exerciseLoggerCloseBtn, { backgroundColor: '#F3F4F6', borderColor: theme.borderColor }]}
-                        onPress={() => handleTemplateListBackFromLogger()}
-                        activeOpacity={0.7}
-                      >
-                        <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
-                      </TouchableOpacity>
-                    ) : (
-                      <>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Workout Detail Modal */}
+        <Modal
+          visible={selectedHistoryItem !== null}
+          transparent={true}
+          animationType="none"
+          onRequestClose={() => setSelectedHistoryItem(null)}
+        >
+          <View style={styles.detailOverlay}>
+            <View style={[styles.detailCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+              {/* Floating close button */}
+              <TouchableOpacity
+                style={[styles.detailCloseFloatingBtn, { backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6', borderColor: theme.borderColor }]}
+                onPress={() => setSelectedHistoryItem(null)}
+                activeOpacity={0.7}
+              >
+                <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
+              </TouchableOpacity>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {selectedHistoryItem && (
+                  <>
+                    <View style={styles.detailHeader}>
+                      <View style={styles.detailTitleCol}>
+                        <Text style={[styles.detailSessionName, { color: theme.textPrimary }]}>{selectedHistoryItem.name}</Text>
+                        <Text style={[styles.detailDate, { color: theme.textSecondary }]}>{formatHistoryDate(selectedHistoryItem.date).toUpperCase()}</Text>
+                      </View>
+                      <View style={styles.detailHeaderActions}>
                         <TouchableOpacity
-                          style={[styles.exerciseNavArrow, { opacity: canGoNext ? 1 : 0.2 }]}
-                          onPress={() => navigateToExercise('next')}
-                          disabled={!canGoNext}
+                          style={[styles.detailActionBtn, { borderColor: theme.borderColor }]}
+                          onPress={() => handleOpenSaveTemplate(selectedHistoryItem.exercises, selectedHistoryItem.name)}
                           activeOpacity={0.6}
                         >
-                          <ChevronRight size={18} color={theme.textPrimary} strokeWidth={2.5} />
+                          <Text style={[styles.detailActionBtnText, { color: theme.textSecondary }]}>SAVE AS TEMPLATE</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
+                          style={[styles.detailActionBtn, { borderColor: theme.borderColor }]}
+                          onPress={() => {
+                            if (editingHistoryWorkoutId === selectedHistoryItem.id) {
+                              handleSaveHistoryEdit(selectedHistoryItem);
+                            } else {
+                              handleEditHistoryWorkout(selectedHistoryItem);
+                            }
+                          }}
+                          activeOpacity={0.6}
+                        >
+                          <Text style={[styles.detailActionBtnText, { color: editingHistoryWorkoutId === selectedHistoryItem.id ? '#10B981' : theme.textSecondary }]}>
+                            {editingHistoryWorkoutId === selectedHistoryItem.id ? 'SAVE' : 'EDIT'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    {selectedHistoryItem.duration > 0 && (
+                      <View style={styles.detailDurationRow}>
+                        <Text style={[styles.detailDurationLabel, { color: theme.textSecondary }]}>
+                          Duration
+                        </Text>
+                        <Text style={[styles.detailDurationValue, { color: theme.textPrimary }]}>
+                          {selectedHistoryItem.duration} min
+                        </Text>
+                      </View>
+                    )}
+
+                    <View style={[styles.detailDivider, { backgroundColor: theme.borderColor }]} />
+
+                    {selectedHistoryItem.exercises.map((logEx) => {
+                      const exDetails = exercises.find((e) => e.id === logEx.exerciseId);
+                      const isEditing = editingHistoryWorkoutId === selectedHistoryItem.id;
+                      const editSets = historyEditSets[logEx.exerciseId];
+                      return (
+                        <View key={logEx.exerciseId} style={styles.detailExerciseGroup}>
+                          <View style={styles.detailExerciseHeader}>
+                            <View style={[styles.detailExerciseDot, { backgroundColor: categoryColors[exDetails?.muscleGroup || ''] || '#10B981' }]} />
+                            <Text style={[styles.detailExerciseName, { color: theme.textPrimary }]}>
+                              {exDetails?.name || 'Unknown'}
+                            </Text>
+                          </View>
+                          {isEditing ? (
+                            <View style={{ paddingLeft: 12, paddingRight: 4, marginBottom: 12 }}>
+                              <TextInput
+                                style={{
+                                  backgroundColor: theme.inputBg,
+                                  borderColor: theme.borderColor,
+                                  borderWidth: 1,
+                                  borderRadius: 8,
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 6,
+                                  color: theme.textPrimary,
+                                  fontSize: 13,
+                                  minHeight: 36,
+                                  textAlignVertical: 'top',
+                                }}
+                                placeholder="Workout note..."
+                                placeholderTextColor={theme.inputPlaceholder}
+                                value={historyEditNotes[logEx.exerciseId] || ''}
+                                onChangeText={(text) => {
+                                  setHistoryEditNotes((prev) => ({
+                                    ...prev,
+                                    [logEx.exerciseId]: text,
+                                  }));
+                                }}
+                                multiline
+                                maxLength={150}
+                              />
+                            </View>
+                          ) : (
+                            logEx.notes ? (
+                              <View style={{ paddingLeft: 12, paddingBottom: 10 }}>
+                                <Text style={{ fontSize: 13, color: '#10B981', fontStyle: 'italic', lineHeight: 17 }}>
+                                  Note: {logEx.notes}
+                                </Text>
+                              </View>
+                            ) : null
+                          )}
+
+                          {(isEditing && editSets ? editSets : logEx.sets).map((set, setIndex) => (
+                            <View key={set.id} style={styles.detailSetRow}>
+                              <Text style={[styles.detailSetLabel, { color: theme.textSecondary }]}>SET {setIndex + 1}</Text>
+                              {isEditing ? (
+                                <View style={styles.detailEditSetRow}>
+                                  <IncrementInput
+                                    value={set.weight}
+                                    step={2.5}
+                                    onChange={(val) => {
+                                      setHistoryEditSets((prev) => ({
+                                        ...prev,
+                                        [logEx.exerciseId]: (prev[logEx.exerciseId] || logEx.sets.map((s) => ({ ...s }))).map((s, i) =>
+                                          i === setIndex ? { ...s, weight: val } : s
+                                        ),
+                                      }));
+                                    }}
+                                    placeholder="kg"
+                                    accentColor="#10B981"
+                                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, height: 36, minWidth: 80 }}
+                                    textColor={theme.textPrimary}
+                                  />
+                                  <IncrementInput
+                                    value={set.reps}
+                                    step={1}
+                                    onChange={(val) => {
+                                      setHistoryEditSets((prev) => ({
+                                        ...prev,
+                                        [logEx.exerciseId]: (prev[logEx.exerciseId] || logEx.sets.map((s) => ({ ...s }))).map((s, i) =>
+                                          i === setIndex ? { ...s, reps: val } : s
+                                        ),
+                                      }));
+                                    }}
+                                    placeholder="reps"
+                                    accentColor="#10B981"
+                                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, height: 36, minWidth: 80 }}
+                                    textColor={theme.textPrimary}
+                                  />
+                                </View>
+                              ) : (
+                                <Text style={[styles.detailSetValue, { color: theme.textPrimary }]}>{set.weight} kg × {set.reps}</Text>
+                              )}
+                            </View>
+                          ))}
+                        </View>
+                      );
+                    })}
+                  </>
+                )}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* PR Celebration Modal */}
+        <Modal
+          visible={showNewPrsAlert}
+          transparent={true}
+          animationType="none"
+          onRequestClose={() => setShowNewPrsAlert(false)}
+        >
+          <View style={styles.timerOverlay}>
+            <View style={[styles.timerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+              <TouchableOpacity
+                style={styles.timerCloseBtn}
+                onPress={() => setShowNewPrsAlert(false)}
+                activeOpacity={0.7}
+              >
+                <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
+              </TouchableOpacity>
+              <Text style={[styles.prAlertEmoji]}>🏆</Text>
+              <Text style={[styles.prAlertTitle, { color: theme.textPrimary }]}>NEW PR{newPrsDetected.length > 1 ? 'S' : ''}!</Text>
+              <View style={styles.prAlertList}>
+                {newPrsDetected.map((pr) => {
+                  const ex = exercises.find((e) => e.id === pr.exerciseId);
+                  return (
+                    <View key={pr.exerciseId} style={[styles.prAlertItem, { borderColor: theme.borderColor }]}>
+                      <Text style={[styles.prAlertExName, { color: theme.textPrimary }]}>{ex?.name || 'Unknown'}</Text>
+                      <Text style={[styles.prAlertExValue, { color: '#10B981' }]}>{pr.weight} kg × {pr.reps}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+              <TouchableOpacity
+                style={[styles.prAlertBtn, { backgroundColor: '#10B981' }]}
+                onPress={() => setShowNewPrsAlert(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.prAlertBtnText}>{"LET'S GO!"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Edit Session Exercise Modal */}
+        <Modal
+          visible={editSessionExerciseModalVisible}
+          transparent={true}
+          animationType="none"
+          onRequestClose={() => setEditSessionExerciseModalVisible(false)}
+        >
+          <View style={styles.timerOverlay}>
+            <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+              <View style={styles.editWorkoutHeader}>
+                <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Edit Workout</Text>
+                <TouchableOpacity
+                  onPress={() => setEditSessionExerciseModalVisible(false)}
+                  activeOpacity={0.6}
+                  style={{ padding: 4 }}
+                >
+                  <X size={20} color={theme.textSecondary} strokeWidth={2} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={{ flexGrow: 0, maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+                {activeSessionExercises.map((le) => {
+                  const details = exercises.find((e) => e.id === le.exerciseId);
+                  if (!details) return null;
+                  const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
+                  return (
+                    <TouchableOpacity
+                      key={le.exerciseId}
+                      style={[styles.editWorkoutItem, { borderBottomColor: theme.borderColor }]}
+                      activeOpacity={0.6}
+                      onPress={() => {
+                        handleToggleExpand(le.exerciseId);
+                        setCameFromEditModal(true);
+                        setEditSessionExerciseModalVisible(false);
+                      }}
+                    >
+                      <View style={[styles.editWorkoutItemAccent, { backgroundColor: muscleColor }]} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: theme.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 2 }}>
+                          {details.name}
+                        </Text>
+                        <View style={styles.editWorkoutItemMeta}>
+                          <View style={[styles.editWorkoutMuscleBadge, { backgroundColor: `${muscleColor}15` }]}>
+                            <Text style={[styles.editWorkoutMuscleBadgeText, { color: muscleColor }]}>
+                              {details.muscleGroup.toUpperCase()}
+                            </Text>
+                          </View>
+                          <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
+                            {le.sets.length} set{le.sets.length > 1 ? 's' : ''}
+                          </Text>
+                        </View>
+                      </View>
+                      <ChevronRight size={18} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Exercise Set Logger Modal */}
+        <Modal
+          visible={expandedExerciseId !== null}
+          transparent={true}
+          animationType="none"
+          onRequestClose={() => {
+            if (fromTemplateList) {
+              handleTemplateListBackFromLogger();
+            } else {
+              handleCloseActiveExerciseLogger();
+            }
+          }}
+        >
+          <View style={styles.exerciseLoggerOverlayContainer}>
+            <Pressable
+              style={styles.exerciseLoggerBackdrop}
+              onPress={() => {
+                if (fromTemplateList) handleTemplateListBackFromLogger(true);
+                else handleCloseActiveExerciseLogger(true);
+              }}
+            />
+            <View
+              style={[styles.exerciseLoggerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '85%', flexShrink: 1 }]}
+            >
+              {(() => {
+                const exItem = expandedExerciseId ? exercises.find((e) => e.id === expandedExerciseId) : null;
+                if (!exItem) return null;
+                const categoryColor = categoryColors[exItem.muscleGroup] || '#10B981';
+                const exerciseList = fromTemplateList ? templateListExercises : activeSessionExercises;
+                const currentExIndex = exerciseList.findIndex((le) => le.exerciseId === expandedExerciseId);
+                const canGoPrev = currentExIndex > 0;
+                const canGoNext = currentExIndex < exerciseList.length - 1;
+
+                const navigateToExercise = (direction: 'prev' | 'next') => {
+                  const exerciseList = fromTemplateList ? templateListExercises : activeSessionExercises;
+                  const curIdx = exerciseList.findIndex((le) => le.exerciseId === expandedExerciseId);
+                  const nextIndex = direction === 'next' ? curIdx + 1 : curIdx - 1;
+                  const nextEx = exerciseList[nextIndex];
+                  if (!nextEx) return;
+                  if (expandedExerciseId && activeSets.length > 0) {
+                    const save = (prev: LoggedExercise[]) =>
+                      prev.map((ex) =>
+                        ex.exerciseId === expandedExerciseId
+                          ? { ...ex, sets: activeSets.map((s) => ({ ...s, isCompleted: true })), notes: exerciseNote.trim() || undefined }
+                          : ex
+                      );
+                    if (fromTemplateList) {
+                      setTemplateListExercises(save);
+                    } else {
+                      const updated = save(activeSessionExercises);
+                      setActiveSessionExercises(updated);
+                      AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                    }
+                  }
+                  setExpandedExerciseId(nextEx.exerciseId);
+                  const isLogged = nextEx.sets.every(s => s.isCompleted);
+                  setActiveSets(nextEx.sets.map((s) => ({
+                    id: s.id,
+                    weight: fromTemplateList ? s.weight : (isLogged ? 0 : s.weight),
+                    reps: fromTemplateList ? s.reps : (isLogged ? 0 : s.reps),
+                    isCompleted: fromTemplateList ? true : (isLogged ? false : s.isCompleted),
+                  })));
+                  setExerciseNote(nextEx.notes || '');
+                  setSameForAll(false);
+                };
+                navigateToExerciseRef.current = navigateToExercise;
+
+                return (
+                  <View style={{ flexShrink: 1, maxHeight: '100%' }}>
+                    <View {...exercisePanResponder.panHandlers} style={styles.exerciseLoggerHeader}>
+                      {fromTemplateList ? (
+                        <TouchableOpacity
+                          style={styles.exerciseNavArrow}
+                          onPress={() => handleTemplateListBackFromLogger()}
+                          activeOpacity={0.6}
+                        >
+                          <ChevronLeft size={18} color={theme.textPrimary} strokeWidth={2.5} />
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          style={[styles.exerciseNavArrow, { opacity: canGoPrev ? 1 : 0.2 }]}
+                          onPress={() => navigateToExercise('prev')}
+                          disabled={!canGoPrev}
+                          activeOpacity={0.6}
+                        >
+                          <ChevronLeft size={18} color={theme.textPrimary} strokeWidth={2.5} />
+                        </TouchableOpacity>
+                      )}
+                      <View style={styles.exerciseLoggerTitleCol}>
+                        <Text style={[styles.exerciseLoggerName, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>{exItem.name}</Text>
+                        <Text style={[styles.exerciseLoggerMuscle, { color: categoryColor }]}>
+                          {exItem.muscleGroup.toUpperCase()}
+                          {activeSets.length > 2 && (
+                            <Text style={{ fontSize: 9, fontWeight: '700', color: theme.textSecondary }}>
+                              {"  "}·{"  "}SCROLL ↕ FOR SETS & NOTE
+                            </Text>
+                          )}
+                        </Text>
+                      </View>
+                      {fromTemplateList ? (
+                        <TouchableOpacity
                           style={[styles.exerciseLoggerCloseBtn, { backgroundColor: '#F3F4F6', borderColor: theme.borderColor }]}
-                          onPress={() => handleCloseActiveExerciseLogger()}
+                          onPress={() => handleTemplateListBackFromLogger()}
                           activeOpacity={0.7}
                         >
                           <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
                         </TouchableOpacity>
-                      </>
-                    )}
-                  </View>
-
-                  <ScrollView style={{ flexShrink: 1, marginVertical: 12 }} showsVerticalScrollIndicator={false}>
-
-                  {(() => {
-                    const prev = expandedExerciseId ? getPreviousSessionForExercise(expandedExerciseId) : null;
-                    const exercisePr = expandedExerciseId ? getExercisePR(expandedExerciseId) : null;
-                    return prev ? (
-                      <View style={[styles.prevWorkoutCard, { borderColor: theme.borderColor, backgroundColor: theme.background }]}>
-                        <View style={styles.prevWorkoutHeader}>
-                          <Text style={[styles.prevWorkoutLabel, { color: theme.textSecondary }]}>PREVIOUS</Text>
-                          <Text style={[styles.prevWorkoutDate, { color: theme.textSecondary }]}>{new Date(prev.session.date).toLocaleDateString()}</Text>
-                        </View>
-                        {prev.log.sets.map((s, i) => (
-                          <View key={s.id} style={styles.prevWorkoutSetRow}>
-                            <Text style={[styles.prevWorkoutSetNum, { color: theme.textSecondary }]}>{i + 1}</Text>
-                            <Text style={[styles.prevWorkoutSetDetail, { color: theme.textPrimary }]}>{s.weight} kg × {s.reps}</Text>
-                          </View>
-                        ))}
-                        {prev.log.notes && (
-                          <View style={{ marginTop: 8, paddingHorizontal: 4 }}>
-                            <Text style={{ fontSize: 11, color: '#10B981', fontStyle: 'italic', lineHeight: 15 }}>
-                              Note: {prev.log.notes}
-                            </Text>
-                          </View>
-                        )}
-                        {exercisePr && (
-                          <View style={styles.prevWorkoutPrBadge}>
-                            <Text style={{ fontSize: 10, fontWeight: '800', color: '#10B981', letterSpacing: 0.3 }}>PR: {exercisePr.weight} kg × {exercisePr.reps}</Text>
-                          </View>
-                        )}
-                      </View>
-                    ) : null;
-                  })()}
-
-                  <View style={[styles.exerciseLoggerDivider, { backgroundColor: theme.borderColor }]} />
-
-                  <TouchableOpacity
-                    style={styles.exerciseLoggerOptionRow}
-                    onPress={toggleSameForAll}
-                    activeOpacity={0.8}
-                  >
-                    <View style={{ flex: 1, paddingRight: 8 }}>
-                      <Text style={[styles.optionsTitle, { color: theme.textPrimary }]}>Same for all sets</Text>
-                      <Text style={[styles.optionsSubtitle, { color: theme.textSecondary }]}>
-                        Sync weight and reps automatically
-                      </Text>
-                    </View>
-                    <View
-                      style={[
-                        styles.switchTrack,
-                        sameForAll
-                          ? { backgroundColor: categoryColor, alignItems: 'flex-end' }
-                          : { backgroundColor: '#D1D5DB', alignItems: 'flex-start' }
-                      ]}
-                    >
-                      <View style={styles.switchThumb} />
-                    </View>
-                  </TouchableOpacity>
-
-                  <View style={styles.setRowLabels}>
-                    <Text style={[styles.labelCol, styles.widthSet, { color: theme.textPrimary }]}>SET</Text>
-                    <Text style={[styles.labelCol, styles.widthWeight, { color: theme.textSecondary }]}>WEIGHT</Text>
-                    <Text style={[styles.labelCol, styles.widthReps, { color: theme.textSecondary }]}>REPS</Text>
-                  </View>
-
-                  {activeSets.map((set, index) => (
-                    <View key={set.id} style={[styles.setRow, { borderBottomColor: theme.borderColor }]}>
-                      <Text style={[styles.setText, { color: theme.textPrimary }]}>{index + 1}</Text>
-                      <View style={styles.widthWeight}>
-                        <IncrementInput
-                          value={set.weight}
-                          step={2.5}
-                          onChange={(val) => handleUpdateSet(set.id, { weight: val })}
-                          placeholder="kg"
-                          accentColor={categoryColor}
-                          style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
-                          textColor={theme.textPrimary}
-                        />
-                      </View>
-                      <View style={styles.widthReps}>
-                        <IncrementInput
-                          value={set.reps}
-                          step={1}
-                          onChange={(val) => handleUpdateSet(set.id, { reps: val })}
-                          placeholder="reps"
-                          accentColor={categoryColor}
-                          style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
-                          textColor={theme.textPrimary}
-                        />
-                      </View>
-                      {index === activeSets.length - 1 && activeSets.length > 1 && (
-                        <TouchableOpacity
-                          style={styles.setDeleteBtn}
-                          onPress={() => handleRemoveSet(set.id)}
-                          activeOpacity={0.6}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        >
-                          <X size={10} color="#EF4444" strokeWidth={2.5} />
-                        </TouchableOpacity>
+                      ) : (
+                        <>
+                          <TouchableOpacity
+                            style={[styles.exerciseNavArrow, { opacity: canGoNext ? 1 : 0.2 }]}
+                            onPress={() => navigateToExercise('next')}
+                            disabled={!canGoNext}
+                            activeOpacity={0.6}
+                          >
+                            <ChevronRight size={18} color={theme.textPrimary} strokeWidth={2.5} />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.exerciseLoggerCloseBtn, { backgroundColor: '#F3F4F6', borderColor: theme.borderColor }]}
+                            onPress={() => handleCloseActiveExerciseLogger()}
+                            activeOpacity={0.7}
+                          >
+                            <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
+                          </TouchableOpacity>
+                        </>
                       )}
                     </View>
-                  ))}
 
-                  <View style={{ marginTop: 16, marginBottom: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.borderColor, paddingTop: 16 }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textSecondary, marginBottom: 6, letterSpacing: 0.5 }}>
-                      EXERCISE NOTE
-                    </Text>
-                    <TextInput
-                      style={{
-                        backgroundColor: theme.inputBg,
-                        borderColor: theme.borderColor,
-                        borderWidth: 1,
-                        borderRadius: 10,
-                        paddingHorizontal: 12,
-                        paddingVertical: 8,
-                        color: theme.textPrimary,
-                        fontSize: 13,
-                        minHeight: 48,
-                        textAlignVertical: 'top',
-                      }}
-                      placeholder="Add an optional workout note..."
-                      placeholderTextColor={theme.inputPlaceholder}
-                      value={exerciseNote}
-                      onChangeText={setExerciseNote}
-                      multiline
-                      maxLength={150}
-                    />
-                  </View>
-                  </ScrollView>
+                    <ScrollView style={{ flexShrink: 1, marginVertical: 12 }} showsVerticalScrollIndicator={false}>
 
-                  <View style={styles.loggerActions}>
-                    <TouchableOpacity
-                      style={[styles.addSetBtn, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
-                      onPress={() => exItem && handleAddSet(exItem.id)}
-                      activeOpacity={0.75}
-                    >
-                      <Plus size={14} color={theme.textSecondary} strokeWidth={2.5} />
-                      <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>ADD SET</Text>
-                    </TouchableOpacity>
-                    <Button
-                      title={fromTemplateList ? "Save" : "Log Workout"}
-                      variant="primary"
-                      onPress={() => exItem && handleSaveWorkout(exItem.id)}
-                      style={styles.saveWorkoutBtn}
-                    />
+                      {(() => {
+                        const prev = expandedExerciseId ? getPreviousSessionForExercise(expandedExerciseId) : null;
+                        const exercisePr = expandedExerciseId ? getExercisePR(expandedExerciseId) : null;
+                        return prev ? (
+                          <View style={[styles.prevWorkoutCard, { borderColor: theme.borderColor, backgroundColor: theme.background }]}>
+                            <View style={styles.prevWorkoutHeader}>
+                              <Text style={[styles.prevWorkoutLabel, { color: theme.textSecondary }]}>PREVIOUS</Text>
+                              <Text style={[styles.prevWorkoutDate, { color: theme.textSecondary }]}>{new Date(prev.session.date).toLocaleDateString()}</Text>
+                            </View>
+                            {prev.log.sets.map((s, i) => (
+                              <View key={s.id} style={styles.prevWorkoutSetRow}>
+                                <Text style={[styles.prevWorkoutSetNum, { color: theme.textSecondary }]}>{i + 1}</Text>
+                                <Text style={[styles.prevWorkoutSetDetail, { color: theme.textPrimary }]}>{s.weight} kg × {s.reps}</Text>
+                              </View>
+                            ))}
+                            {prev.log.notes && (
+                              <View style={{ marginTop: 8, paddingHorizontal: 4 }}>
+                                <Text style={{ fontSize: 11, color: '#10B981', fontStyle: 'italic', lineHeight: 15 }}>
+                                  Note: {prev.log.notes}
+                                </Text>
+                              </View>
+                            )}
+                            {exercisePr && (
+                              <View style={styles.prevWorkoutPrBadge}>
+                                <Text style={{ fontSize: 10, fontWeight: '800', color: '#10B981', letterSpacing: 0.3 }}>PR: {exercisePr.weight} kg × {exercisePr.reps}</Text>
+                              </View>
+                            )}
+                          </View>
+                        ) : null;
+                      })()}
+
+                      <View style={[styles.exerciseLoggerDivider, { backgroundColor: theme.borderColor }]} />
+
+                      <TouchableOpacity
+                        style={styles.exerciseLoggerOptionRow}
+                        onPress={toggleSameForAll}
+                        activeOpacity={0.8}
+                      >
+                        <View style={{ flex: 1, paddingRight: 8 }}>
+                          <Text style={[styles.optionsTitle, { color: theme.textPrimary }]}>Same for all sets</Text>
+                          <Text style={[styles.optionsSubtitle, { color: theme.textSecondary }]}>
+                            Sync weight and reps automatically
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.switchTrack,
+                            sameForAll
+                              ? { backgroundColor: categoryColor, alignItems: 'flex-end' }
+                              : { backgroundColor: '#D1D5DB', alignItems: 'flex-start' }
+                          ]}
+                        >
+                          <View style={styles.switchThumb} />
+                        </View>
+                      </TouchableOpacity>
+
+                      <View style={styles.setRowLabels}>
+                        <Text style={[styles.labelCol, styles.widthSet, { color: theme.textPrimary }]}>SET</Text>
+                        <Text style={[styles.labelCol, styles.widthWeight, { color: theme.textSecondary }]}>WEIGHT</Text>
+                        <Text style={[styles.labelCol, styles.widthReps, { color: theme.textSecondary }]}>REPS</Text>
+                      </View>
+
+                      {activeSets.map((set, index) => (
+                        <View key={set.id} style={[styles.setRow, { borderBottomColor: theme.borderColor }]}>
+                          <Text style={[styles.setText, { color: theme.textPrimary }]}>{index + 1}</Text>
+                          <View style={styles.widthWeight}>
+                            <IncrementInput
+                              value={set.weight}
+                              step={2.5}
+                              onChange={(val) => handleUpdateSet(set.id, { weight: val })}
+                              placeholder="kg"
+                              accentColor={categoryColor}
+                              style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
+                              textColor={theme.textPrimary}
+                            />
+                          </View>
+                          <View style={styles.widthReps}>
+                            <IncrementInput
+                              value={set.reps}
+                              step={1}
+                              onChange={(val) => handleUpdateSet(set.id, { reps: val })}
+                              placeholder="reps"
+                              accentColor={categoryColor}
+                              style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
+                              textColor={theme.textPrimary}
+                            />
+                          </View>
+                          {index === activeSets.length - 1 && activeSets.length > 1 && (
+                            <TouchableOpacity
+                              style={styles.setDeleteBtn}
+                              onPress={() => handleRemoveSet(set.id)}
+                              activeOpacity={0.6}
+                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                              <X size={10} color="#EF4444" strokeWidth={2.5} />
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      ))}
+
+                      <View style={{ marginTop: 16, marginBottom: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.borderColor, paddingTop: 16 }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textSecondary, marginBottom: 6, letterSpacing: 0.5 }}>
+                          EXERCISE NOTE
+                        </Text>
+                        <TextInput
+                          style={{
+                            backgroundColor: theme.inputBg,
+                            borderColor: theme.borderColor,
+                            borderWidth: 1,
+                            borderRadius: 10,
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            color: theme.textPrimary,
+                            fontSize: 13,
+                            minHeight: 48,
+                            textAlignVertical: 'top',
+                          }}
+                          placeholder="Add an optional workout note..."
+                          placeholderTextColor={theme.inputPlaceholder}
+                          value={exerciseNote}
+                          onChangeText={setExerciseNote}
+                          multiline
+                          maxLength={150}
+                        />
+                      </View>
+                    </ScrollView>
+
+                    <View style={styles.loggerActions}>
+                      <TouchableOpacity
+                        style={[styles.addSetBtn, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
+                        onPress={() => exItem && handleAddSet(exItem.id)}
+                        activeOpacity={0.75}
+                      >
+                        <Plus size={14} color={theme.textSecondary} strokeWidth={2.5} />
+                        <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>ADD SET</Text>
+                      </TouchableOpacity>
+                      <Button
+                        title={fromTemplateList ? "Save" : "Log Workout"}
+                        variant="primary"
+                        onPress={() => exItem && handleSaveWorkout(exItem.id)}
+                        style={styles.saveWorkoutBtn}
+                      />
+                    </View>
                   </View>
-                </View>
-              );
-            })()}
+                );
+              })()}
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      {/* Save as Template Modal */}
-      <Modal
-        visible={templateModalVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={handleCancelSaveTemplate}
-      >
-        <View style={styles.timerOverlay}>
-          <View style={[styles.timerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-            <TouchableOpacity
-              style={styles.timerCloseBtn}
-              onPress={handleCancelSaveTemplate}
-              activeOpacity={0.7}
-            >
-              <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
-            </TouchableOpacity>
-            <Text style={[styles.prAlertTitle, { color: theme.textPrimary }]}>SAVE AS TEMPLATE</Text>
-            <Text style={[styles.addExerciseSubtitle, { color: theme.textSecondary }]}>Name your template</Text>
-            <TextInput
-              style={[styles.addExerciseInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
-              placeholder="Template name"
-              placeholderTextColor={theme.inputPlaceholder}
-              value={templateName}
-              onChangeText={setTemplateName}
-              autoFocus={true}
-              autoCorrect={false}
-            />
-            <View style={styles.addExerciseActions}>
+        {/* Save as Template Modal */}
+        <Modal
+          visible={templateModalVisible}
+          transparent={true}
+          animationType="none"
+          onRequestClose={handleCancelSaveTemplate}
+        >
+          <View style={styles.timerOverlay}>
+            <View style={[styles.timerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
               <TouchableOpacity
-                style={[styles.addExerciseCancelBtn, { borderColor: theme.borderColor }]}
+                style={styles.timerCloseBtn}
                 onPress={handleCancelSaveTemplate}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.addExerciseCancelText, { color: theme.textSecondary }]}>Cancel</Text>
+                <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.addExerciseConfirmBtn, { backgroundColor: templateName.trim() ? '#10B981' : theme.borderColor }]}
-                onPress={handleConfirmSaveTemplate}
-                activeOpacity={0.8}
-                disabled={!templateName.trim()}
-              >
-                <Text style={styles.addExerciseConfirmText}>Save</Text>
-              </TouchableOpacity>
+              <Text style={[styles.prAlertTitle, { color: theme.textPrimary }]}>SAVE AS TEMPLATE</Text>
+              <Text style={[styles.addExerciseSubtitle, { color: theme.textSecondary }]}>Name your template</Text>
+              <TextInput
+                style={[styles.addExerciseInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
+                placeholder="Template name"
+                placeholderTextColor={theme.inputPlaceholder}
+                value={templateName}
+                onChangeText={setTemplateName}
+                autoFocus={true}
+                autoCorrect={false}
+              />
+              <View style={styles.addExerciseActions}>
+                <TouchableOpacity
+                  style={[styles.addExerciseCancelBtn, { borderColor: theme.borderColor }]}
+                  onPress={handleCancelSaveTemplate}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.addExerciseCancelText, { color: theme.textSecondary }]}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.addExerciseConfirmBtn, { backgroundColor: templateName.trim() ? '#10B981' : theme.borderColor }]}
+                  onPress={handleConfirmSaveTemplate}
+                  activeOpacity={0.8}
+                  disabled={!templateName.trim()}
+                >
+                  <Text style={styles.addExerciseConfirmText}>Save</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      {/* Template Exercise List Overlay */}
-      <View
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: templateListVisible ? 1000 : -1,
-          opacity: templateListVisible ? 1 : 0,
-          pointerEvents: templateListVisible ? 'auto' : 'none',
-        }}
-      >
-        <View style={styles.timerOverlay}>
-          <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '90%', width: '95%' }]}>
-            <View style={styles.editWorkoutHeader}>
-              <View>
-                <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Workouts ({templateListExercises.length})</Text>
-                {templateListExercises.length > 1 && (
-                  <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 3, opacity: 0.8, letterSpacing: 0.2 }}>
-                    Drag ⠿ to reorder
+        {/* Template Exercise List Overlay */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: templateListVisible ? 1000 : -1,
+            opacity: templateListVisible ? 1 : 0,
+            pointerEvents: templateListVisible ? 'auto' : 'none',
+          }}
+        >
+          <View style={styles.timerOverlay}>
+            <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '90%', width: '95%' }]}>
+              <View style={styles.editWorkoutHeader}>
+                <View>
+                  <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Workouts ({templateListExercises.length})</Text>
+                  {templateListExercises.length > 1 && (
+                    <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 3, opacity: 0.8, letterSpacing: 0.2 }}>
+                      Drag ⠿ to reorder
+                    </Text>
+                  )}
+                </View>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      handleSelectMuscleCard('Chest');
+                    }}
+                    activeOpacity={0.6}
+                    style={{ padding: 4 }}
+                  >
+                    <Plus size={20} color={theme.textPrimary} strokeWidth={2.5} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); setActiveTemplateId(null); }}
+                    activeOpacity={0.6}
+                    style={{ padding: 4 }}
+                  >
+                    <X size={24} color={theme.textSecondary} strokeWidth={2} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              {templateListExercises.length === 0 ? (
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 12 }}>
+                  <Dumbbell size={36} color={theme.textSecondary} opacity={0.5} strokeWidth={1.5} />
+                  <Text style={{ color: theme.textSecondary, fontSize: 14, fontWeight: '600', textAlign: 'center' }}>
+                    No exercises in this template yet.
                   </Text>
-                )}
-              </View>
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                <TouchableOpacity
-                  onPress={() => {
-                    handleSelectMuscleCard('Chest');
+                  <TouchableOpacity
+                    onPress={() => {
+                      handleSelectMuscleCard('Chest');
+                    }}
+                    activeOpacity={0.7}
+                    style={{
+                      backgroundColor: '#10B981',
+                      paddingVertical: 10,
+                      paddingHorizontal: 20,
+                      borderRadius: 10,
+                      marginTop: 8,
+                    }}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800' }}>ADD WORKOUT</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <DragList
+                  containerStyle={{ maxHeight: 400, flexShrink: 1 }}
+                  data={templateListExercises}
+                  keyExtractor={(item) => item.exerciseId}
+                  onReordered={(fromIdx, toIdx) => {
+                    setTemplateListExercises((prev) => {
+                      const updated = [...prev];
+                      const [moved] = updated.splice(fromIdx, 1);
+                      updated.splice(toIdx, 0, moved);
+                      return updated;
+                    });
                   }}
-                  activeOpacity={0.6}
-                  style={{ padding: 4 }}
-                >
-                  <Plus size={20} color={theme.textPrimary} strokeWidth={2.5} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); setActiveTemplateId(null); }}
-                  activeOpacity={0.6}
-                  style={{ padding: 4 }}
-                >
-                  <X size={24} color={theme.textSecondary} strokeWidth={2} />
-                </TouchableOpacity>
-              </View>
-            </View>
-            {templateListExercises.length === 0 ? (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 12 }}>
-                <Dumbbell size={36} color={theme.textSecondary} opacity={0.5} strokeWidth={1.5} />
-                <Text style={{ color: theme.textSecondary, fontSize: 14, fontWeight: '600', textAlign: 'center' }}>
-                  No exercises in this template yet.
-                </Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    handleSelectMuscleCard('Chest');
-                  }}
-                  activeOpacity={0.7}
-                  style={{
-                    backgroundColor: '#10B981',
-                    paddingVertical: 10,
-                    paddingHorizontal: 20,
-                    borderRadius: 10,
-                    marginTop: 8,
-                  }}
-                >
-                  <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800' }}>ADD WORKOUT</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <DragList
-                containerStyle={{ maxHeight: 400, flexShrink: 1 }}
-                data={templateListExercises}
-                keyExtractor={(item) => item.exerciseId}
-                onReordered={(fromIdx, toIdx) => {
-                  setTemplateListExercises((prev) => {
-                    const updated = [...prev];
-                    const [moved] = updated.splice(fromIdx, 1);
-                    updated.splice(toIdx, 0, moved);
-                    return updated;
-                  });
-                }}
-                style={{ maxHeight: 400, flexShrink: 1 }}
-                renderItem={({ item, onDragStart, isActive }) => {
+                  style={{ maxHeight: 400, flexShrink: 1 }}
+                  renderItem={({ item, onDragStart, isActive }) => {
                     const details = exercises.find((e) => e.id === item.exerciseId);
                     if (!details) return null;
                     const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
@@ -3073,176 +3151,374 @@ export default function SinglePageLandingScreen() {
                     );
                   }}
                 />
-            )}
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
-              <TouchableOpacity
-                onPress={async () => {
-                  if (activeTemplateId) {
-                    await updateTemplate(activeTemplateId, templateListExercises);
-                  }
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  setTemplateListVisible(false);
-                  setFromTemplateList(false);
-                  setTemplateListExercises([]);
-                  setActiveTemplateId(null);
-                }}
-                activeOpacity={0.7}
-                style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: '#10B981', backgroundColor: 'transparent' }}
-              >
-                <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800', letterSpacing: 0.3 }}>SAVE</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setTemplateLogSelectedIds(new Set(templateListExercises.map(e => e.exerciseId)));
-                  setTemplateLogSelectVisible(true);
-                }}
-                activeOpacity={0.8}
-                style={{ flex: 1, backgroundColor: '#10B981', paddingVertical: 16, alignItems: 'center', borderRadius: 14 }}
-              >
-                <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>LOG</Text>
-              </TouchableOpacity>
+              )}
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                <TouchableOpacity
+                  onPress={async () => {
+                    if (activeTemplateId) {
+                      await updateTemplate(activeTemplateId, templateListExercises);
+                    }
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    setTemplateListVisible(false);
+                    setFromTemplateList(false);
+                    setTemplateListExercises([]);
+                    setActiveTemplateId(null);
+                  }}
+                  activeOpacity={0.7}
+                  style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: '#10B981', backgroundColor: 'transparent' }}
+                >
+                  <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800', letterSpacing: 0.3 }}>SAVE</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    setTemplateLogSelectedIds(new Set(templateListExercises.map(e => e.exerciseId)));
+                    setTemplateLogSelectVisible(true);
+                  }}
+                  activeOpacity={0.8}
+                  style={{ flex: 1, backgroundColor: '#10B981', paddingVertical: 16, alignItems: 'center', borderRadius: 14 }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>LOG</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
-      </View>
 
-      {/* Template Log Selection Modal */}
-      <Modal
-        visible={templateLogSelectVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={() => setTemplateLogSelectVisible(false)}
-      >
-        <View style={styles.timerOverlay}>
-          <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '85%', width: '95%' }]}>
-            <View style={styles.editWorkoutHeader}>
-              <View>
-                <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Select Workouts</Text>
-                <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: '600', marginTop: 2 }}>
-                  {templateLogSelectedIds.size} of {templateListExercises.length} selected
-                </Text>
+        {/* Template Log Selection Modal */}
+        <Modal
+          visible={templateLogSelectVisible}
+          transparent={true}
+          animationType="none"
+          onRequestClose={() => setTemplateLogSelectVisible(false)}
+        >
+          <View style={styles.timerOverlay}>
+            <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '85%', width: '95%' }]}>
+              <View style={styles.editWorkoutHeader}>
+                <View>
+                  <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Select Workouts</Text>
+                  <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: '600', marginTop: 2 }}>
+                    {templateLogSelectedIds.size} of {templateListExercises.length} selected
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (templateLogSelectedIds.size === templateListExercises.length) {
+                      setTemplateLogSelectedIds(new Set());
+                    } else {
+                      setTemplateLogSelectedIds(new Set(templateListExercises.map(e => e.exerciseId)));
+                    }
+                  }}
+                  activeOpacity={0.7}
+                  style={{ paddingVertical: 4, paddingHorizontal: 10 }}
+                >
+                  <Text style={{ color: '#10B981', fontSize: 13, fontWeight: '700' }}>
+                    {templateLogSelectedIds.size === templateListExercises.length ? 'Deselect All' : 'Select All'}
+                  </Text>
+                </TouchableOpacity>
               </View>
+
+              <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+                {templateListExercises.map((logEx) => {
+                  const details = exercises.find((e) => e.id === logEx.exerciseId);
+                  if (!details) return null;
+                  const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
+                  const isSelected = templateLogSelectedIds.has(logEx.exerciseId);
+                  return (
+                    <TouchableOpacity
+                      key={logEx.exerciseId}
+                      activeOpacity={0.6}
+                      onPress={() => {
+                        setTemplateLogSelectedIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(logEx.exerciseId)) {
+                            next.delete(logEx.exerciseId);
+                          } else {
+                            next.add(logEx.exerciseId);
+                          }
+                          return next;
+                        });
+                      }}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        paddingVertical: 12,
+                        paddingHorizontal: 16,
+                        borderBottomWidth: 1,
+                        borderBottomColor: theme.borderColor,
+                      }}
+                    >
+                      <View style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 6,
+                        borderWidth: 2,
+                        borderColor: isSelected ? '#10B981' : theme.borderColor,
+                        backgroundColor: isSelected ? '#10B981' : 'transparent',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: 14,
+                      }}>
+                        {isSelected && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
+                      </View>
+                      <View style={[styles.editWorkoutItemAccent, { backgroundColor: muscleColor }]} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: isSelected ? theme.textPrimary : theme.textSecondary, fontSize: 15, fontWeight: '600' }}>
+                          {details.name}
+                        </Text>
+                        <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: '500', marginTop: 1 }}>
+                          {details.muscleGroup} · {logEx.sets.length} set{logEx.sets.length > 1 ? 's' : ''}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                <TouchableOpacity
+                  onPress={() => setTemplateLogSelectVisible(false)}
+                  activeOpacity={0.7}
+                  style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: theme.borderColor }}
+                >
+                  <Text style={{ color: theme.textSecondary, fontSize: 14, fontWeight: '700', letterSpacing: 0.3 }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    const selectedExercises = templateListExercises
+                      .filter(e => templateLogSelectedIds.has(e.exerciseId))
+                      .map(e => ({
+                        exerciseId: e.exerciseId,
+                        sets: e.sets.map(s => ({ ...s, id: generateId(), isCompleted: false })),
+                        notes: e.notes,
+                      }));
+                    const now = Date.now();
+                    setActiveSessionExercises(selectedExercises);
+                    setSessionStartTime(now);
+                    setTemplateLogSelectVisible(false);
+                    setTemplateListVisible(false);
+                    setFromTemplateList(false);
+                    setActiveTemplateId(null);
+                    setTemplateListExercises([]);
+                    setActiveSegment('log');
+                    AsyncStorage.setItem('@active_session_exercises', JSON.stringify(selectedExercises));
+                    AsyncStorage.setItem('@session_start_time', String(now));
+                  }}
+                  activeOpacity={0.8}
+                  disabled={templateLogSelectedIds.size === 0}
+                  style={{
+                    flex: 1,
+                    backgroundColor: templateLogSelectedIds.size > 0 ? '#10B981' : theme.borderColor,
+                    paddingVertical: 16,
+                    alignItems: 'center',
+                    borderRadius: 14,
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>
+                    START ({templateLogSelectedIds.size})
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Profile Full Screen */}
+        <Modal
+          visible={profileModalVisible}
+          transparent={false}
+          animationType="slide"
+          onRequestClose={() => setProfileModalVisible(false)}
+        >
+          <View style={[styles.profileFull, { backgroundColor: theme.background }]}>
+            {/* Header */}
+            <View style={styles.profileFullHeader}>
               <TouchableOpacity
-                onPress={() => {
-                  if (templateLogSelectedIds.size === templateListExercises.length) {
-                    setTemplateLogSelectedIds(new Set());
-                  } else {
-                    setTemplateLogSelectedIds(new Set(templateListExercises.map(e => e.exerciseId)));
-                  }
-                }}
+                onPress={() => setProfileModalVisible(false)}
                 activeOpacity={0.7}
-                style={{ paddingVertical: 4, paddingHorizontal: 10 }}
+                style={styles.profileFullBack}
               >
-                <Text style={{ color: '#10B981', fontSize: 13, fontWeight: '700' }}>
-                  {templateLogSelectedIds.size === templateListExercises.length ? 'Deselect All' : 'Select All'}
-                </Text>
+                <ChevronLeft size={22} color={theme.textPrimary} strokeWidth={2.5} />
+                <Text style={[styles.profileFullBackText, { color: theme.textSecondary }]}>Back</Text>
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
-              {templateListExercises.map((logEx) => {
-                const details = exercises.find((e) => e.id === logEx.exerciseId);
-                if (!details) return null;
-                const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
-                const isSelected = templateLogSelectedIds.has(logEx.exerciseId);
-                return (
-                  <TouchableOpacity
-                    key={logEx.exerciseId}
-                    activeOpacity={0.6}
-                    onPress={() => {
-                      setTemplateLogSelectedIds((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(logEx.exerciseId)) {
-                          next.delete(logEx.exerciseId);
-                        } else {
-                          next.add(logEx.exerciseId);
-                        }
-                        return next;
-                      });
-                    }}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingVertical: 12,
-                      paddingHorizontal: 16,
-                      borderBottomWidth: 1,
-                      borderBottomColor: theme.borderColor,
-                    }}
-                  >
-                    <View style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: 6,
-                      borderWidth: 2,
-                      borderColor: isSelected ? '#10B981' : theme.borderColor,
-                      backgroundColor: isSelected ? '#10B981' : 'transparent',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: 14,
-                    }}>
-                      {isSelected && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
+            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+              {/* Profile Section */}
+              <View style={styles.profileFullTop}>
+                <View style={[styles.profileAvatar, { backgroundColor: userEmail || auth.currentUser ? '#10B981' : '#212330' }]}>
+                  <Text style={styles.profileAvatarText}>
+                    {getInitials(userDisplayName || userProfile?.name || null, userEmail)}
+                  </Text>
+                </View>
+
+                {userEmail ? (
+                  <>
+                    {userDisplayName ? (
+                      <Text style={[styles.profileName, { color: theme.textPrimary }]}>{userDisplayName}</Text>
+                    ) : null}
+                    <Text style={[styles.profileEmail, { color: theme.textSecondary }]}>{userEmail}</Text>
+                  </>
+                ) : (
+                  <Text style={[styles.profileName, { color: theme.textPrimary }]}>
+                    Hi, {userProfile?.name || 'Guest'}
+                  </Text>
+                )}
+              </View>
+
+              {/* Highlight Stats */}
+              <View style={styles.profileStatsRow}>
+                <View style={[styles.profileStatCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                  <Text style={[styles.profileStatNumber, { color: theme.textPrimary }]}>{overallStats.totalWorkouts}</Text>
+                  <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>Workouts</Text>
+                </View>
+                <View style={[styles.profileStatCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                  <Text style={[styles.profileStatNumber, { color: '#FACC15' }]}>{overallStats.currentStreak}</Text>
+                  <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>Day Streak</Text>
+                </View>
+                <View style={[styles.profileStatCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                  <Text style={[styles.profileStatNumber, { color: theme.textPrimary }]}>{achievements.filter(a => a.isUnlocked).length}</Text>
+                  <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>Unlocked</Text>
+                </View>
+              </View>
+
+              {/* Fitness Details (Height • Weight • Goal) */}
+              <View style={styles.profileFullSection}>
+                <Text style={[styles.profileFullSectionTitle, { color: theme.textPrimary }]}>YOUR FITNESS PROFILE</Text>
+
+                <View style={[styles.profileFitnessCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                  {/* Height */}
+                  <View style={styles.profileFitnessRow}>
+                    <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary }]}>Height</Text>
+                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                      <Text style={{ color: theme.textPrimary, fontWeight: '900', fontSize: 14, textAlign: 'right' }}>
+                        {userProfile?.heightCm ? `${Math.round(userProfile.heightCm)} cm` : '—'}
+                      </Text>
                     </View>
-                    <View style={[styles.editWorkoutItemAccent, { backgroundColor: muscleColor }]} />
+                  </View>
+
+                  <View style={[styles.profileFitnessDivider, { backgroundColor: theme.borderColor }]} />
+
+                  {/* Weight */}
+                  <View style={styles.profileFitnessRow}>
+                    <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary }]}>Weight</Text>
+                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                      <Text style={{ color: theme.textPrimary, fontWeight: '900', fontSize: 14, textAlign: 'right' }}>
+                        {userProfile?.weightKg ? `${Math.round(userProfile.weightKg)} kg` : '—'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={[styles.profileFitnessDivider, { backgroundColor: theme.borderColor }]} />
+
+                  {/* Goal */}
+                  <View style={styles.profileFitnessRow}>
+                    <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary }]}>Fitness Goal</Text>
+                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                      <Text style={{ color: theme.textPrimary, fontWeight: '900', fontSize: 14, textAlign: 'right' }}>
+                        {userProfile?.goal || '—'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Achievements */}
+              <View style={styles.profileFullSection}>
+                <Text style={[styles.profileFullSectionTitle, { color: theme.textPrimary }]}>ACHIEVEMENTS</Text>
+                <View style={[styles.profileAchievementSummary, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                  <View style={styles.profileAchievementSummaryRow}>
+                    <Text style={[styles.profileAchievementSummaryText, { color: theme.textPrimary }]}>
+                      {achievements.filter(a => a.isUnlocked).length} of {achievements.length} Unlocked
+                    </Text>
+                    <Text style={[styles.profileAchievementSummaryPct, { color: theme.textSecondary }]}>
+                      {achievements.length > 0 ? Math.round((achievements.filter(a => a.isUnlocked).length / achievements.length) * 100) : 0}%
+                    </Text>
+                  </View>
+                  <View style={styles.profileAchievementTrack}>
+                    <View style={[styles.profileAchievementBar, { width: `${achievements.length > 0 ? Math.round((achievements.filter(a => a.isUnlocked).length / achievements.length) * 100) : 0}%` }]} />
+                  </View>
+                </View>
+
+                {achievements.filter(a => a.isUnlocked).length > 0 ? (
+                  <>
+                    <Text style={[styles.profileMilestoneLabel, { color: theme.textSecondary }]}>UNLOCKED</Text>
+                    {achievements.filter(a => a.isUnlocked).slice(0, 5).map((a) => (
+                      <View key={a.id} style={[styles.profileAchievementCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                        <View style={styles.profileAchievementCardLeft}>
+                          <Award size={18} color="#10B981" strokeWidth={2.5} />
+                          <View style={{ marginLeft: 10 }}>
+                            <Text style={[styles.profileAchievementTitle, { color: theme.textPrimary }]}>{a.title}</Text>
+                            <Text style={[styles.profileAchievementDesc, { color: theme.textSecondary }]}>{a.description}</Text>
+                          </View>
+                        </View>
+                        <CheckCircle size={16} color="#10B981" strokeWidth={2.5} fill="#10B981" />
+                      </View>
+                    ))}
+                  </>
+                ) : null}
+
+                <Text style={[styles.profileMilestoneLabel, { color: theme.textSecondary }]}>NEXT MILESTONES</Text>
+                {achievements.filter(a => !a.isUnlocked).sort((a, b) => b.progress - a.progress).slice(0, 3).map((a) => (
+                  <View key={a.id} style={[styles.profileAchievementCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: isSelected ? theme.textPrimary : theme.textSecondary, fontSize: 15, fontWeight: '600' }}>
-                        {details.name}
-                      </Text>
-                      <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: '500', marginTop: 1 }}>
-                        {details.muscleGroup} · {logEx.sets.length} set{logEx.sets.length > 1 ? 's' : ''}
-                      </Text>
+                      <View style={styles.profileAchievementCardRow}>
+                        <Text style={[styles.profileAchievementTitle, { color: theme.textPrimary }]}>{a.title}</Text>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#9CA3AF' }}>{a.targetLabel}</Text>
+                      </View>
+                      <Text style={[styles.profileAchievementDesc, { color: theme.textSecondary }]}>{a.description}</Text>
+                      <View style={styles.profileAchievementMiniTrack}>
+                        <View style={[styles.profileAchievementMiniBar, { width: `${a.progress}%` }]} />
+                      </View>
                     </View>
-                  </TouchableOpacity>
-                );
-              })}
+                  </View>
+                ))}
+              </View>
+
+              {/* Personal Records */}
+              {prs.length > 0 ? (
+                <View style={styles.profileFullSection}>
+                  <Text style={[styles.profileFullSectionTitle, { color: theme.textPrimary }]}>PERSONAL RECORDS</Text>
+                  {prs.slice(0, 5).map((pr, idx) => (
+                    <View key={idx} style={[styles.profilePrCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.profilePrExerciseName, { color: theme.textPrimary }]}>{pr.exerciseName}</Text>
+                        <Text style={[styles.profilePrDetails, { color: theme.textSecondary }]}>{pr.weight} kg × {pr.reps} reps</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#9CA3AF' }}>{pr.date}</Text>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#10B981' }}>e1RM: {pr.estimatedOneRM} kg</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
+              <View style={{ height: 24 }} />
             </ScrollView>
 
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
-              <TouchableOpacity
-                onPress={() => setTemplateLogSelectVisible(false)}
-                activeOpacity={0.7}
-                style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: theme.borderColor }}
-              >
-                <Text style={{ color: theme.textSecondary, fontSize: 14, fontWeight: '700', letterSpacing: 0.3 }}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  const selectedExercises = templateListExercises
-                    .filter(e => templateLogSelectedIds.has(e.exerciseId))
-                    .map(e => ({
-                      exerciseId: e.exerciseId,
-                      sets: e.sets.map(s => ({ ...s, id: generateId(), isCompleted: false })),
-                      notes: e.notes,
-                    }));
-                  const now = Date.now();
-                  setActiveSessionExercises(selectedExercises);
-                  setSessionStartTime(now);
-                  setTemplateLogSelectVisible(false);
-                  setTemplateListVisible(false);
-                  setFromTemplateList(false);
-                  setActiveTemplateId(null);
-                  setTemplateListExercises([]);
-                  setActiveSegment('log');
-                  AsyncStorage.setItem('@active_session_exercises', JSON.stringify(selectedExercises));
-                  AsyncStorage.setItem('@session_start_time', String(now));
-                }}
-                activeOpacity={0.8}
-                disabled={templateLogSelectedIds.size === 0}
-                style={{
-                  flex: 1,
-                  backgroundColor: templateLogSelectedIds.size > 0 ? '#10B981' : theme.borderColor,
-                  paddingVertical: 16,
-                  alignItems: 'center',
-                  borderRadius: 14,
-                }}
-              >
-                <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>
-                  START ({templateLogSelectedIds.size})
-                </Text>
-              </TouchableOpacity>
+            {/* Fixed Bottom: Sign Out / Sign In */}
+            <View style={styles.profileFullBottom}>
+              {userEmail ? (
+                <TouchableOpacity
+                  style={styles.profileSignOutBtn}
+                  onPress={handleLogout}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.profileSignOutText}>Sign out</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.profileSignInBtn}
+                  onPress={handleRedirectToSignIn}
+                  activeOpacity={0.7}
+                >
+                  <User size={16} color="#FFFFFF" strokeWidth={2.5} />
+                  <Text style={styles.profileSignInText}>Sign in with Google</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -5041,5 +5317,250 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#E5E7EB',
+  },
+  // Profile styles
+  profileBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+  },
+  profileBadgeInitials: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  profileFull: {
+    flex: 1,
+    paddingTop: 50,
+  },
+  profileFullHeader: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  profileFullBack: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileFullBackText: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  profileFullTop: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  profileAvatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  profileAvatarText: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  profileEmail: {
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  profileStatsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 8,
+    marginBottom: 24,
+  },
+  profileStatCard: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  profileStatNumber: {
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  profileStatLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  profileFullSection: {
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  profileFullSectionTitle: {
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+    marginBottom: 10,
+  },
+  profileAchievementSummary: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 14,
+  },
+  profileAchievementSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  profileAchievementSummaryText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  profileAchievementSummaryPct: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  profileAchievementTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#212330',
+    overflow: 'hidden',
+  },
+  profileAchievementBar: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+  },
+  profileMilestoneLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  profileAchievementCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 8,
+  },
+  profileAchievementCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  profileAchievementTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  profileAchievementDesc: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  profileAchievementCardRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  profileAchievementMiniTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#212330',
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  profileAchievementMiniBar: {
+    height: '100%',
+    borderRadius: 2,
+    backgroundColor: '#10B981',
+  },
+  profilePrCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 8,
+  },
+  profilePrExerciseName: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  profilePrDetails: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  profileFitnessCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 18,
+  },
+  profileFitnessRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  profileFitnessLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  profileFitnessValue: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  profileFitnessDivider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: 2,
+  },
+  profileFullBottom: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 32,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#212330',
+  },
+  profileSignOutBtn: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EF444415',
+  },
+  profileSignOutText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#EF4444',
+  },
+  profileSignInBtn: {
+    width: '100%',
+    flexDirection: 'row',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#10B981',
+    gap: 8,
+  },
+  profileSignInText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
