@@ -2565,7 +2565,7 @@ export default function SinglePageLandingScreen() {
               onPress={() => setShowNewPrsAlert(false)}
               activeOpacity={0.7}
             >
-              <Text style={styles.prAlertBtnText}>LET'S GO!</Text>
+              <Text style={styles.prAlertBtnText}>{"LET'S GO!"}</Text>
             </TouchableOpacity>
           </View>
         </View>

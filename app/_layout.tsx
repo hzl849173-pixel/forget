@@ -1,11 +1,13 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { WorkoutProvider } from '@/hooks/use-workout-storage';
+import { isOnboardingCompleted } from '@/lib/profile/profileStorage';
+import React, { useEffect, useState } from 'react';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -13,12 +15,49 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+  const [decided, setDecided] = useState(false);
+  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(false);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const done = await isOnboardingCompleted();
+        if (!mounted) return;
+        setOnboardingCompleted(done);
+      } finally {
+        if (mounted) setDecided(true);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!decided) return;
+
+    if (onboardingCompleted) {
+      router.replace('/');
+    } else {
+      router.replace('/onboarding/brand');
+    }
+  }, [decided, onboardingCompleted, router]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <WorkoutProvider>
           <Stack>
+            {/* onboarding routes */}
+            <Stack.Screen name="onboarding/brand" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding/height" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding/weight" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding/goal" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding/signin" options={{ headerShown: false }} />
+
+            {/* home */}
             <Stack.Screen name="index" options={{ headerShown: false }} />
           </Stack>
           <StatusBar style="auto" />
