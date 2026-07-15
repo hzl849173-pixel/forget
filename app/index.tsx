@@ -178,7 +178,8 @@ const Haptics = {
 };
 
 import { auth } from '@/lib/firebase/firebaseConfig';
-import { loadLocalProfile, OnboardingProfile, setSignedOut } from '@/lib/profile/profileStorage';
+import { loadLocalProfile, OnboardingProfile, setSignedOut, saveLocalProfile, FitnessGoal } from '@/lib/profile/profileStorage';
+import { getProfileFromFirestore, saveProfileToFirestore } from '@/lib/firestore/profileFirestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -240,6 +241,13 @@ export default function SinglePageLandingScreen() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
 
+  // Profile Editing states
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editHeight, setEditHeight] = useState('');
+  const [editWeight, setEditWeight] = useState('');
+  const [editGoal, setEditGoal] = useState<FitnessGoal>('' as FitnessGoal);
+
   const getInitials = (name: string | null, email: string | null): string => {
     if (name) {
       const parts = name.split(' ').filter(Boolean);
@@ -252,16 +260,38 @@ export default function SinglePageLandingScreen() {
 
   const handleOpenProfile = async () => {
     try {
-      const p = await loadLocalProfile();
-      setUserProfile(p);
+      setIsEditingProfile(false); // Reset editing state
+      let p = await loadLocalProfile();
+      
       const currentUser = auth.currentUser;
       if (currentUser) {
         setUserEmail(currentUser.email);
         setUserDisplayName(currentUser.displayName);
+        
+        // Fetch latest profile from Firestore for signed in users
+        const cloudProfile = await getProfileFromFirestore(currentUser.uid);
+        if (cloudProfile) {
+          p = {
+            name: cloudProfile.name || p?.name || '',
+            heightCm: cloudProfile.heightCm || p?.heightCm || 0,
+            weightKg: cloudProfile.weightKg || p?.weightKg || 0,
+            goal: cloudProfile.goal || p?.goal || ('' as FitnessGoal),
+            updatedAt: new Date().toISOString(),
+          };
+          // Save locally so it stays in sync
+          await saveLocalProfile({
+            name: p.name,
+            heightCm: p.heightCm,
+            weightKg: p.weightKg,
+            goal: p.goal,
+          });
+        }
       } else {
         setUserEmail(null);
         setUserDisplayName(null);
       }
+      
+      setUserProfile(p);
       setProfileModalVisible(true);
     } catch (e) {
       console.log('Error opening profile', e);
@@ -275,6 +305,7 @@ export default function SinglePageLandingScreen() {
       setUserEmail(null);
       setUserDisplayName(null);
       setProfileModalVisible(false);
+      setIsEditingProfile(false);
     } catch (e) {
       console.log('Error signing out', e);
     }
@@ -283,6 +314,70 @@ export default function SinglePageLandingScreen() {
   const handleRedirectToSignIn = () => {
     setProfileModalVisible(false);
     router.replace('/onboarding/signin');
+  };
+
+  const handleStartEditProfile = () => {
+    if (userProfile) {
+      setEditName(userProfile.name);
+      setEditHeight(userProfile.heightCm ? String(Math.round(userProfile.heightCm)) : '');
+      setEditWeight(userProfile.weightKg ? String(Math.round(userProfile.weightKg)) : '');
+      setEditGoal(userProfile.goal);
+    } else {
+      setEditName('');
+      setEditHeight('');
+      setEditWeight('');
+      setEditGoal('' as FitnessGoal);
+    }
+    setIsEditingProfile(true);
+  };
+
+  const handleCancelEditProfile = () => {
+    setIsEditingProfile(false);
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const parsedHeight = Number(editHeight);
+      const parsedWeight = Number(editWeight);
+      
+      const nameVal = editName.trim();
+      const heightVal = Number.isFinite(parsedHeight) ? parsedHeight : 0;
+      const weightVal = Number.isFinite(parsedWeight) ? parsedWeight : 0;
+      const goalVal = editGoal;
+      
+      const updatedProfile: OnboardingProfile = {
+        name: nameVal,
+        heightCm: heightVal,
+        weightKg: weightVal,
+        goal: goalVal,
+        updatedAt: new Date().toISOString(),
+      };
+      
+      // Save locally
+      await saveLocalProfile({
+        name: nameVal,
+        heightCm: heightVal,
+        weightKg: weightVal,
+        goal: goalVal,
+      });
+      
+      // Sync to Firestore if signed in
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await saveProfileToFirestore(currentUser.uid, {
+          name: nameVal,
+          heightCm: heightVal,
+          weightKg: weightVal,
+          goal: goalVal,
+        });
+      }
+      
+      setUserProfile(updatedProfile);
+      setIsEditingProfile(false);
+    } catch (e) {
+      console.log('Error saving profile', e);
+      showCustomAlert('Save Profile', 'Failed to save profile. Please check your inputs.', [{ text: 'OK' }]);
+    }
   };
 
   // Workout logging states
@@ -3351,18 +3446,12 @@ export default function SinglePageLandingScreen() {
                   </Text>
                 </View>
 
+                <Text style={[styles.profileName, { color: theme.textPrimary }]}>
+                  {userProfile?.name || userDisplayName || 'Guest'}
+                </Text>
                 {userEmail ? (
-                  <>
-                    {userDisplayName ? (
-                      <Text style={[styles.profileName, { color: theme.textPrimary }]}>{userDisplayName}</Text>
-                    ) : null}
-                    <Text style={[styles.profileEmail, { color: theme.textSecondary }]}>{userEmail}</Text>
-                  </>
-                ) : (
-                  <Text style={[styles.profileName, { color: theme.textPrimary }]}>
-                    Hi, {userProfile?.name || 'Guest'}
-                  </Text>
-                )}
+                  <Text style={[styles.profileEmail, { color: theme.textSecondary, marginTop: 2 }]}>{userEmail}</Text>
+                ) : null}
               </View>
 
               {/* Highlight Stats */}
@@ -3383,42 +3472,176 @@ export default function SinglePageLandingScreen() {
 
               {/* Fitness Details (Height • Weight • Goal) */}
               <View style={styles.profileFullSection}>
-                <Text style={[styles.profileFullSectionTitle, { color: theme.textPrimary }]}>YOUR FITNESS PROFILE</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <Text style={[styles.profileFullSectionTitle, { color: theme.textPrimary }]}>YOUR FITNESS PROFILE</Text>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {isEditingProfile ? (
+                      <>
+                        <TouchableOpacity
+                          onPress={handleCancelEditProfile}
+                          activeOpacity={0.7}
+                          style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, backgroundColor: '#EF444415' }}
+                        >
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#EF4444', letterSpacing: 0.5 }}>CANCEL</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={handleSaveProfile}
+                          activeOpacity={0.7}
+                          style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, backgroundColor: '#10B98115' }}
+                        >
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#10B981', letterSpacing: 0.5 }}>SAVE</Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={handleStartEditProfile}
+                        activeOpacity={0.7}
+                        style={{ paddingVertical: 4, paddingHorizontal: 12, borderRadius: 8, backgroundColor: '#10B98115' }}
+                      >
+                        <Text style={{ fontSize: 11, fontWeight: '800', color: '#10B981', letterSpacing: 0.5 }}>EDIT</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
 
                 <View style={[styles.profileFitnessCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                  {/* Height */}
-                  <View style={styles.profileFitnessRow}>
-                    <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary }]}>Height</Text>
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <Text style={{ color: theme.textPrimary, fontWeight: '900', fontSize: 14, textAlign: 'right' }}>
-                        {userProfile?.heightCm ? `${Math.round(userProfile.heightCm)} cm` : '—'}
-                      </Text>
+                  {isEditingProfile ? (
+                    <View style={{ gap: 14 }}>
+                      {/* Name Edit */}
+                      <View style={{ gap: 4 }}>
+                        <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary, fontSize: 12 }]}>Name</Text>
+                        <TextInput
+                          value={editName}
+                          onChangeText={setEditName}
+                          style={[
+                            styles.profileEditInput,
+                            {
+                              color: theme.textPrimary,
+                              borderColor: theme.borderColor,
+                              backgroundColor: theme.background
+                            }
+                          ]}
+                          placeholder="e.g. Alex"
+                          placeholderTextColor="#9CA3AF"
+                          returnKeyType="done"
+                        />
+                      </View>
+
+                      {/* Height Edit */}
+                      <View style={{ gap: 4 }}>
+                        <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary, fontSize: 12 }]}>Height (cm)</Text>
+                        <TextInput
+                          value={editHeight}
+                          onChangeText={(val) => setEditHeight(val.replace(/[^\d]/g, ''))}
+                          keyboardType="numeric"
+                          style={[
+                            styles.profileEditInput,
+                            {
+                              color: theme.textPrimary,
+                              borderColor: theme.borderColor,
+                              backgroundColor: theme.background
+                            }
+                          ]}
+                          placeholder="e.g. 175"
+                          placeholderTextColor="#9CA3AF"
+                          returnKeyType="done"
+                        />
+                      </View>
+
+                      {/* Weight Edit */}
+                      <View style={{ gap: 4 }}>
+                        <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary, fontSize: 12 }]}>Weight (kg)</Text>
+                        <TextInput
+                          value={editWeight}
+                          onChangeText={(val) => setEditWeight(val.replace(/[^\d.]/g, ''))}
+                          keyboardType="numeric"
+                          style={[
+                            styles.profileEditInput,
+                            {
+                              color: theme.textPrimary,
+                              borderColor: theme.borderColor,
+                              backgroundColor: theme.background
+                            }
+                          ]}
+                          placeholder="e.g. 75"
+                          placeholderTextColor="#9CA3AF"
+                          returnKeyType="done"
+                        />
+                      </View>
+
+                      {/* Goal Edit */}
+                      <View style={{ gap: 6 }}>
+                        <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary, fontSize: 12 }]}>Fitness Goal</Text>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
+                          {([
+                            'Lean & Aesthetic',
+                            'Strong & Powerful',
+                            'Athletic & Functional',
+                            'Slim & Toned',
+                            'Balanced Fitness',
+                            'Improve Overall Health'
+                          ] as FitnessGoal[]).map((g) => {
+                            const isSel = editGoal === g;
+                            return (
+                              <TouchableOpacity
+                                key={g}
+                                activeOpacity={0.7}
+                                onPress={() => setEditGoal(g)}
+                                style={{
+                                  paddingVertical: 6,
+                                  paddingHorizontal: 12,
+                                  borderRadius: 20,
+                                  borderWidth: 1,
+                                  borderColor: isSel ? '#10B981' : theme.borderColor,
+                                  backgroundColor: isSel ? '#10B98115' : theme.background,
+                                }}
+                              >
+                                <Text style={{ fontSize: 11, fontWeight: '700', color: isSel ? '#10B981' : theme.textSecondary }}>
+                                  {g}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      </View>
                     </View>
-                  </View>
+                  ) : (
+                    <>
+                      {/* Height */}
+                      <View style={styles.profileFitnessRow}>
+                        <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary }]}>Height</Text>
+                        <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                          <Text style={{ color: theme.textPrimary, fontWeight: '900', fontSize: 14, textAlign: 'right' }}>
+                            {userProfile?.heightCm ? `${Math.round(userProfile.heightCm)} cm` : '—'}
+                          </Text>
+                        </View>
+                      </View>
 
-                  <View style={[styles.profileFitnessDivider, { backgroundColor: theme.borderColor }]} />
+                      <View style={[styles.profileFitnessDivider, { backgroundColor: theme.borderColor }]} />
 
-                  {/* Weight */}
-                  <View style={styles.profileFitnessRow}>
-                    <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary }]}>Weight</Text>
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <Text style={{ color: theme.textPrimary, fontWeight: '900', fontSize: 14, textAlign: 'right' }}>
-                        {userProfile?.weightKg ? `${Math.round(userProfile.weightKg)} kg` : '—'}
-                      </Text>
-                    </View>
-                  </View>
+                      {/* Weight */}
+                      <View style={styles.profileFitnessRow}>
+                        <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary }]}>Weight</Text>
+                        <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                          <Text style={{ color: theme.textPrimary, fontWeight: '900', fontSize: 14, textAlign: 'right' }}>
+                            {userProfile?.weightKg ? `${Math.round(userProfile.weightKg)} kg` : '—'}
+                          </Text>
+                        </View>
+                      </View>
 
-                  <View style={[styles.profileFitnessDivider, { backgroundColor: theme.borderColor }]} />
+                      <View style={[styles.profileFitnessDivider, { backgroundColor: theme.borderColor }]} />
 
-                  {/* Goal */}
-                  <View style={styles.profileFitnessRow}>
-                    <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary }]}>Fitness Goal</Text>
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <Text style={{ color: theme.textPrimary, fontWeight: '900', fontSize: 14, textAlign: 'right' }}>
-                        {userProfile?.goal || '—'}
-                      </Text>
-                    </View>
-                  </View>
+                      {/* Goal */}
+                      <View style={styles.profileFitnessRow}>
+                        <Text style={[styles.profileFitnessLabel, { color: theme.textSecondary }]}>Fitness Goal</Text>
+                        <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                          <Text style={{ color: theme.textPrimary, fontWeight: '900', fontSize: 14, textAlign: 'right' }}>
+                            {userProfile?.goal || '—'}
+                          </Text>
+                        </View>
+                      </View>
+                    </>
+                  )}
                 </View>
               </View>
 
@@ -5562,5 +5785,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  profileEditInput: {
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

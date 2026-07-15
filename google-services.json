@@ -1,33 +1,70 @@
 {
   "project_info": {
-    "project_number": "807515672576",
-    "project_id": "we-remember-c7c83",
-    "storage_bucket": "we-remember-c7c83.firebasestorage.app"
+    "project_number": "870975577935",
+    "project_id": "forget-gym",
+    "storage_bucket": "forget-gym.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:807515672576:android:124f1bdfb43e2fa9d0c8e5",
+        "mobilesdk_app_id": "1:870975577935:android:e66e094e100f1fb914af3a",
         "android_client_info": {
           "package_name": "com.forget.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "807515672576-dqltan2ononk6te8a3teu9f4a2eamvtp.apps.googleusercontent.com",
+          "client_id": "870975577935-09ivit2r75a4ahvupgploc06da4ra1ev.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBV2azoK-Anbgte1UtJFMQZYXDaxcx9tQs"
+          "current_key": "AIzaSyAo3VTGtS85NWaowCgjqkWcHDOLaxFJ2zY"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "807515672576-dqltan2ononk6te8a3teu9f4a2eamvtp.apps.googleusercontent.com",
+              "client_id": "870975577935-09ivit2r75a4ahvupgploc06da4ra1ev.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:870975577935:android:f8cd26ad2c606a9f14af3a",
+        "android_client_info": {
+          "package_name": "com.forgetgym.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "870975577935-7nkm47agahiufr0vrq0po5pl4orq2i8v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.forgetgym.app",
+            "certificate_hash": "4a0f45273f2985c0b0c0acf38f0e0cb63b3f8353"
+          }
+        },
+        {
+          "client_id": "870975577935-09ivit2r75a4ahvupgploc06da4ra1ev.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAo3VTGtS85NWaowCgjqkWcHDOLaxFJ2zY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "870975577935-09ivit2r75a4ahvupgploc06da4ra1ev.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

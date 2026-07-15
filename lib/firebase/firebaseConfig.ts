@@ -1,19 +1,28 @@
 import { getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore, getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-    apiKey: 'AIzaSyCg-37wlB3jP9mHodx3ybExUpgnkFKzog',
-    authDomain: 'we-remember-c7c83.firebaseapp.com',
-    projectId: 'we-remember-c7c83',
-    storageBucket: 'we-remember-c7c83.firebasestorage.app',
-    messagingSenderId: '807515672576',
-    appId: '1:807515672576:web:a2da22b5baa3a628d0c8e5',
-    measurementId: 'G-DWZFEZRJLS',
+    apiKey: 'AIzaSyAo3VTGtS85NWaowCgjqkWcHDOLaxFJ2zY',
+    authDomain: 'forget-gym.firebaseapp.com',
+    projectId: 'forget-gym',
+    storageBucket: 'forget-gym.firebasestorage.app',
+    messagingSenderId: '870975577935',
 };
 
 export const app =
     getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+
+let database;
+try {
+    database = initializeFirestore(app, {
+        experimentalAutoDetectLongPolling: true,
+    });
+} catch (e) {
+    database = getFirestore(app);
+}
+
+export const db = database;
+

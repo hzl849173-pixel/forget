@@ -1,9 +1,10 @@
-import { signInWithGoogle } from '@/lib/auth/googleAuth';
-import { saveProfileToFirestore } from '@/lib/firestore/profileFirestore';
+import { useGoogleSignIn } from '@/lib/auth/googleAuth';
+import { saveProfileToFirestore, getProfileFromFirestore } from '@/lib/firestore/profileFirestore';
 import {
     isOnboardingCompleted,
     isSignedInFlag,
     loadLocalProfile,
+    saveLocalProfile,
     setOnboardingCompleted,
     setSignedIn,
 } from '@/lib/profile/profileStorage';
@@ -18,6 +19,7 @@ const SIGN_IN_DESCRIPTION =
 export default function SignInScreen() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const { signIn: signInWithGoogle } = useGoogleSignIn();
 
     useEffect(() => {
         let mounted = true;
@@ -54,15 +56,30 @@ export default function SignInScreen() {
             // Sign-in succeeded; persist signed-in flag
             await setSignedIn();
 
-            // Save profile to Firestore (height/weight/goal) from local onboarding answers
-            const p = await loadLocalProfile();
-            if (user?.uid && p) {
-                await saveProfileToFirestore(user.uid, {
-                    name: p.name,
-                    heightCm: p.heightCm,
-                    weightKg: p.weightKg,
-                    goal: p.goal,
-                });
+            if (user?.uid) {
+                // Check if a Firestore profile already exists for this user (returning user)
+                const cloudProfile = await getProfileFromFirestore(user.uid);
+                
+                if (cloudProfile) {
+                    // Sync the cloud profile locally to AsyncStorage
+                    await saveLocalProfile({
+                        name: cloudProfile.name || '',
+                        heightCm: cloudProfile.heightCm || 0,
+                        weightKg: cloudProfile.weightKg || 0,
+                        goal: cloudProfile.goal || '',
+                    });
+                } else {
+                    // New user: Save profile to Firestore from local onboarding answers
+                    const p = await loadLocalProfile();
+                    if (p) {
+                        await saveProfileToFirestore(user.uid, {
+                            name: p.name,
+                            heightCm: p.heightCm,
+                            weightKg: p.weightKg,
+                            goal: p.goal,
+                        });
+                    }
+                }
             }
 
             await setOnboardingCompleted();

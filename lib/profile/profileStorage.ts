@@ -60,17 +60,16 @@ export async function loadLocalProfile(): Promise<OnboardingProfile | null> {
         AsyncStorage.getItem(KEYS.GOAL),
     ]);
 
-    if (h === null || w === null || g === null) return null;
+    if (n === null && h === null && w === null && g === null) return null;
 
-    const heightCm = Number(h);
-    const weightKg = Number(w);
-    if (!Number.isFinite(heightCm) || !Number.isFinite(weightKg)) return null;
+    const heightCm = h ? Number(h) : 0;
+    const weightKg = w ? Number(w) : 0;
 
     return {
         name: n || '',
-        heightCm,
-        weightKg,
-        goal: g as FitnessGoal,
+        heightCm: Number.isFinite(heightCm) ? heightCm : 0,
+        weightKg: Number.isFinite(weightKg) ? weightKg : 0,
+        goal: (g || '') as FitnessGoal,
         updatedAt: new Date().toISOString(),
     };
 }
