@@ -22,6 +22,8 @@ function maskClientId(clientId: string | undefined): string {
     return `${clientId.substring(0, 5)}...${clientId.substring(clientId.length - 5)}`;
 }
 
+let isGoogleConfigured = false;
+
 console.log("[googleAuth] Google Web Client ID being used at initialization:", maskClientId(webClientIdEnv));
 
 // Configure Google Sign-In with webClientId if available at initialization
@@ -33,6 +35,7 @@ if (webClientId) {
         GoogleSignin.configure({
             webClientId,
         });
+        isGoogleConfigured = true;
         console.log("[STEP] GoogleSignin.configure() completed");
     } catch (error: any) {
         console.error('[googleAuth] Module-level GoogleSignin.configure failed:', error);
@@ -75,6 +78,27 @@ export function useGoogleSignIn() {
  */
 export async function signOutFromGoogle(): Promise<void> {
     try {
+        const clientId = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID;
+        if (clientId && !isGoogleConfigured) {
+            console.log("[googleAuth] Configuring GoogleSignin lazily inside signOutFromGoogle...");
+            GoogleSignin.configure({
+                webClientId: clientId,
+            });
+            isGoogleConfigured = true;
+        }
+    } catch (configError) {
+        console.error("[googleAuth] GoogleSignin.configure failed in signOutFromGoogle:", configError);
+    }
+
+    try {
+        console.log("[googleAuth] Starting GoogleSignin.revokeAccess()...");
+        await GoogleSignin.revokeAccess();
+        console.log("[googleAuth] GoogleSignin.revokeAccess() completed.");
+    } catch (error) {
+        console.log("[googleAuth] GoogleSignin.revokeAccess() failed/ignored (usually safe if not signed in):", error);
+    }
+
+    try {
         console.log("[googleAuth] Starting GoogleSignin.signOut()...");
         await GoogleSignin.signOut();
         console.log("[googleAuth] GoogleSignin.signOut() completed.");
@@ -99,11 +123,16 @@ export async function signIn(): Promise<FirebaseUser> {
 
         // Step 1: Configure Google Sign-In
         console.log("[STEP 1] Configure Google Sign-In");
-        console.log("[STEP] Starting GoogleSignin.configure()");
-        GoogleSignin.configure({
-            webClientId: clientId,
-        });
-        console.log("[STEP] GoogleSignin.configure() completed");
+        if (!isGoogleConfigured) {
+            console.log("[STEP] Starting GoogleSignin.configure() lazily in signIn()");
+            GoogleSignin.configure({
+                webClientId: clientId,
+            });
+            isGoogleConfigured = true;
+            console.log("[STEP] GoogleSignin.configure() completed");
+        } else {
+            console.log("[STEP] GoogleSignin already configured, skipping re-configure");
+        }
         lastStep = "[STEP 1] Configure Google Sign-In Completed";
 
         // Step 2: Check Play Services
@@ -114,7 +143,13 @@ export async function signIn(): Promise<FirebaseUser> {
         console.log("[STEP] GoogleSignin.hasPlayServices() completed");
         lastStep = "[STEP 2] Check Play Services Completed";
 
-        // Step 2.5: Sign out from Google before signing in to clear active session and force account picker
+        // Step 2.5: Revoke access and sign out from Google before signing in to clear active session and force account picker
+        try {
+            console.log("[googleAuth] Calling GoogleSignin.revokeAccess() before signIn to clear active session");
+            await GoogleSignin.revokeAccess();
+        } catch (revokeError) {
+            console.log("[googleAuth] GoogleSignin.revokeAccess() failed/ignored (usually safe if not signed in):", revokeError);
+        }
         try {
             console.log("[googleAuth] Calling GoogleSignin.signOut() before signIn to clear active session");
             await GoogleSignin.signOut();

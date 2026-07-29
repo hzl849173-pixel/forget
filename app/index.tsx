@@ -3582,9 +3582,7 @@ export default function SinglePageLandingScreen() {
                           {([
                             'Lean & Aesthetic',
                             'Strong & Powerful',
-                            'Athletic & Functional',
                             'Slim & Toned',
-                            'Balanced Fitness',
                             'Improve Overall Health'
                           ] as FitnessGoal[]).map((g) => {
                             const isSel = editGoal === g;

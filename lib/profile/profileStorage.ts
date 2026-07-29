@@ -3,9 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type FitnessGoal =
     | 'Lean & Aesthetic'
     | 'Strong & Powerful'
-    | 'Athletic & Functional'
     | 'Slim & Toned'
-    | 'Balanced Fitness'
     | 'Improve Overall Health';
 
 export interface OnboardingProfile {

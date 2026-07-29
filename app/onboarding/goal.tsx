@@ -14,9 +14,7 @@ type GoalOption = {
 const GOALS: GoalOption[] = [
     { value: 'Lean & Aesthetic', title: 'Lean & Aesthetic', subtitle: 'Look lean, feel sharp' },
     { value: 'Strong & Powerful', title: 'Strong & Powerful', subtitle: 'Build power and confidence' },
-    { value: 'Athletic & Functional', title: 'Athletic & Functional', subtitle: 'Train for real-world movement' },
     { value: 'Slim & Toned', title: 'Slim & Toned', subtitle: 'Shape and define with consistency' },
-    { value: 'Balanced Fitness', title: 'Balanced Fitness', subtitle: 'All-around strength and conditioning' },
     { value: 'Improve Overall Health', title: 'Improve Overall Health', subtitle: 'Support mobility, endurance, and wellbeing' },
 ];
 
