@@ -184,6 +184,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { signOut } from 'firebase/auth';
+import { signOutFromGoogle } from '@/lib/auth/googleAuth';
 
 import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
 import { Button } from '@/components/ui/button';
@@ -301,6 +302,11 @@ export default function SinglePageLandingScreen() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      try {
+        await signOutFromGoogle();
+      } catch (googleSignOutError) {
+        console.error('Error signing out from Google', googleSignOutError);
+      }
       await setSignedOut();
       setUserEmail(null);
       setUserDisplayName(null);

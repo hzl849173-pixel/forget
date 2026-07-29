@@ -60,9 +60,27 @@ export function useGoogleSignIn() {
         return signIn();
     };
 
+    const signOutWrapper = async (): Promise<void> => {
+        return signOutFromGoogle();
+    };
+
     return {
         signIn: signInWrapper,
+        signOut: signOutWrapper,
     };
+}
+
+/**
+ * Signs out of Google Sign-in to clear the cached user session.
+ */
+export async function signOutFromGoogle(): Promise<void> {
+    try {
+        console.log("[googleAuth] Starting GoogleSignin.signOut()...");
+        await GoogleSignin.signOut();
+        console.log("[googleAuth] GoogleSignin.signOut() completed.");
+    } catch (error) {
+        console.error("[googleAuth] Error in GoogleSignin.signOut():", error);
+    }
 }
 
 /**
@@ -95,6 +113,14 @@ export async function signIn(): Promise<FirebaseUser> {
         console.log("[googleAuth] Play Services are available:", playServicesAvailable);
         console.log("[STEP] GoogleSignin.hasPlayServices() completed");
         lastStep = "[STEP 2] Check Play Services Completed";
+
+        // Step 2.5: Sign out from Google before signing in to clear active session and force account picker
+        try {
+            console.log("[googleAuth] Calling GoogleSignin.signOut() before signIn to clear active session");
+            await GoogleSignin.signOut();
+        } catch (signOutError) {
+            console.log("[googleAuth] GoogleSignin.signOut() failed/ignored (usually safe if not signed in):", signOutError);
+        }
 
         // Step 3: Start Google Sign-In
         console.log("[STEP 3] Start Google Sign-In");
