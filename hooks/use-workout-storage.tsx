@@ -44,6 +44,7 @@ export interface WorkoutTemplate {
   name: string;
   exercises: LoggedExercise[];
   createdAt: string;
+  usageCount?: number;
 }
 
 export const DEFAULT_TEMPLATES: WorkoutTemplate[] = [
@@ -310,6 +311,7 @@ interface WorkoutContextType {
   saveTemplate: (name: string, exercises: LoggedExercise[]) => Promise<WorkoutTemplate>;
   updateTemplate: (id: string, exercises: LoggedExercise[]) => Promise<void>;
   deleteTemplate: (id: string) => Promise<void>;
+  incrementTemplateUsage: (id: string) => Promise<void>;
 }
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
@@ -653,6 +655,14 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await AsyncStorage.setItem(STORAGE_KEYS.TEMPLATES, JSON.stringify(newTemplates));
   };
 
+  const incrementTemplateUsage = async (id: string) => {
+    const newTemplates = templates.map((t) =>
+      t.id === id ? { ...t, usageCount: (t.usageCount || 0) + 1 } : t
+    );
+    setTemplates(newTemplates);
+    await AsyncStorage.setItem(STORAGE_KEYS.TEMPLATES, JSON.stringify(newTemplates));
+  };
+
   const setWeekStartDay = async (day: number) => {
     setWeekStartDayState(day);
     await AsyncStorage.setItem(STORAGE_KEYS.WEEK_START_DAY, String(day));
@@ -689,6 +699,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         saveTemplate,
         updateTemplate,
         deleteTemplate,
+        incrementTemplateUsage,
       }}
     >
       {children}

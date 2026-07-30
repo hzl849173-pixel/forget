@@ -19,6 +19,7 @@ import {
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
+  Animated,
   BackHandler,
   KeyboardAvoidingView,
   Modal,
@@ -219,6 +220,7 @@ export default function SinglePageLandingScreen() {
     deleteTemplate,
     weekStartDay,
     setWeekStartDay,
+    incrementTemplateUsage,
   } = useWorkout();
 
   const {
@@ -234,6 +236,12 @@ export default function SinglePageLandingScreen() {
   const [progressInitialTab, setProgressInitialTab] = useState<'overview' | 'analytics' | 'milestones' | null>(null);
 
   const switcherScrollRef = React.useRef<ScrollView>(null);
+  const mainScrollRef = React.useRef<ScrollView>(null);
+  const templateLayouts = React.useRef<Record<string, number>>({});
+  const templatesContainerY = React.useRef<number>(0);
+  const [targetScrollTemplateId, setTargetScrollTemplateId] = useState<string | null>(null);
+  const [highlightedTemplateId, setHighlightedTemplateId] = useState<string | null>(null);
+  const tabOpacity = React.useRef(new Animated.Value(1)).current;
 
   // Profile Modal states
   const router = useRouter();
@@ -635,6 +643,46 @@ export default function SinglePageLandingScreen() {
       }
     }
   }, [selectedModalMuscle]);
+
+  React.useEffect(() => {
+    if (!targetScrollTemplateId) {
+      mainScrollRef.current?.scrollTo({ y: 0, animated: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSegment]);
+
+  React.useEffect(() => {
+    if (activeSegment === 'templates' && targetScrollTemplateId) {
+      const timer = setTimeout(() => {
+        const cardY = templateLayouts.current[targetScrollTemplateId];
+        if (cardY !== undefined) {
+          const absoluteY = templatesContainerY.current + cardY - 20;
+          mainScrollRef.current?.scrollTo({ y: absoluteY, animated: false });
+        }
+        setTargetScrollTemplateId(null);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSegment, targetScrollTemplateId]);
+
+  React.useEffect(() => {
+    if (highlightedTemplateId) {
+      const timer = setTimeout(() => {
+        setHighlightedTemplateId(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightedTemplateId]);
+
+  React.useEffect(() => {
+    tabOpacity.setValue(0);
+    Animated.timing(tabOpacity, {
+      toValue: 1,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSegment]);
 
   const handleShowWorkoutDaysInfo = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -1330,7 +1378,7 @@ export default function SinglePageLandingScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.inner}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView ref={mainScrollRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {/* Landing Header */}
           <View style={styles.header}>
             <View style={styles.headerRow}>
@@ -1432,7 +1480,8 @@ export default function SinglePageLandingScreen() {
           </ScrollView>
 
           {/* Segment Switch Logic */}
-          {activeSegment === 'log' ? (
+          <Animated.View style={{ opacity: tabOpacity }}>
+            {activeSegment === 'log' ? (
             <>
               {/* Active Session Status Card */}
               {activeSessionExercises.length > 0 && (
@@ -1498,6 +1547,80 @@ export default function SinglePageLandingScreen() {
                   </TouchableOpacity>
                 </Card>
               )}
+
+              {/* Quick Start Templates */}
+              <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>TEMPLATES</Text>
+              {(() => {
+                const sortedQuickTemplates = [...templates]
+                  .sort((a, b) => {
+                    const usageA = a.usageCount || 0;
+                    const usageB = b.usageCount || 0;
+                    if (usageB !== usageA) return usageB - usageA;
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  })
+                  .slice(0, 5);
+
+                if (sortedQuickTemplates.length === 0) {
+                  return (
+                    <Card style={[styles.weeklyCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, padding: 16, alignItems: 'center', marginBottom: 16 }]}>
+                      <Text style={{ color: theme.textSecondary, fontSize: 13 }}>No templates created yet.</Text>
+                    </Card>
+                  );
+                }
+
+                return (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingHorizontal: 16, gap: 10, paddingBottom: 8 }}
+                    style={{ marginHorizontal: -16, marginBottom: 16 }}
+                  >
+                    {sortedQuickTemplates.map((tmpl) => {
+                      const sessionMuscles: MuscleGroup[] = [];
+                      tmpl.exercises.forEach((logEx) => {
+                        const details = exercises.find((e) => e.id === logEx.exerciseId);
+                        if (details) sessionMuscles.push(details.muscleGroup);
+                      });
+                      const primaryMuscle = sessionMuscles[0] || 'Chest';
+                      const muscleColor = categoryColors[primaryMuscle] || '#10B981';
+
+                      return (
+                        <TouchableOpacity
+                          key={tmpl.id}
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            setTargetScrollTemplateId(tmpl.id);
+                            setHighlightedTemplateId(tmpl.id);
+                            setActiveSegment('templates');
+                          }}
+                          activeOpacity={0.8}
+                          style={{
+                            backgroundColor: theme.cardBg,
+                            borderWidth: 1,
+                            borderColor: theme.borderColor,
+                            borderLeftWidth: 4,
+                            borderLeftColor: muscleColor,
+                            paddingVertical: 14,
+                            paddingHorizontal: 18,
+                            borderRadius: 12,
+                            minWidth: 120,
+                            justifyContent: 'center',
+                            shadowColor: '#000000',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: isDarkMode ? 0 : 0.05,
+                            shadowRadius: 2,
+                            elevation: 1,
+                          }}
+                        >
+                          <Text style={{ color: theme.textPrimary, fontSize: 15, fontWeight: '700' }}>
+                            {tmpl.name}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                );
+              })()}
 
               {/* Muscle Selector Cards Grid */}
               <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>SELECT MUSCLE GROUP</Text>
@@ -1717,6 +1840,8 @@ export default function SinglePageLandingScreen() {
                 )}
               </Card>
 
+
+
               {/* Consistency Graph */}
               <TouchableOpacity
                 activeOpacity={0.7}
@@ -1732,7 +1857,12 @@ export default function SinglePageLandingScreen() {
             </>
           ) : activeSegment === 'templates' ? (
             /* Templates View Section */
-            <View style={styles.historySection}>
+            <View
+              style={styles.historySection}
+              onLayout={(event) => {
+                templatesContainerY.current = event.nativeEvent.layout.y;
+              }}
+            >
               <TouchableOpacity
                 style={[styles.createTemplateButton, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
                 onPress={() => {
@@ -1775,6 +1905,9 @@ export default function SinglePageLandingScreen() {
                   return (
                     <TouchableOpacity
                       key={tmpl.id}
+                      onLayout={(event) => {
+                        templateLayouts.current[tmpl.id] = event.nativeEvent.layout.y;
+                      }}
                       onPress={() => handleUseTemplate(tmpl)}
                       activeOpacity={0.85}
                     >
@@ -1785,7 +1918,8 @@ export default function SinglePageLandingScreen() {
                             borderLeftWidth: 4,
                             borderLeftColor: categoryColors[sessionMuscles[0] || 'Chest'] || '#10B981',
                             backgroundColor: theme.cardBg,
-                            borderColor: theme.borderColor
+                            borderColor: tmpl.id === highlightedTemplateId ? '#10B981' : theme.borderColor,
+                            borderWidth: tmpl.id === highlightedTemplateId ? 2 : 1,
                           }
                         ]}
                       >
@@ -1815,8 +1949,9 @@ export default function SinglePageLandingScreen() {
                           </View>
                           <TouchableOpacity
                             style={styles.templateStartBtn}
-                            onPress={() => {
+                            onPress={async () => {
                               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                              await incrementTemplateUsage(tmpl.id);
                               const exercisesToLoad = tmpl.exercises.map((logEx) => ({
                                 exerciseId: logEx.exerciseId,
                                 sets: logEx.sets.map((s) => ({ ...s, id: generateId(), isCompleted: false })),
@@ -1958,13 +2093,14 @@ export default function SinglePageLandingScreen() {
               onClearInitialTab={() => setProgressInitialTab(null)}
             />
           )}
+          </Animated.View>
         </ScrollView>
 
         {/* Muscle Workout list popup modal */}
         <Modal
           visible={selectedModalMuscle !== null}
-          animationType="none"
-          presentationStyle="fullScreen"
+          animationType="slide"
+          presentationStyle="overFullScreen"
           onRequestClose={() => {
             setSelectedModalMuscle(null);
             setSelectedSubGroup(null);
@@ -3296,12 +3432,15 @@ export default function SinglePageLandingScreen() {
                   <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800', letterSpacing: 0.3 }}>SAVE</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => {
+                  onPress={async () => {
                     const selectedExercises = templateListExercises.map(e => ({
                       exerciseId: e.exerciseId,
                       sets: e.sets.map(s => ({ ...s, id: generateId(), isCompleted: false })),
                       notes: e.notes,
                     }));
+                    if (activeTemplateId) {
+                      await incrementTemplateUsage(activeTemplateId);
+                    }
                     const now = Date.now();
                     setActiveSessionExercises(selectedExercises);
                     setSessionStartTime(now);
