@@ -1447,7 +1447,7 @@ export default function SinglePageLandingScreen() {
                 <TouchableOpacity
                   style={[
                     styles.profileBadge,
-                    { backgroundColor: userEmail || auth.currentUser ? '#10B981' : theme.cardBg, borderColor: userEmail || auth.currentUser ? '#10B981' : theme.borderColor }
+                    { backgroundColor: userEmail || auth.currentUser ? '#111827' : theme.cardBg, borderColor: userEmail || auth.currentUser ? '#111827' : theme.borderColor }
                   ]}
                   onPress={handleOpenProfile}
                   activeOpacity={0.7}
@@ -3777,7 +3777,7 @@ export default function SinglePageLandingScreen() {
             <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
               {/* Profile Section */}
               <View style={styles.profileFullTop}>
-                <View style={[styles.profileAvatar, { backgroundColor: userEmail || auth.currentUser ? '#10B981' : '#212330' }]}>
+                <View style={[styles.profileAvatar, { backgroundColor: userEmail || auth.currentUser ? '#111827' : '#212330' }]}>
                   <Text style={styles.profileAvatarText}>
                     {getInitials(userDisplayName || userProfile?.name || null, userEmail)}
                   </Text>
