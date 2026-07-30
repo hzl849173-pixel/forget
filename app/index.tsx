@@ -1952,6 +1952,7 @@ export default function SinglePageLandingScreen() {
                           style={[
                             styles.historyLogCard,
                             {
+                              padding: 12,
                               borderLeftWidth: 4,
                               borderLeftColor: muscleColor,
                               backgroundColor: theme.cardBg,
@@ -1960,9 +1961,9 @@ export default function SinglePageLandingScreen() {
                             }
                           ]}
                         >
-                          <View style={styles.historyCardHeader}>
+                          <View style={[styles.historyCardHeader, { marginBottom: 8 }]}>
                             <View style={styles.historyTitleCol}>
-                              <Text style={[styles.historySessionName, { color: theme.textPrimary }]}>{tmpl.name}</Text>
+                              <Text style={[styles.historySessionName, { color: theme.textPrimary, fontSize: 15 }]}>{tmpl.name}</Text>
                               <Text style={[styles.historyDate, { color: theme.textSecondary }]}>SAVED {new Date(tmpl.createdAt).toLocaleDateString().toUpperCase()}</Text>
                             </View>
                             <TouchableOpacity
@@ -1973,19 +1974,19 @@ export default function SinglePageLandingScreen() {
                               <Trash2 size={16} color="#EF4444" strokeWidth={2} />
                             </TouchableOpacity>
                           </View>
-                          <View style={[styles.historySetsReceipt, { borderTopColor: theme.borderColor }]}>
+                          <View style={[styles.historySetsReceipt, { borderTopColor: theme.borderColor, paddingVertical: 6, marginBottom: 6 }]}>
                             <Text style={[styles.historySummaryText, { color: theme.textSecondary }]} numberOfLines={1}>
                               {muscleSetsString}
                             </Text>
                           </View>
-                          <View style={[styles.historyFooter, { borderTopColor: theme.borderColor }]}>
+                          <View style={[styles.historyFooter, { borderTopColor: theme.borderColor, paddingTop: 8 }]}>
                             <View style={styles.historyBadgeRow}>
                               {uniqueMuscles.map((m) => (
                                 <MuscleBadge key={m} muscleGroup={m} size="sm" />
                               ))}
                             </View>
                             <TouchableOpacity
-                              style={styles.templateStartBtn}
+                              style={[styles.templateStartBtn, { paddingVertical: 3, paddingHorizontal: 10 }]}
                               onPress={async () => {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                                 await incrementTemplateUsage(tmpl.id);
