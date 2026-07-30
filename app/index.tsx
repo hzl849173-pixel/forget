@@ -412,6 +412,8 @@ export default function SinglePageLandingScreen() {
   const [templateListExercises, setTemplateListExercises] = useState<LoggedExercise[]>([]);
   const [fromTemplateList, setFromTemplateList] = useState(false);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedTemplateExerciseIds, setSelectedTemplateExerciseIds] = useState<Set<string>>(new Set());
   const [templateLogSelectVisible, setTemplateLogSelectVisible] = useState(false);
   const [templateLogSelectedIds, setTemplateLogSelectedIds] = useState<Set<string>>(new Set());
   const [selectedPickerExerciseIds, setSelectedPickerExerciseIds] = useState<Set<string>>(new Set());
@@ -1204,6 +1206,7 @@ export default function SinglePageLandingScreen() {
     setTemplateListVisible(true);
     setFromTemplateList(true);
   };
+
 
   const handleTemplateExercisePress = (logEx: LoggedExercise) => {
     if (expandedExerciseId && activeSets.length > 0) {
@@ -3357,25 +3360,54 @@ export default function SinglePageLandingScreen() {
             <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '90%', width: '95%' }]}>
               <View style={styles.editWorkoutHeader}>
                 <View>
-                  <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Workouts ({templateListExercises.length})</Text>
-                  {templateListExercises.length > 1 && (
+                  <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>
+                    {isDeleteMode ? 'Delete Workouts' : `Workouts (${templateListExercises.length})`}
+                  </Text>
+                  {templateListExercises.length > 1 && !isDeleteMode && (
                     <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 3, opacity: 0.8, letterSpacing: 0.2 }}>
                       Drag ⠿ to reorder
                     </Text>
                   )}
+                  {isDeleteMode && (
+                    <Text style={{ color: '#EF4444', fontSize: 10, fontWeight: '700', marginTop: 3, opacity: 0.8, letterSpacing: 0.2 }}>
+                      Select workouts to delete
+                    </Text>
+                  )}
                 </View>
-                <View style={{ flexDirection: 'row', gap: 12 }}>
+                <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+                  {templateListExercises.length > 0 && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setIsDeleteMode((prev) => !prev);
+                        setSelectedTemplateExerciseIds(new Set());
+                      }}
+                      activeOpacity={0.6}
+                      style={{ padding: 4 }}
+                    >
+                      <Trash2 size={20} color={isDeleteMode ? '#EF4444' : theme.textPrimary} strokeWidth={2.2} />
+                    </TouchableOpacity>
+                  )}
+                  {!isDeleteMode && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        handleSelectMuscleCard('Chest');
+                      }}
+                      activeOpacity={0.6}
+                      style={{ padding: 4 }}
+                    >
+                      <Plus size={20} color={theme.textPrimary} strokeWidth={2.5} />
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity
                     onPress={() => {
-                      handleSelectMuscleCard('Chest');
+                      setTemplateListVisible(false);
+                      setFromTemplateList(false);
+                      setTemplateListExercises([]);
+                      setActiveTemplateId(null);
+                      setIsDeleteMode(false);
+                      setSelectedTemplateExerciseIds(new Set());
                     }}
-                    activeOpacity={0.6}
-                    style={{ padding: 4 }}
-                  >
-                    <Plus size={20} color={theme.textPrimary} strokeWidth={2.5} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => { setTemplateListVisible(false); setFromTemplateList(false); setTemplateListExercises([]); setActiveTemplateId(null); }}
                     activeOpacity={0.6}
                     style={{ padding: 4 }}
                   >
@@ -3424,80 +3456,160 @@ export default function SinglePageLandingScreen() {
                     if (!details) return null;
                     const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
                     return (
-                      <TouchableOpacity
-                        activeOpacity={0.6}
-                        onPress={() => handleTemplateExercisePress(item)}
-                        onLongPress={onDragStart}
-                        delayLongPress={150}
+                      <View
                         style={[styles.editWorkoutItem, { borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1 }]}
                       >
-                        <View style={[styles.editWorkoutItemAccent, { backgroundColor: muscleColor }]} />
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ color: theme.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 2 }}>
-                            {details.name}
-                          </Text>
-                          <View style={styles.editWorkoutItemMeta}>
-                            <View style={[styles.editWorkoutMuscleBadge, { backgroundColor: `${muscleColor}15` }]}>
-                              <Text style={[styles.editWorkoutMuscleBadgeText, { color: muscleColor }]}>
-                                {details.muscleGroup.toUpperCase()}
+                        <TouchableOpacity
+                          activeOpacity={0.6}
+                          onPress={() => {
+                            if (isDeleteMode) {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                              setSelectedTemplateExerciseIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(item.exerciseId)) {
+                                  next.delete(item.exerciseId);
+                                } else {
+                                  next.add(item.exerciseId);
+                                }
+                                return next;
+                              });
+                            } else {
+                              handleTemplateExercisePress(item);
+                            }
+                          }}
+                          onLongPress={isDeleteMode ? undefined : onDragStart}
+                          delayLongPress={150}
+                          style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+                        >
+                          {isDeleteMode && (
+                            <View
+                              style={{
+                                width: 18,
+                                height: 18,
+                                borderRadius: 9,
+                                borderWidth: 1.5,
+                                borderColor: selectedTemplateExerciseIds.has(item.exerciseId) ? '#EF4444' : theme.textSecondary,
+                                backgroundColor: selectedTemplateExerciseIds.has(item.exerciseId) ? '#EF4444' : 'transparent',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginRight: 12,
+                              }}
+                            >
+                              {selectedTemplateExerciseIds.has(item.exerciseId) && (
+                                <Check size={10} color="#FFFFFF" strokeWidth={3.5} />
+                              )}
+                            </View>
+                          )}
+                          <View style={[styles.editWorkoutItemAccent, { backgroundColor: muscleColor }]} />
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ color: theme.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 2 }}>
+                              {details.name}
+                            </Text>
+                            <View style={styles.editWorkoutItemMeta}>
+                              <View style={[styles.editWorkoutMuscleBadge, { backgroundColor: `${muscleColor}15` }]}>
+                                <Text style={[styles.editWorkoutMuscleBadgeText, { color: muscleColor }]}>
+                                  {details.muscleGroup.toUpperCase()}
+                                </Text>
+                              </View>
+                              <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
+                                {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
                               </Text>
                             </View>
-                            <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
-                              {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
-                            </Text>
                           </View>
-                        </View>
-                        <ChevronRight size={18} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
-                      </TouchableOpacity>
+                          {!isDeleteMode && (
+                            <ChevronRight size={18} color={theme.textSecondary} opacity={0.4} strokeWidth={2} style={{ marginRight: 8 }} />
+                          )}
+                        </TouchableOpacity>
+                      </View>
                     );
                   }}
                 />
               )}
-              <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
-                <TouchableOpacity
-                  onPress={async () => {
-                    if (activeTemplateId) {
-                      await updateTemplate(activeTemplateId, templateListExercises);
-                    }
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    setTemplateListVisible(false);
-                    setFromTemplateList(false);
-                    setTemplateListExercises([]);
-                    setActiveTemplateId(null);
-                  }}
-                  activeOpacity={0.7}
-                  style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: '#10B981', backgroundColor: 'transparent' }}
-                >
-                  <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800', letterSpacing: 0.3 }}>SAVE</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={async () => {
-                    const selectedExercises = templateListExercises.map(e => ({
-                      exerciseId: e.exerciseId,
-                      sets: e.sets.map(s => ({ ...s, id: generateId(), isCompleted: false })),
-                      notes: e.notes,
-                    }));
-                    if (activeTemplateId) {
-                      await incrementTemplateUsage(activeTemplateId);
-                    }
-                    const now = Date.now();
-                    setActiveSessionExercises(selectedExercises);
-                    setSessionStartTime(now);
-                    setTemplateListVisible(false);
-                    setFromTemplateList(false);
-                    setActiveTemplateId(null);
-                    setTemplateListExercises([]);
-                    setActiveSegment('log');
-                    AsyncStorage.setItem('@active_session_exercises', JSON.stringify(selectedExercises));
-                    AsyncStorage.setItem('@session_start_time', String(now));
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  }}
-                  activeOpacity={0.8}
-                  style={{ flex: 1, backgroundColor: '#10B981', paddingVertical: 16, alignItems: 'center', borderRadius: 14 }}
-                >
-                  <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>LOG</Text>
-                </TouchableOpacity>
-              </View>
+              {isDeleteMode ? (
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setIsDeleteMode(false);
+                      setSelectedTemplateExerciseIds(new Set());
+                    }}
+                    activeOpacity={0.7}
+                    style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: theme.borderColor, backgroundColor: 'transparent' }}
+                  >
+                    <Text style={{ color: theme.textSecondary, fontSize: 14, fontWeight: '800', letterSpacing: 0.3 }}>CANCEL</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    disabled={selectedTemplateExerciseIds.size === 0}
+                    onPress={() => {
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                      setTemplateListExercises((prev) =>
+                        prev.filter((ex) => !selectedTemplateExerciseIds.has(ex.exerciseId))
+                      );
+                      setIsDeleteMode(false);
+                      setSelectedTemplateExerciseIds(new Set());
+                    }}
+                    activeOpacity={0.8}
+                    style={{
+                      flex: 1,
+                      backgroundColor: selectedTemplateExerciseIds.size === 0 ? theme.borderColor : '#EF4444',
+                      paddingVertical: 16,
+                      alignItems: 'center',
+                      borderRadius: 14,
+                      opacity: selectedTemplateExerciseIds.size === 0 ? 0.5 : 1,
+                    }}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', letterSpacing: 0.3 }}>
+                      DELETE ({selectedTemplateExerciseIds.size})
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                  <TouchableOpacity
+                    onPress={async () => {
+                      if (activeTemplateId) {
+                        await updateTemplate(activeTemplateId, templateListExercises);
+                      }
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                      setTemplateListVisible(false);
+                      setFromTemplateList(false);
+                      setTemplateListExercises([]);
+                      setActiveTemplateId(null);
+                    }}
+                    activeOpacity={0.7}
+                    style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: '#10B981', backgroundColor: 'transparent' }}
+                  >
+                    <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800', letterSpacing: 0.3 }}>SAVE</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={async () => {
+                      const selectedExercises = templateListExercises.map(e => ({
+                        exerciseId: e.exerciseId,
+                        sets: e.sets.map(s => ({ ...s, id: generateId(), isCompleted: false })),
+                        notes: e.notes,
+                      }));
+                      if (activeTemplateId) {
+                        await incrementTemplateUsage(activeTemplateId);
+                      }
+                      const now = Date.now();
+                      setActiveSessionExercises(selectedExercises);
+                      setSessionStartTime(now);
+                      setTemplateListVisible(false);
+                      setFromTemplateList(false);
+                      setActiveTemplateId(null);
+                      setTemplateListExercises([]);
+                      setActiveSegment('log');
+                      AsyncStorage.setItem('@active_session_exercises', JSON.stringify(selectedExercises));
+                      AsyncStorage.setItem('@session_start_time', String(now));
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    }}
+                    activeOpacity={0.8}
+                    style={{ flex: 1, backgroundColor: '#10B981', paddingVertical: 16, alignItems: 'center', borderRadius: 14 }}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>LOG</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </View>
         </View>
