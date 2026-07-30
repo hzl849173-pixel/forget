@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Dumbbell,
   Flame,
-  GripVertical,
   Plus,
   Star,
   Timer,
@@ -1179,8 +1178,23 @@ export default function SinglePageLandingScreen() {
     setTemplateExercises([]);
   };
 
+  const sortTemplateExercises = (exercisesList: LoggedExercise[]) => {
+    return [...exercisesList].sort((a, b) => {
+      const detailsA = exercises.find((e) => e.id === a.exerciseId);
+      const detailsB = exercises.find((e) => e.id === b.exerciseId);
+      const muscleA = detailsA ? detailsA.muscleGroup : '';
+      const muscleB = detailsB ? detailsB.muscleGroup : '';
+      const idxA = MUSCLE_GROUPS.indexOf(muscleA as MuscleGroup);
+      const idxB = MUSCLE_GROUPS.indexOf(muscleB as MuscleGroup);
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
+  };
+
   const handleUseTemplate = (tmpl: WorkoutTemplate) => {
-    const exercisesToLoad = tmpl.exercises.map((logEx) => ({
+    const sortedExercises = sortTemplateExercises(tmpl.exercises);
+    const exercisesToLoad = sortedExercises.map((logEx) => ({
       exerciseId: logEx.exerciseId,
       sets: logEx.sets.map((s) => ({ ...s })),
       notes: logEx.notes,
@@ -1551,11 +1565,19 @@ export default function SinglePageLandingScreen() {
               {/* Quick Start Templates */}
               <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>TEMPLATES</Text>
               {(() => {
+                const defaultOrder = ['tmpl-push', 'tmpl-pull', 'tmpl-legs', 'tmpl-upper', 'tmpl-full'];
                 const sortedQuickTemplates = [...templates]
                   .sort((a, b) => {
                     const usageA = a.usageCount || 0;
                     const usageB = b.usageCount || 0;
                     if (usageB !== usageA) return usageB - usageA;
+
+                    const idxA = defaultOrder.indexOf(a.id);
+                    const idxB = defaultOrder.indexOf(b.id);
+                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    if (idxA !== -1) return -1;
+                    if (idxB !== -1) return 1;
+
                     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                   })
                   .slice(0, 5);
@@ -1888,91 +1910,108 @@ export default function SinglePageLandingScreen() {
                   </Text>
                 </Card>
               ) : (
-                [...templates].reverse().map((tmpl) => {
-                  const sessionMuscles: MuscleGroup[] = [];
-                  const muscleSetCounts: Record<string, number> = {};
-                  tmpl.exercises.forEach((logEx) => {
-                    const details = exercises.find((e) => e.id === logEx.exerciseId);
-                    if (details) {
-                      sessionMuscles.push(details.muscleGroup);
-                      muscleSetCounts[details.muscleGroup] = (muscleSetCounts[details.muscleGroup] || 0) + logEx.sets.length;
-                    }
+                (() => {
+                  const defaultOrder = ['tmpl-push', 'tmpl-pull', 'tmpl-legs', 'tmpl-upper', 'tmpl-full'];
+                  const sortedList = [...templates].sort((a, b) => {
+                    const idxA = defaultOrder.indexOf(a.id);
+                    const idxB = defaultOrder.indexOf(b.id);
+                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    if (idxA !== -1) return -1;
+                    if (idxB !== -1) return 1;
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                   });
-                  const uniqueMuscles = [...new Set(sessionMuscles)];
-                  const muscleSetsString = Object.entries(muscleSetCounts)
-                    .map(([muscle, sets]) => `${muscle} ${sets}`)
-                    .join(' · ');
-                  return (
-                    <TouchableOpacity
-                      key={tmpl.id}
-                      onLayout={(event) => {
-                        templateLayouts.current[tmpl.id] = event.nativeEvent.layout.y;
-                      }}
-                      onPress={() => handleUseTemplate(tmpl)}
-                      activeOpacity={0.85}
-                    >
-                      <Card
-                        style={[
-                          styles.historyLogCard,
-                          {
-                            borderLeftWidth: 4,
-                            borderLeftColor: categoryColors[sessionMuscles[0] || 'Chest'] || '#10B981',
-                            backgroundColor: theme.cardBg,
-                            borderColor: tmpl.id === highlightedTemplateId ? '#10B981' : theme.borderColor,
-                            borderWidth: tmpl.id === highlightedTemplateId ? 2 : 1,
-                          }
-                        ]}
+                  return sortedList.map((tmpl) => {
+                    const sortedExercises = sortTemplateExercises(tmpl.exercises);
+                    const sessionMuscles: MuscleGroup[] = [];
+                    const muscleSetCounts: Record<string, number> = {};
+                    sortedExercises.forEach((logEx) => {
+                      const details = exercises.find((e) => e.id === logEx.exerciseId);
+                      if (details) {
+                        sessionMuscles.push(details.muscleGroup);
+                        muscleSetCounts[details.muscleGroup] = (muscleSetCounts[details.muscleGroup] || 0) + logEx.sets.length;
+                      }
+                    });
+                    const uniqueMuscles = [...new Set(sessionMuscles)];
+                    const muscleSetsString = Object.entries(muscleSetCounts)
+                      .map(([muscle, sets]) => `${muscle} ${sets}`)
+                      .join(' · ');
+                    const firstEx = tmpl.exercises[0];
+                    const firstExDetails = firstEx ? exercises.find((e) => e.id === firstEx.exerciseId) : null;
+                    const primaryMuscle = firstExDetails ? firstExDetails.muscleGroup : 'Chest';
+                    const muscleColor = categoryColors[primaryMuscle] || '#10B981';
+                    return (
+                      <TouchableOpacity
+                        key={tmpl.id}
+                        onLayout={(event) => {
+                          templateLayouts.current[tmpl.id] = event.nativeEvent.layout.y;
+                        }}
+                        onPress={() => handleUseTemplate(tmpl)}
+                        activeOpacity={0.85}
                       >
-                        <View style={styles.historyCardHeader}>
-                          <View style={styles.historyTitleCol}>
-                            <Text style={[styles.historySessionName, { color: theme.textPrimary }]}>{tmpl.name}</Text>
-                            <Text style={[styles.historyDate, { color: theme.textSecondary }]}>SAVED {new Date(tmpl.createdAt).toLocaleDateString().toUpperCase()}</Text>
+                        <Card
+                          style={[
+                            styles.historyLogCard,
+                            {
+                              borderLeftWidth: 4,
+                              borderLeftColor: muscleColor,
+                              backgroundColor: theme.cardBg,
+                              borderColor: tmpl.id === highlightedTemplateId ? muscleColor : theme.borderColor,
+                              borderWidth: tmpl.id === highlightedTemplateId ? 2 : 1,
+                            }
+                          ]}
+                        >
+                          <View style={styles.historyCardHeader}>
+                            <View style={styles.historyTitleCol}>
+                              <Text style={[styles.historySessionName, { color: theme.textPrimary }]}>{tmpl.name}</Text>
+                              <Text style={[styles.historyDate, { color: theme.textSecondary }]}>SAVED {new Date(tmpl.createdAt).toLocaleDateString().toUpperCase()}</Text>
+                            </View>
+                            <TouchableOpacity
+                              style={styles.deleteLogBtn}
+                              onPress={() => handleDeleteTemplate(tmpl.id, tmpl.name)}
+                              activeOpacity={0.6}
+                            >
+                              <Trash2 size={16} color="#EF4444" strokeWidth={2} />
+                            </TouchableOpacity>
                           </View>
-                          <TouchableOpacity
-                            style={styles.deleteLogBtn}
-                            onPress={() => handleDeleteTemplate(tmpl.id, tmpl.name)}
-                            activeOpacity={0.6}
-                          >
-                            <Trash2 size={16} color="#EF4444" strokeWidth={2} />
-                          </TouchableOpacity>
-                        </View>
-                        <View style={[styles.historySetsReceipt, { borderTopColor: theme.borderColor }]}>
-                          <Text style={[styles.historySummaryText, { color: theme.textSecondary }]} numberOfLines={1}>
-                            {muscleSetsString}
-                          </Text>
-                        </View>
-                        <View style={[styles.historyFooter, { borderTopColor: theme.borderColor }]}>
-                          <View style={styles.historyBadgeRow}>
-                            {uniqueMuscles.map((m) => (
-                              <MuscleBadge key={m} muscleGroup={m} size="sm" />
-                            ))}
+                          <View style={[styles.historySetsReceipt, { borderTopColor: theme.borderColor }]}>
+                            <Text style={[styles.historySummaryText, { color: theme.textSecondary }]} numberOfLines={1}>
+                              {muscleSetsString}
+                            </Text>
                           </View>
-                          <TouchableOpacity
-                            style={styles.templateStartBtn}
-                            onPress={async () => {
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                              await incrementTemplateUsage(tmpl.id);
-                              const exercisesToLoad = tmpl.exercises.map((logEx) => ({
-                                exerciseId: logEx.exerciseId,
-                                sets: logEx.sets.map((s) => ({ ...s, id: generateId(), isCompleted: false })),
-                                notes: logEx.notes,
-                              }));
-                              const now = Date.now();
-                              setActiveSessionExercises(exercisesToLoad);
-                              setSessionStartTime(now);
-                              setActiveSegment('log');
-                              AsyncStorage.setItem('@active_session_exercises', JSON.stringify(exercisesToLoad));
-                              AsyncStorage.setItem('@session_start_time', String(now));
-                            }}
-                            activeOpacity={0.7}
-                          >
-                            <Text style={styles.templateStartBtnText}>START</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </Card>
-                    </TouchableOpacity>
-                  );
-                })
+                          <View style={[styles.historyFooter, { borderTopColor: theme.borderColor }]}>
+                            <View style={styles.historyBadgeRow}>
+                              {uniqueMuscles.map((m) => (
+                                <MuscleBadge key={m} muscleGroup={m} size="sm" />
+                              ))}
+                            </View>
+                            <TouchableOpacity
+                              style={styles.templateStartBtn}
+                              onPress={async () => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                await incrementTemplateUsage(tmpl.id);
+                                const sortedExercises = sortTemplateExercises(tmpl.exercises);
+                                const exercisesToLoad = sortedExercises.map((logEx) => ({
+                                  exerciseId: logEx.exerciseId,
+                                  sets: logEx.sets.map((s) => ({ ...s, id: generateId(), isCompleted: false })),
+                                  notes: logEx.notes,
+                                }));
+                                const now = Date.now();
+                                setActiveSessionExercises(exercisesToLoad);
+                                setSessionStartTime(now);
+                                setActiveSegment('log');
+                                AsyncStorage.setItem('@active_session_exercises', JSON.stringify(exercisesToLoad));
+                                AsyncStorage.setItem('@session_start_time', String(now));
+                              }}
+                              activeOpacity={0.7}
+                            >
+                              <Text style={styles.templateStartBtnText}>START</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </Card>
+                      </TouchableOpacity>
+                    );
+                  });
+                })()
               )}
             </View>
           ) : activeSegment === 'history' ? (
@@ -3391,7 +3430,6 @@ export default function SinglePageLandingScreen() {
                         delayLongPress={150}
                         style={[styles.editWorkoutItem, { borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1 }]}
                       >
-                        <GripVertical size={16} color={theme.textSecondary} opacity={0.4} style={{ marginRight: 10 }} />
                         <View style={[styles.editWorkoutItemAccent, { backgroundColor: muscleColor }]} />
                         <View style={{ flex: 1 }}>
                           <Text style={{ color: theme.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 2 }}>
