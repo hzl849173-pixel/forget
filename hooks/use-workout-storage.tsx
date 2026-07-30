@@ -46,6 +46,248 @@ export interface WorkoutTemplate {
   createdAt: string;
 }
 
+export const DEFAULT_TEMPLATES: WorkoutTemplate[] = [
+  {
+    id: 'tmpl-push',
+    name: 'Push Day',
+    createdAt: '2026-07-30T00:00:00.000Z',
+    exercises: [
+      {
+        exerciseId: 'bb-bench-press',
+        sets: [
+          { id: 'bb-bench-press-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'bb-bench-press-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'bb-bench-press-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'db-shoulder-press',
+        sets: [
+          { id: 'db-shoulder-press-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'db-shoulder-press-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'db-shoulder-press-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'bb-incline-press',
+        sets: [
+          { id: 'bb-incline-press-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'bb-incline-press-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'bb-incline-press-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'db-lateral-raise',
+        sets: [
+          { id: 'db-lateral-raise-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'db-lateral-raise-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'db-lateral-raise-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'tricep-pushdown',
+        sets: [
+          { id: 'tricep-pushdown-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'tricep-pushdown-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'tricep-pushdown-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'tmpl-pull',
+    name: 'Pull Day',
+    createdAt: '2026-07-30T00:00:00.000Z',
+    exercises: [
+      {
+        exerciseId: 'pull-ups',
+        sets: [
+          { id: 'pull-ups-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'pull-ups-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'pull-ups-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'lat-pulldown',
+        sets: [
+          { id: 'lat-pulldown-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'lat-pulldown-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'lat-pulldown-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'cable-row',
+        sets: [
+          { id: 'cable-row-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'cable-row-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'cable-row-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'db-bicep-curl',
+        sets: [
+          { id: 'db-bicep-curl-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'db-bicep-curl-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'db-bicep-curl-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'db-hammer-curl',
+        sets: [
+          { id: 'db-hammer-curl-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'db-hammer-curl-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'db-hammer-curl-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'tmpl-legs',
+    name: 'Leg Day',
+    createdAt: '2026-07-30T00:00:00.000Z',
+    exercises: [
+      {
+        exerciseId: 'bb-squat',
+        sets: [
+          { id: 'bb-squat-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'bb-squat-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'bb-squat-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'rdl',
+        sets: [
+          { id: 'rdl-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'rdl-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'rdl-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'leg-press',
+        sets: [
+          { id: 'leg-press-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'leg-press-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'leg-press-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'leg-extensions',
+        sets: [
+          { id: 'leg-extensions-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'leg-extensions-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'leg-extensions-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'seated-leg-curls',
+        sets: [
+          { id: 'seated-leg-curls-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'seated-leg-curls-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'seated-leg-curls-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'tmpl-upper',
+    name: 'Upper Body',
+    createdAt: '2026-07-30T00:00:00.000Z',
+    exercises: [
+      {
+        exerciseId: 'bb-bench-press',
+        sets: [
+          { id: 'bb-upper-bench-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'bb-upper-bench-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'bb-upper-bench-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'lat-pulldown',
+        sets: [
+          { id: 'lat-upper-pulldown-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'lat-upper-pulldown-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'lat-upper-pulldown-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'db-shoulder-press',
+        sets: [
+          { id: 'db-upper-press-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'db-upper-press-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'db-upper-press-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'cable-row',
+        sets: [
+          { id: 'cable-upper-row-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'cable-upper-row-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'cable-upper-row-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'db-bicep-curl',
+        sets: [
+          { id: 'db-upper-curl-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'db-upper-curl-2', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'tricep-pushdown',
+        sets: [
+          { id: 'tricep-upper-pushdown-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'tricep-upper-pushdown-2', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'tmpl-full',
+    name: 'Full Body',
+    createdAt: '2026-07-30T00:00:00.000Z',
+    exercises: [
+      {
+        exerciseId: 'bb-squat',
+        sets: [
+          { id: 'bb-full-squat-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'bb-full-squat-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'bb-full-squat-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'bb-bench-press',
+        sets: [
+          { id: 'bb-full-bench-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'bb-full-bench-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'bb-full-bench-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'pull-ups',
+        sets: [
+          { id: 'pull-full-ups-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'pull-full-ups-2', weight: 0, reps: 0, isCompleted: false },
+          { id: 'pull-full-ups-3', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'db-shoulder-press',
+        sets: [
+          { id: 'db-full-press-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'db-full-press-2', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+      {
+        exerciseId: 'rdl',
+        sets: [
+          { id: 'rdl-full-1', weight: 0, reps: 0, isCompleted: false },
+          { id: 'rdl-full-2', weight: 0, reps: 0, isCompleted: false },
+        ],
+      },
+    ],
+  },
+];
+
 interface WorkoutContextType {
   exercises: Exercise[];
   history: WorkoutSession[];
@@ -174,8 +416,20 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
           setPrs(JSON.parse(storedPrs));
         }
 
+        let parsedTemplates: WorkoutTemplate[] = [];
         if (storedTemplates) {
-          setTemplates(JSON.parse(storedTemplates));
+          parsedTemplates = JSON.parse(storedTemplates);
+        }
+
+        const storedTemplateIds = new Set(parsedTemplates.map((t) => t.id));
+        const missingDefaultTemplates = DEFAULT_TEMPLATES.filter((t) => !storedTemplateIds.has(t.id));
+
+        if (missingDefaultTemplates.length > 0) {
+          const mergedTemplates = [...parsedTemplates, ...missingDefaultTemplates];
+          setTemplates(mergedTemplates);
+          await AsyncStorage.setItem(STORAGE_KEYS.TEMPLATES, JSON.stringify(mergedTemplates));
+        } else {
+          setTemplates(parsedTemplates);
         }
 
         const storedWeekStart = await AsyncStorage.getItem(STORAGE_KEYS.WEEK_START_DAY);

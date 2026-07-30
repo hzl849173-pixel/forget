@@ -1773,51 +1773,69 @@ export default function SinglePageLandingScreen() {
                     .map(([muscle, sets]) => `${muscle} ${sets}`)
                     .join(' · ');
                   return (
-                    <Card
+                    <TouchableOpacity
                       key={tmpl.id}
-                      style={[
-                        styles.historyLogCard,
-                        {
-                          borderLeftWidth: 4,
-                          borderLeftColor: categoryColors[sessionMuscles[0] || 'Chest'] || '#10B981',
-                          backgroundColor: theme.cardBg,
-                          borderColor: theme.borderColor
-                        }
-                      ]}
+                      onPress={() => handleUseTemplate(tmpl)}
+                      activeOpacity={0.85}
                     >
-                      <View style={styles.historyCardHeader}>
-                        <View style={styles.historyTitleCol}>
-                          <Text style={[styles.historySessionName, { color: theme.textPrimary }]}>{tmpl.name}</Text>
-                          <Text style={[styles.historyDate, { color: theme.textSecondary }]}>SAVED {new Date(tmpl.createdAt).toLocaleDateString().toUpperCase()}</Text>
+                      <Card
+                        style={[
+                          styles.historyLogCard,
+                          {
+                            borderLeftWidth: 4,
+                            borderLeftColor: categoryColors[sessionMuscles[0] || 'Chest'] || '#10B981',
+                            backgroundColor: theme.cardBg,
+                            borderColor: theme.borderColor
+                          }
+                        ]}
+                      >
+                        <View style={styles.historyCardHeader}>
+                          <View style={styles.historyTitleCol}>
+                            <Text style={[styles.historySessionName, { color: theme.textPrimary }]}>{tmpl.name}</Text>
+                            <Text style={[styles.historyDate, { color: theme.textSecondary }]}>SAVED {new Date(tmpl.createdAt).toLocaleDateString().toUpperCase()}</Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.deleteLogBtn}
+                            onPress={() => handleDeleteTemplate(tmpl.id, tmpl.name)}
+                            activeOpacity={0.6}
+                          >
+                            <Trash2 size={16} color="#EF4444" strokeWidth={2} />
+                          </TouchableOpacity>
                         </View>
-                        <TouchableOpacity
-                          style={styles.deleteLogBtn}
-                          onPress={() => handleDeleteTemplate(tmpl.id, tmpl.name)}
-                          activeOpacity={0.6}
-                        >
-                          <Trash2 size={16} color="#EF4444" strokeWidth={2} />
-                        </TouchableOpacity>
-                      </View>
-                      <View style={[styles.historySetsReceipt, { borderTopColor: theme.borderColor }]}>
-                        <Text style={[styles.historySummaryText, { color: theme.textSecondary }]} numberOfLines={1}>
-                          {muscleSetsString}
-                        </Text>
-                      </View>
-                      <View style={[styles.historyFooter, { borderTopColor: theme.borderColor }]}>
-                        <View style={styles.historyBadgeRow}>
-                          {uniqueMuscles.map((m) => (
-                            <MuscleBadge key={m} muscleGroup={m} size="sm" />
-                          ))}
+                        <View style={[styles.historySetsReceipt, { borderTopColor: theme.borderColor }]}>
+                          <Text style={[styles.historySummaryText, { color: theme.textSecondary }]} numberOfLines={1}>
+                            {muscleSetsString}
+                          </Text>
                         </View>
-                        <TouchableOpacity
-                          style={styles.templateStartBtn}
-                          onPress={() => handleUseTemplate(tmpl)}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={styles.templateStartBtnText}>START</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </Card>
+                        <View style={[styles.historyFooter, { borderTopColor: theme.borderColor }]}>
+                          <View style={styles.historyBadgeRow}>
+                            {uniqueMuscles.map((m) => (
+                              <MuscleBadge key={m} muscleGroup={m} size="sm" />
+                            ))}
+                          </View>
+                          <TouchableOpacity
+                            style={styles.templateStartBtn}
+                            onPress={() => {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                              const exercisesToLoad = tmpl.exercises.map((logEx) => ({
+                                exerciseId: logEx.exerciseId,
+                                sets: logEx.sets.map((s) => ({ ...s, id: generateId(), isCompleted: false })),
+                                notes: logEx.notes,
+                              }));
+                              const now = Date.now();
+                              setActiveSessionExercises(exercisesToLoad);
+                              setSessionStartTime(now);
+                              setActiveSegment('log');
+                              AsyncStorage.setItem('@active_session_exercises', JSON.stringify(exercisesToLoad));
+                              AsyncStorage.setItem('@session_start_time', String(now));
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={styles.templateStartBtnText}>START</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </Card>
+                    </TouchableOpacity>
                   );
                 })
               )}
@@ -3279,8 +3297,22 @@ export default function SinglePageLandingScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => {
-                    setTemplateLogSelectedIds(new Set(templateListExercises.map(e => e.exerciseId)));
-                    setTemplateLogSelectVisible(true);
+                    const selectedExercises = templateListExercises.map(e => ({
+                      exerciseId: e.exerciseId,
+                      sets: e.sets.map(s => ({ ...s, id: generateId(), isCompleted: false })),
+                      notes: e.notes,
+                    }));
+                    const now = Date.now();
+                    setActiveSessionExercises(selectedExercises);
+                    setSessionStartTime(now);
+                    setTemplateListVisible(false);
+                    setFromTemplateList(false);
+                    setActiveTemplateId(null);
+                    setTemplateListExercises([]);
+                    setActiveSegment('log');
+                    AsyncStorage.setItem('@active_session_exercises', JSON.stringify(selectedExercises));
+                    AsyncStorage.setItem('@session_start_time', String(now));
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   }}
                   activeOpacity={0.8}
                   style={{ flex: 1, backgroundColor: '#10B981', paddingVertical: 16, alignItems: 'center', borderRadius: 14 }}
