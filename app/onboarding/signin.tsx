@@ -53,6 +53,11 @@ export default function SignInScreen() {
         try {
             const user = await signInWithGoogle();
 
+            if (user === null) {
+                // Sign-in was cancelled by the user. Just return without error alert.
+                return;
+            }
+
             // Sign-in succeeded; persist signed-in flag
             await setSignedIn();
 

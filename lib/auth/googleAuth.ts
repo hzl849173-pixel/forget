@@ -1,5 +1,5 @@
 import { auth } from '@/lib/firebase/firebaseConfig';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { GoogleAuthProvider, signInWithCredential, User as FirebaseUser } from 'firebase/auth';
 import { Platform } from 'react-native';
 
@@ -59,7 +59,7 @@ if (webClientId) {
  * Custom React Hook for Google Sign-In using the native SDK.
  */
 export function useGoogleSignIn() {
-    const signInWrapper = async (): Promise<FirebaseUser> => {
+    const signInWrapper = async (): Promise<FirebaseUser | null> => {
         return signIn();
     };
 
@@ -90,13 +90,7 @@ export async function signOutFromGoogle(): Promise<void> {
         console.error("[googleAuth] GoogleSignin.configure failed in signOutFromGoogle:", configError);
     }
 
-    try {
-        console.log("[googleAuth] Starting GoogleSignin.revokeAccess()...");
-        await GoogleSignin.revokeAccess();
-        console.log("[googleAuth] GoogleSignin.revokeAccess() completed.");
-    } catch (error) {
-        console.log("[googleAuth] GoogleSignin.revokeAccess() failed/ignored (usually safe if not signed in):", error);
-    }
+
 
     try {
         console.log("[googleAuth] Starting GoogleSignin.signOut()...");
@@ -111,7 +105,7 @@ export async function signOutFromGoogle(): Promise<void> {
  * Performs Google Sign-In using the native SDK and signs in with Firebase.
  * @returns The Firebase authenticated user.
  */
-export async function signIn(): Promise<FirebaseUser> {
+export async function signIn(): Promise<FirebaseUser | null> {
     console.log("[googleAuth] signIn() initiated.");
     let lastStep = "NONE";
     try {
@@ -143,19 +137,7 @@ export async function signIn(): Promise<FirebaseUser> {
         console.log("[STEP] GoogleSignin.hasPlayServices() completed");
         lastStep = "[STEP 2] Check Play Services Completed";
 
-        // Step 2.5: Revoke access and sign out from Google before signing in to clear active session and force account picker
-        try {
-            console.log("[googleAuth] Calling GoogleSignin.revokeAccess() before signIn to clear active session");
-            await GoogleSignin.revokeAccess();
-        } catch (revokeError) {
-            console.log("[googleAuth] GoogleSignin.revokeAccess() failed/ignored (usually safe if not signed in):", revokeError);
-        }
-        try {
-            console.log("[googleAuth] Calling GoogleSignin.signOut() before signIn to clear active session");
-            await GoogleSignin.signOut();
-        } catch (signOutError) {
-            console.log("[googleAuth] GoogleSignin.signOut() failed/ignored (usually safe if not signed in):", signOutError);
-        }
+
 
         // Step 3: Start Google Sign-In
         console.log("[STEP 3] Start Google Sign-In");
@@ -211,9 +193,7 @@ export async function signIn(): Promise<FirebaseUser> {
             return userCredential.user;
         } else if (response.type === 'cancelled') {
             console.log("[googleAuth] GoogleSignin.signIn() returned: cancelled");
-            const error = new Error('Google sign-in was cancelled by the user.');
-            console.error("[googleAuth] Throwing exception:", error.message);
-            throw error;
+            return null;
         } else {
             console.log("[googleAuth] GoogleSignin.signIn() returned: unknown");
             const error = new Error('Google sign-in failed: Unknown response status.');
@@ -221,6 +201,10 @@ export async function signIn(): Promise<FirebaseUser> {
             throw error;
         }
     } catch (error: any) {
+        if (error?.code === statusCodes.SIGN_IN_CANCELLED) {
+            console.log("[googleAuth] GoogleSignin.signIn() threw SIGN_IN_CANCELLED (user cancellation)");
+            return null;
+        }
         console.log("[googleAuth] GoogleSignin.signIn() returned: exception");
         console.log("[googleAuth] Last successful step before failure:", lastStep);
         console.error("GOOGLE ERROR OBJECT:", error);

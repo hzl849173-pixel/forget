@@ -325,8 +325,10 @@ export default function SinglePageLandingScreen() {
   };
 
   const handleRedirectToSignIn = () => {
-    setProfileModalVisible(false);
-    router.replace('/onboarding/signin');
+    router.push('/onboarding/signin');
+    setTimeout(() => {
+      setProfileModalVisible(false);
+    }, 500);
   };
 
   const handleStartEditProfile = () => {
