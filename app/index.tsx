@@ -192,7 +192,7 @@ import { Card } from '@/components/ui/card';
 import { IncrementInput } from '@/components/ui/input';
 import { MuscleBadge } from '@/components/ui/muscle-badge';
 import { ProgressGrid } from '@/components/ui/progress-grid';
-import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS } from '@/constants/exercises';
+import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS } from '@/constants/exercises';
 import { useWorkoutAnalytics } from '@/hooks/use-workout-analytics';
 import { Exercise, LoggedExercise, PersonalRecord, useWorkout, WorkoutSession, WorkoutSet, WorkoutTemplate } from '@/hooks/use-workout-storage';
 import DragList from 'react-native-draglist';
@@ -1273,10 +1273,17 @@ export default function SinglePageLandingScreen() {
 
   const favoriteExercises = displayedExercises.filter((ex) => ex.isFavorite);
   const customExercises = displayedExercises.filter((ex) => ex.isCustom && !ex.isFavorite);
-  const defaultExercises = displayedExercises.filter((ex) => !ex.isCustom && !ex.isFavorite);
+  const popularExercises = displayedExercises
+    .filter((ex) => POPULAR_EXERCISE_IDS.includes(ex.id) && !ex.isCustom && !ex.isFavorite)
+    .sort((a, b) => POPULAR_EXERCISE_IDS.indexOf(a.id) - POPULAR_EXERCISE_IDS.indexOf(b.id));
+  const defaultExercises = displayedExercises.filter((ex) => !ex.isCustom && !ex.isFavorite && !POPULAR_EXERCISE_IDS.includes(ex.id));
+  
   const exerciseSections: { title: string; data: typeof displayedExercises }[] = [];
   if (favoriteExercises.length > 0) {
     exerciseSections.push({ title: 'Favorites', data: favoriteExercises });
+  }
+  if (popularExercises.length > 0) {
+    exerciseSections.push({ title: 'Popular Workouts', data: popularExercises });
   }
   if (customExercises.length > 0) {
     exerciseSections.push({ title: 'Added Exercises', data: customExercises });
@@ -2179,8 +2186,8 @@ export default function SinglePageLandingScreen() {
                           >
                             <Star
                               size={18}
-                              color={isFav ? '#FF8A00' : theme.textSecondary}
-                              fill={isFav ? '#FF8A00' : 'transparent'}
+                              color={isFav ? '#FF8A00' : (POPULAR_EXERCISE_IDS.includes(item.id) ? '#9CA3AF' : theme.textSecondary)}
+                              fill={isFav ? '#FF8A00' : (POPULAR_EXERCISE_IDS.includes(item.id) ? '#9CA3AF' : 'transparent')}
                               strokeWidth={2}
                             />
                           </TouchableOpacity>

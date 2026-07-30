@@ -109,19 +109,40 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
           const storedIds = new Set(parsed.map((e) => e.id));
           const defaultMap = new Map(DEFAULT_EXERCISES.map((e) => [e.id, e]));
           const missingDefaults = DEFAULT_EXERCISES.filter((e) => !storedIds.has(e.id));
-          const needsInstrumentMigration = parsed.some((e) => !e.instrument);
-          if (needsInstrumentMigration || missingDefaults.length > 0) {
-            const migrated = [
-              ...parsed.map((e) => ({
+          
+          let changed = false;
+          const updated = parsed.map((e) => {
+            const def = defaultMap.get(e.id);
+            if (def && !e.isCustom) {
+              if (e.name !== def.name || e.instrument !== def.instrument || e.muscleGroup !== def.muscleGroup) {
+                changed = true;
+                return {
+                  ...e,
+                  name: def.name,
+                  instrument: def.instrument,
+                  muscleGroup: def.muscleGroup,
+                };
+              }
+            }
+            if (!e.instrument) {
+              changed = true;
+              return {
                 ...e,
-                instrument: e.instrument || defaultMap.get(e.id)?.instrument || 'Other' as const,
-              })),
+                instrument: 'Other' as const,
+              };
+            }
+            return e;
+          });
+
+          if (changed || missingDefaults.length > 0) {
+            const migrated = [
+              ...updated,
               ...missingDefaults,
             ];
             setExercises(migrated);
             await AsyncStorage.setItem(STORAGE_KEYS.EXERCISES, JSON.stringify(migrated));
           } else {
-            setExercises(parsed);
+            setExercises(updated);
           }
         } else {
           setExercises(DEFAULT_EXERCISES);
