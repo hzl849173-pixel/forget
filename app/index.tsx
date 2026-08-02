@@ -1521,17 +1521,34 @@ export default function SinglePageLandingScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  <View style={styles.activeSessionList}>
-                    {activeSessionExercises.map((le) => {
-                      const details = exercises.find((e) => e.id === le.exerciseId);
+                  <DragList
+                    scrollEnabled={false}
+                    data={activeSessionExercises}
+                    keyExtractor={(item) => item.exerciseId}
+                    onReordered={(fromIdx, toIdx) => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      const updated = [...activeSessionExercises];
+                      const [moved] = updated.splice(fromIdx, 1);
+                      updated.splice(toIdx, 0, moved);
+                      setActiveSessionExercises(updated);
+                      AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                    }}
+                    style={styles.activeSessionList}
+                    renderItem={({ item, onDragStart, isActive }) => {
+                      const details = exercises.find((e) => e.id === item.exerciseId);
                       if (!details) return null;
                       const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
                       return (
                         <TouchableOpacity
-                          key={le.exerciseId}
-                          style={[styles.activeSessionItem, { borderBottomColor: theme.borderColor }]}
+                          key={item.exerciseId}
+                          style={[
+                            styles.activeSessionItem,
+                            { borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1 }
+                          ]}
                           activeOpacity={0.6}
-                          onPress={() => handleToggleExpand(le.exerciseId)}
+                          onPress={() => handleToggleExpand(item.exerciseId)}
+                          onLongPress={onDragStart}
+                          delayLongPress={150}
                         >
                           <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor }]} />
                           <View style={styles.activeSessionItemContent}>
@@ -1545,17 +1562,17 @@ export default function SinglePageLandingScreen() {
                                 </Text>
                               </View>
                               <Text style={[styles.activeSessionItemSets, { color: theme.textSecondary }]}>
-                                {le.sets.length} set{le.sets.length > 1 ? 's' : ''}
+                                {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
                               </Text>
                             </View>
                           </View>
                           <ChevronRight size={16} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
                         </TouchableOpacity>
                       );
-                    })}
-                  </View>
+                    }}
+                  />
 
-                  <Text style={[styles.activeSessionHint, { color: theme.textSecondary }]}>Tap a workout to edit</Text>
+                  <Text style={[styles.activeSessionHint, { color: theme.textSecondary }]}>Tap to edit • Long press to reorder</Text>
 
                   <TouchableOpacity
                     style={[styles.finishSessionBtn, { backgroundColor: '#10B981' }]}
@@ -2976,21 +2993,35 @@ export default function SinglePageLandingScreen() {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={{ flexGrow: 0, maxHeight: 400 }} showsVerticalScrollIndicator={false}>
-                {activeSessionExercises.map((le) => {
-                  const details = exercises.find((e) => e.id === le.exerciseId);
+              <DragList
+                containerStyle={{ maxHeight: 400, flexShrink: 1 }}
+                data={activeSessionExercises}
+                keyExtractor={(item) => item.exerciseId}
+                onReordered={(fromIdx, toIdx) => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  const updated = [...activeSessionExercises];
+                  const [moved] = updated.splice(fromIdx, 1);
+                  updated.splice(toIdx, 0, moved);
+                  setActiveSessionExercises(updated);
+                  AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                }}
+                style={{ maxHeight: 400, flexShrink: 1 }}
+                renderItem={({ item, onDragStart, isActive }) => {
+                  const details = exercises.find((e) => e.id === item.exerciseId);
                   if (!details) return null;
                   const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
                   return (
                     <TouchableOpacity
-                      key={le.exerciseId}
-                      style={[styles.editWorkoutItem, { borderBottomColor: theme.borderColor }]}
+                      key={item.exerciseId}
+                      style={[styles.editWorkoutItem, { borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1 }]}
                       activeOpacity={0.6}
                       onPress={() => {
-                        handleToggleExpand(le.exerciseId);
+                        handleToggleExpand(item.exerciseId);
                         setCameFromEditModal(true);
                         setEditSessionExerciseModalVisible(false);
                       }}
+                      onLongPress={onDragStart}
+                      delayLongPress={150}
                     >
                       <View style={[styles.editWorkoutItemAccent, { backgroundColor: muscleColor }]} />
                       <View style={{ flex: 1 }}>
@@ -3004,15 +3035,15 @@ export default function SinglePageLandingScreen() {
                             </Text>
                           </View>
                           <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
-                            {le.sets.length} set{le.sets.length > 1 ? 's' : ''}
+                            {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
                           </Text>
                         </View>
                       </View>
                       <ChevronRight size={18} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
                     </TouchableOpacity>
                   );
-                })}
-              </ScrollView>
+                }}
+              />
             </View>
           </View>
         </Modal>
