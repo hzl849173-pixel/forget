@@ -1512,13 +1512,22 @@ export default function SinglePageLandingScreen() {
                         {activeSessionExercises.length} exercise{activeSessionExercises.length > 1 ? 's' : ''} logged today
                       </Text>
                     </View>
-                    <TouchableOpacity
-                      style={styles.cancelSessionBtn}
-                      onPress={handleCancelSession}
-                      activeOpacity={0.6}
-                    >
-                      <Trash2 size={18} color="#EF4444" strokeWidth={2} />
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <TouchableOpacity
+                        onPress={() => handleSelectMuscleCard('Chest')}
+                        activeOpacity={0.6}
+                        style={{ padding: 6 }}
+                      >
+                        <Plus size={20} color="#10B981" strokeWidth={2.5} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.cancelSessionBtn}
+                        onPress={handleCancelSession}
+                        activeOpacity={0.6}
+                      >
+                        <Trash2 size={18} color="#EF4444" strokeWidth={2} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
                   <DragList
@@ -1571,6 +1580,8 @@ export default function SinglePageLandingScreen() {
                       );
                     }}
                   />
+
+
 
                   <Text style={[styles.activeSessionHint, { color: theme.textSecondary }]}>Tap to edit • Long press to reorder</Text>
 
