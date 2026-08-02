@@ -881,6 +881,17 @@ export default function SinglePageLandingScreen() {
       return;
     }
 
+    if (activeSets.some((s) => s.reps <= 0)) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showCustomAlert(
+        'Invalid Reps',
+        'Please ensure all sets have at least 1 repetition before saving.',
+        [{ text: 'OK' }],
+        <Flame size={28} color="#EF4444" />
+      );
+      return;
+    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     const newLog = {
@@ -1124,6 +1135,31 @@ export default function SinglePageLandingScreen() {
         ? (historyEditNotes[logEx.exerciseId].trim() || undefined)
         : logEx.notes,
     }));
+
+    // Validate sets and reps
+    for (const ex of updatedExercises) {
+      if (ex.sets.length === 0) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        showCustomAlert(
+          'Add Sets',
+          'Please ensure all exercises have at least one set.',
+          [{ text: 'OK' }],
+          <Flame size={28} color="#EF4444" />
+        );
+        return;
+      }
+      if (ex.sets.some((s) => s.reps <= 0)) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        showCustomAlert(
+          'Invalid Reps',
+          'Please ensure all sets have at least 1 repetition.',
+          [{ text: 'OK' }],
+          <Flame size={28} color="#EF4444" />
+        );
+        return;
+      }
+    }
+
     await updateWorkout(session.id, { exercises: updatedExercises });
     setEditingHistoryWorkoutId(null);
     setHistoryEditSets({});
