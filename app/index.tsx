@@ -1918,21 +1918,31 @@ export default function SinglePageLandingScreen() {
                 templatesContainerY.current = event.nativeEvent.layout.y;
               }}
             >
-              <TouchableOpacity
-                style={[styles.createTemplateButton, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
-                onPress={() => {
-                  setTemplateName('');
-                  setTemplateExercises([]);
-                  setIsSavingActiveSessionAsTemplate(false);
-                  setTemplateModalVisible(true);
-                }}
-                activeOpacity={0.7}
-              >
-                <Plus size={16} color="#10B981" strokeWidth={2.5} />
-                <Text style={[styles.createTemplateButtonText, { color: theme.textPrimary }]}>
-                  CREATE CUSTOM TEMPLATE
-                </Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, marginTop: 4 }}>
+                <Text style={[styles.sectionHeader, { color: theme.textSecondary, marginBottom: 0, marginTop: 0 }]}>TEMPLATES</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setTemplateName('');
+                    setTemplateExercises([]);
+                    setIsSavingActiveSessionAsTemplate(false);
+                    setTemplateModalVisible(true);
+                  }}
+                  activeOpacity={0.7}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    paddingVertical: 4,
+                    paddingLeft: 8,
+                    paddingRight: 0,
+                  }}
+                >
+                  <Plus size={12} color="#10B981" strokeWidth={2.5} />
+                  <Text style={{ color: '#10B981', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>
+                    NEW
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
               {templates.length === 0 ? (
                 <Card style={[styles.welcomeCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
