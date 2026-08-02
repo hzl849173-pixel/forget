@@ -1173,8 +1173,11 @@ export default function SinglePageLandingScreen() {
       // Open the new template immediately in the Template Details modal
       setTemplateListExercises([]);
       setActiveTemplateId(newTmpl.id);
-      setTemplateListVisible(true);
+      setTemplateListVisible(false);
       setFromTemplateList(true);
+
+      // Instantly pop open the exercise selector to add workouts to this template
+      handleSelectMuscleCard('Chest');
     }
 
     setTemplateModalVisible(false);
