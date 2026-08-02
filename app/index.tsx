@@ -434,6 +434,7 @@ export default function SinglePageLandingScreen() {
   const [editSessionExerciseModalVisible, setEditSessionExerciseModalVisible] = useState(false);
   const [cameFromEditModal, setCameFromEditModal] = useState(false);
   const [cameFromActiveSessionPlus, setCameFromActiveSessionPlus] = useState(false);
+  const [sessionStartedFromTemplate, setSessionStartedFromTemplate] = useState(false);
 
   // Add exercise state
   const [addExerciseVisible, setAddExerciseVisible] = useState(false);
@@ -621,6 +622,12 @@ export default function SinglePageLandingScreen() {
     AsyncStorage.getItem('@session_start_time').then((val) => {
       if (val !== null) {
         setSessionStartTime(Number(val));
+      }
+    });
+
+    AsyncStorage.getItem('@session_started_from_template').then((val) => {
+      if (val === 'true') {
+        setSessionStartedFromTemplate(true);
       }
     });
 
@@ -977,6 +984,46 @@ export default function SinglePageLandingScreen() {
 
     const suggestedTitle = suggestWorkoutTitle(activeSessionExercises);
 
+    const performSave = async () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      const elapsedMinutes = sessionStartTime > 0
+        ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
+        : 15;
+
+      const detectedPrs = await addCompletedWorkout(suggestedTitle, activeSessionExercises, elapsedMinutes);
+
+      // Clear active session
+      setActiveSessionExercises([]);
+      setSessionStartTime(0);
+      setSessionStartedFromTemplate(false);
+      await Promise.all([
+        AsyncStorage.removeItem('@active_session_exercises'),
+        AsyncStorage.removeItem('@session_start_time'),
+        AsyncStorage.removeItem('@session_started_from_template'),
+      ]);
+
+      // Reset modal, logger, and views
+      setExpandedExerciseId(null);
+      setActiveSets([]);
+      setSameForAll(true);
+      setSelectedModalMuscle(null);
+      setSelectedSubGroup(null);
+      setTemplateListVisible(false);
+      setFromTemplateList(false);
+
+      if (detectedPrs.length > 0) {
+        setNewPrsDetected(detectedPrs);
+        setShowNewPrsAlert(true);
+      }
+    };
+
+    if (sessionStartedFromTemplate) {
+      // Just save directly with absolutely no popup dialog!
+      await performSave();
+      return;
+    }
+
     showCustomAlert(
       'Finish Workout Day',
       `Save today's session as "${suggestedTitle}"?`,
@@ -988,37 +1035,7 @@ export default function SinglePageLandingScreen() {
         {
           text: 'Save',
           style: 'default',
-          onPress: async () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-            const elapsedMinutes = sessionStartTime > 0
-              ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
-              : 15;
-
-            const detectedPrs = await addCompletedWorkout(suggestedTitle, activeSessionExercises, elapsedMinutes);
-
-            // Clear active session
-            setActiveSessionExercises([]);
-            setSessionStartTime(0);
-            await Promise.all([
-              AsyncStorage.removeItem('@active_session_exercises'),
-              AsyncStorage.removeItem('@session_start_time'),
-            ]);
-
-            // Reset modal, logger, and views
-            setExpandedExerciseId(null);
-            setActiveSets([]);
-            setSameForAll(true);
-            setSelectedModalMuscle(null);
-            setSelectedSubGroup(null);
-            setTemplateListVisible(false);
-            setFromTemplateList(false);
-
-            if (detectedPrs.length > 0) {
-              setNewPrsDetected(detectedPrs);
-              setShowNewPrsAlert(true);
-            }
-          },
+          onPress: performSave,
         },
         {
           text: 'Create Template',
@@ -1053,9 +1070,11 @@ export default function SinglePageLandingScreen() {
           onPress: async () => {
             setActiveSessionExercises([]);
             setSessionStartTime(0);
+            setSessionStartedFromTemplate(false);
             await Promise.all([
               AsyncStorage.removeItem('@active_session_exercises'),
               AsyncStorage.removeItem('@session_start_time'),
+              AsyncStorage.removeItem('@session_started_from_template'),
             ]);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           },
@@ -2055,9 +2074,11 @@ export default function SinglePageLandingScreen() {
                                 const now = Date.now();
                                 setActiveSessionExercises(exercisesToLoad);
                                 setSessionStartTime(now);
+                                setSessionStartedFromTemplate(true);
                                 setActiveSegment('log');
                                 AsyncStorage.setItem('@active_session_exercises', JSON.stringify(exercisesToLoad));
                                 AsyncStorage.setItem('@session_start_time', String(now));
+                                AsyncStorage.setItem('@session_started_from_template', 'true');
                               }}
                               activeOpacity={0.7}
                             >
@@ -3663,6 +3684,7 @@ export default function SinglePageLandingScreen() {
                       const now = Date.now();
                       setActiveSessionExercises(selectedExercises);
                       setSessionStartTime(now);
+                      setSessionStartedFromTemplate(true);
                       setTemplateListVisible(false);
                       setFromTemplateList(false);
                       setActiveTemplateId(null);
@@ -3670,6 +3692,7 @@ export default function SinglePageLandingScreen() {
                       setActiveSegment('log');
                       AsyncStorage.setItem('@active_session_exercises', JSON.stringify(selectedExercises));
                       AsyncStorage.setItem('@session_start_time', String(now));
+                      AsyncStorage.setItem('@session_started_from_template', 'true');
                       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                     }}
                     activeOpacity={0.8}
