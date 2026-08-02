@@ -2029,6 +2029,9 @@ export default function SinglePageLandingScreen() {
                     if (idxA !== -1 && idxB !== -1) return idxA - idxB;
                     if (idxA !== -1) return -1;
                     if (idxB !== -1) return 1;
+                    const countA = a.usageCount || 0;
+                    const countB = b.usageCount || 0;
+                    if (countA !== countB) return countB - countA;
                     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                   });
                   return sortedList.map((tmpl) => {
