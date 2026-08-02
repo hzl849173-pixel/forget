@@ -9,6 +9,17 @@ import { DEFAULT_EXERCISES, MUSCLE_GROUPS, MuscleGroup } from '@/constants/exerc
 
 const generateId = () => Date.now().toString() + Math.random().toString(36).substring(2, 9);
 
+const categoryColors: Record<string, string> = {
+    Chest: '#10B981',
+    Triceps: '#06B6D4',
+    Biceps: '#3B82F6',
+    Back: '#A855F7',
+    Legs: '#FF8A00',
+    'Abs & Shoulders': '#22C55E',
+    Abs: '#22C55E',
+    Shoulders: '#22C55E',
+};
+
 export default function TemplatesScreen() {
     const router = useRouter();
 
@@ -88,12 +99,20 @@ export default function TemplatesScreen() {
                             .filter(Boolean)
                             .join(' • ');
 
+                        const firstEx = tmpl.exercises[0];
+                        const firstExDetails = firstEx ? getExerciseDetails(firstEx.exerciseId) : null;
+                        const primaryMuscle = firstExDetails ? firstExDetails.muscleGroup : 'Chest';
+                        const muscleColor = categoryColors[primaryMuscle] || '#10B981';
+
                         return (
                             <TouchableOpacity
                                 key={tmpl.id}
                                 activeOpacity={0.8}
                                 onPress={() => handleSelectTemplate(tmpl)}
-                                style={styles.templateCard}
+                                style={[
+                                    styles.templateCard,
+                                    { borderLeftWidth: 4, borderLeftColor: muscleColor }
+                                ]}
                             >
                                 <View style={styles.cardHeader}>
                                     <Text style={styles.cardTitle}>{tmpl.name}</Text>
