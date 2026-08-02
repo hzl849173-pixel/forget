@@ -554,6 +554,63 @@ export default function SinglePageLandingScreen() {
     return week;
   };
 
+  const renderWeekRow = (offset: number) => {
+    const dates = getWeekDates(offset);
+    const todayLocal = new Date();
+    const todayLocalStr = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth() + 1).padStart(2, '0')}-${String(todayLocal.getDate()).padStart(2, '0')}`;
+
+    return (
+      <View style={styles.weekDaysRow}>
+        {dates.map((date, i) => {
+          const dateStr = date.toISOString().split('T')[0];
+          const localDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+          const isToday = todayLocalStr === localDateStr;
+          const isFuture = localDateStr > todayLocalStr;
+          const hasWorkout = history.some((s) => s.date.startsWith(dateStr));
+          const isSelected = selectedDay === dateStr;
+
+          return (
+            <TouchableOpacity
+              key={i}
+              disabled={isFuture}
+              style={[
+                styles.weekDaySquare,
+                {
+                  backgroundColor: isSelected
+                    ? '#3B82F6'
+                    : hasWorkout
+                      ? '#10B98120'
+                      : theme.background,
+                  borderColor: isSelected
+                    ? '#3B82F6'
+                    : isToday
+                      ? '#3B82F660'
+                      : theme.borderColor,
+                  opacity: isFuture ? 0.3 : 1,
+                  paddingVertical: 6,
+                },
+              ]}
+              onPress={isFuture ? undefined : () => setSelectedDay(isSelected ? null : dateStr)}
+              activeOpacity={isFuture ? 1 : 0.7}
+            >
+              <Text
+                style={[
+                  styles.weekDayNum,
+                  { color: isSelected ? '#FFFFFF' : theme.textPrimary, fontSize: 13, fontWeight: '700' },
+                ]}
+              >
+                {date.getDate()}
+              </Text>
+              {hasWorkout && !isSelected && (
+                <View style={[styles.weekDayDot, { marginTop: 1 }]} />
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
+
   const getWeekNumber = (dates: Date[]) => {
     const firstDay = dates[0];
     const monthStart = new Date(firstDay.getFullYear(), firstDay.getMonth(), 1);
@@ -1852,67 +1909,35 @@ export default function SinglePageLandingScreen() {
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.weekDaysRow}>
-                  {(() => {
-                    const dates = getWeekDates(currentWeekOffset);
-                    const baseLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                    const dayLabels = [...baseLabels.slice(weekStartDay), ...baseLabels.slice(0, weekStartDay)];
-                    const todayLocal = new Date();
-                    const todayLocalStr = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth() + 1).padStart(2, '0')}-${String(todayLocal.getDate()).padStart(2, '0')}`;
-                    return dates.map((date, i) => {
-                      const dateStr = date.toISOString().split('T')[0];
-                      const localDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                      const isToday = todayLocalStr === localDateStr;
-                      const isFuture = localDateStr > todayLocalStr;
-                      const hasWorkout = history.some((s) => s.date.startsWith(dateStr));
-                      const isSelected = selectedDay === dateStr;
-                      return (
-                        <TouchableOpacity
-                          key={i}
-                          disabled={isFuture}
-                          style={[
-                            styles.weekDaySquare,
-                            {
-                              backgroundColor: isSelected
-                                ? '#3B82F6'
-                                : hasWorkout
-                                  ? '#10B98120'
-                                  : theme.background,
-                              borderColor: isSelected
-                                ? '#3B82F6'
-                                : isToday
-                                  ? '#3B82F660'
-                                  : theme.borderColor,
-                              opacity: isFuture ? 0.3 : 1,
-                            },
-                          ]}
-                          onPress={isFuture ? undefined : () => setSelectedDay(isSelected ? null : dateStr)}
-                          activeOpacity={isFuture ? 1 : 0.7}
-                        >
-                          <Text
-                            style={[
-                              styles.weekDayLabel,
-                              { color: isSelected ? '#FFFFFF' : theme.textSecondary },
-                            ]}
-                          >
-                            {dayLabels[i]}
+                {(() => {
+                  const baseLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                  const dayLabels = [...baseLabels.slice(weekStartDay), ...baseLabels.slice(0, weekStartDay)];
+                  return (
+                    <View style={{ gap: 10 }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                        {dayLabels.map((lbl, idx) => (
+                          <Text key={idx} style={{ flex: 1, textAlign: 'center', fontSize: 10, fontWeight: '800', color: theme.textSecondary, opacity: 0.6 }}>
+                            {lbl.toUpperCase()}
                           </Text>
-                          <Text
-                            style={[
-                              styles.weekDayNum,
-                              { color: isSelected ? '#FFFFFF' : theme.textPrimary },
-                            ]}
-                          >
-                            {date.getDate()}
-                          </Text>
-                          {hasWorkout && !isSelected && (
-                            <View style={styles.weekDayDot} />
-                          )}
-                        </TouchableOpacity>
-                      );
-                    });
-                  })()}
-                </View>
+                        ))}
+                      </View>
+
+                      <View>
+                        <Text style={{ fontSize: 9, fontWeight: '800', color: theme.textSecondary, marginBottom: 4, letterSpacing: 0.5 }}>
+                          {currentWeekOffset === 0 ? 'THIS WEEK' : 'CURRENT WEEK'}
+                        </Text>
+                        {renderWeekRow(currentWeekOffset)}
+                      </View>
+
+                      <View>
+                        <Text style={{ fontSize: 9, fontWeight: '800', color: theme.textSecondary, marginBottom: 4, letterSpacing: 0.5 }}>
+                          {currentWeekOffset === 0 ? 'LAST WEEK' : 'PREVIOUS WEEK'}
+                        </Text>
+                        {renderWeekRow(currentWeekOffset - 1)}
+                      </View>
+                    </View>
+                  );
+                })()}
 
                 {selectedDay && (
                   <View style={[styles.weeklyWorkouts, { borderTopColor: theme.borderColor }]}>
@@ -2022,16 +2047,30 @@ export default function SinglePageLandingScreen() {
                 </Card>
               ) : (
                 (() => {
+                  const todayDayOfWeek = new Date().getDay();
+                  const todayStr = new Date().toDateString();
+                  const lastSameDayLog = [...history]
+                    .filter((log) => {
+                      const logDate = new Date(log.date);
+                      return logDate.getDay() === todayDayOfWeek && logDate.toDateString() !== todayStr;
+                    })
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+                  const targetName = lastSameDayLog ? lastSameDayLog.name.toLowerCase() : null;
+
                   const defaultOrder = ['tmpl-push', 'tmpl-pull', 'tmpl-legs', 'tmpl-upper', 'tmpl-full'];
                   const sortedList = [...templates].sort((a, b) => {
+                    if (targetName) {
+                      const matchA = a.name.toLowerCase() === targetName;
+                      const matchB = b.name.toLowerCase() === targetName;
+                      if (matchA && !matchB) return -1;
+                      if (matchB && !matchA) return 1;
+                    }
                     const idxA = defaultOrder.indexOf(a.id);
                     const idxB = defaultOrder.indexOf(b.id);
                     if (idxA !== -1 && idxB !== -1) return idxA - idxB;
                     if (idxA !== -1) return -1;
                     if (idxB !== -1) return 1;
-                    const countA = a.usageCount || 0;
-                    const countB = b.usageCount || 0;
-                    if (countA !== countB) return countB - countA;
                     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                   });
                   return sortedList.map((tmpl) => {
