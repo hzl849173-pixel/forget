@@ -55,112 +55,7 @@ const categoryColors: Record<string, string> = {
   Shoulders: '#22C55E',
 };
 
-const ALT_COLORS = [
-  '#A855F7', // Purple
-  '#FACC15', // Yellow
-  '#3B82F6', // Blue
-  '#FF8A00', // Orange
-];
 
-const KettlebellIcon = ({ color }: { color: string }) => (
-  <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
-    {/* Kettlebell Handle */}
-    <View style={{
-      width: 12,
-      height: 9,
-      borderRadius: 5,
-      borderWidth: 1.5,
-      borderColor: color,
-      backgroundColor: 'transparent',
-      position: 'absolute',
-      top: 1,
-    }} />
-    {/* Kettlebell Body */}
-    <View style={{
-      width: 15,
-      height: 15,
-      borderRadius: 7.5,
-      borderWidth: 1.5,
-      borderColor: color,
-      backgroundColor: 'transparent',
-      position: 'absolute',
-      bottom: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}>
-      {/* Inner weight marker */}
-      <View style={{
-        width: 3,
-        height: 3,
-        borderRadius: 1.5,
-        backgroundColor: color,
-      }} />
-    </View>
-  </View>
-);
-
-const WeightPlateIcon = ({ color }: { color: string }) => (
-  <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
-    {/* Outer Plate rim */}
-    <View style={{
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      borderWidth: 1.5,
-      borderColor: color,
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}>
-      {/* Inner dash details */}
-      <View style={{
-        width: 13,
-        height: 13,
-        borderRadius: 6.5,
-        borderWidth: 0.75,
-        borderColor: color,
-        borderStyle: 'dashed',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}>
-        {/* Center hole */}
-        <View style={{
-          width: 4,
-          height: 4,
-          borderRadius: 2,
-          borderWidth: 1,
-          borderColor: color,
-          backgroundColor: '#13141C',
-        }} />
-      </View>
-    </View>
-  </View>
-);
-
-const ALT_IMAGES = [
-  (color: string) => (
-    <Image
-      source={require('@/assets/images/eq_dumbbell.png')}
-      style={{ width: 24, height: 24, opacity: 0.85 }}
-      contentFit="contain"
-    />
-  ),
-  (color: string) => (
-    <Image
-      source={require('@/assets/images/eq_cable.png')}
-      style={{ width: 24, height: 24, opacity: 0.85 }}
-      contentFit="contain"
-    />
-  ),
-  (color: string) => (
-    <Image
-      source={require('@/assets/images/eq_barbell.png')}
-      style={{ width: 24, height: 24, opacity: 0.85 }}
-      contentFit="contain"
-    />
-  ),
-  (color: string) => <KettlebellIcon color={color} />,
-  (color: string) => <WeightPlateIcon color={color} />,
-];
 const Haptics = {
   impactAsync: async (...args: any[]) => { },
   notificationAsync: async (...args: any[]) => { },
@@ -193,6 +88,7 @@ import { IncrementInput } from '@/components/ui/input';
 import { MuscleBadge } from '@/components/ui/muscle-badge';
 import { ProgressGrid } from '@/components/ui/progress-grid';
 import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS } from '@/constants/exercises';
+import { getExerciseImage } from '@/constants/equipmentImages';
 import { useWorkoutAnalytics } from '@/hooks/use-workout-analytics';
 import { Exercise, LoggedExercise, PersonalRecord, useWorkout, WorkoutSession, WorkoutSet, WorkoutTemplate } from '@/hooks/use-workout-storage';
 import DragList from 'react-native-draglist';
@@ -2534,17 +2430,18 @@ export default function SinglePageLandingScreen() {
                               </View>
                             )}
                             {(() => {
-                              const exerciseColor = ALT_COLORS[index % 4];
-                              const renderExerciseIcon = ALT_IMAGES[index % 5];
-                              return (
-                                <View style={[
-                                  styles.exerciseBadgeCircle,
-                                  { backgroundColor: `${exerciseColor}12` }
-                                ]}>
-                                  {renderExerciseIcon(exerciseColor)}
-                                </View>
-                              );
-                            })()}
+                               const sectionIndex = section.data.indexOf(item);
+                               const imgSource = getExerciseImage(item.instrument, sectionIndex);
+                               return (
+                                 <View style={styles.exerciseBadgeCircle}>
+                                   <Image
+                                     source={imgSource}
+                                     style={{ width: 26, height: 26 }}
+                                     contentFit="contain"
+                                   />
+                                 </View>
+                               );
+                             })()}
                             <Text
                               style={[styles.exerciseName, { color: theme.textPrimary }]}
                               numberOfLines={2}
