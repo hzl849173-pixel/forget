@@ -433,6 +433,7 @@ export default function SinglePageLandingScreen() {
   const [sessionStartTime, setSessionStartTime] = useState<number>(0);
   const [editSessionExerciseModalVisible, setEditSessionExerciseModalVisible] = useState(false);
   const [cameFromEditModal, setCameFromEditModal] = useState(false);
+  const [cameFromActiveSessionPlus, setCameFromActiveSessionPlus] = useState(false);
 
   // Add exercise state
   const [addExerciseVisible, setAddExerciseVisible] = useState(false);
@@ -916,6 +917,12 @@ export default function SinglePageLandingScreen() {
 
     setActiveSessionExercises(updatedExercises);
     await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updatedExercises));
+
+    if (cameFromActiveSessionPlus) {
+      setSelectedModalMuscle(null);
+      setSelectedSubGroup(null);
+      setCameFromActiveSessionPlus(false);
+    }
 
     // Reset logger states
     handleCloseActiveExerciseLogger(true);
@@ -1517,7 +1524,10 @@ export default function SinglePageLandingScreen() {
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <TouchableOpacity
-                        onPress={() => handleSelectMuscleCard('Chest')}
+                        onPress={() => {
+                          setCameFromActiveSessionPlus(true);
+                          handleSelectMuscleCard('Chest');
+                        }}
                         activeOpacity={0.6}
                         style={{ padding: 6 }}
                       >
@@ -2194,6 +2204,7 @@ export default function SinglePageLandingScreen() {
             if (fromTemplateList) {
               setTemplateListVisible(true);
             }
+            setCameFromActiveSessionPlus(false);
           }}
         >
           <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
@@ -2222,6 +2233,7 @@ export default function SinglePageLandingScreen() {
                       if (fromTemplateList) {
                         setTemplateListVisible(true);
                       }
+                      setCameFromActiveSessionPlus(false);
                     }}
                     activeOpacity={0.7}
                     style={{ padding: 6 }}
