@@ -4644,13 +4644,17 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   historyTitleCol: {
+    flex: 1,
+    flexShrink: 1,
     gap: 3,
+    marginRight: 8,
   },
   historySessionName: {
-    fontSize: 17,
+    fontSize: 14,
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: -0.3,
+    flexShrink: 1,
   },
   historyDate: {
     fontSize: 10,
@@ -4660,6 +4664,7 @@ const styles = StyleSheet.create({
   },
   deleteLogBtn: {
     padding: 6,
+    flexShrink: 0,
   },
   historySetsReceipt: {
     borderTopWidth: 1,
