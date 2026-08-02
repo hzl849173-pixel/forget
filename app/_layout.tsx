@@ -56,6 +56,7 @@ export default function RootLayout() {
             <Stack.Screen name="onboarding/height" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/weight" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/goal" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding/templates" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/signin" options={{ headerShown: false }} />
 
             {/* home */}

@@ -59,7 +59,7 @@ export default function GoalScreen() {
             goal: selected,
         };
         await saveLocalProfile(next);
-        router.push('/onboarding/signin');
+        router.push('/onboarding/templates');
     };
 
     return (
