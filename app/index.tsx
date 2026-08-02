@@ -4755,20 +4755,19 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   detailHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 4,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    marginBottom: 12,
   },
   detailTitleCol: {
-    flex: 1,
-    marginRight: 12,
+    marginRight: 32, // Leave room for floating close button
     gap: 3,
+    marginBottom: 10,
   },
   detailSessionName: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '800',
-    letterSpacing: -0.4,
+    letterSpacing: -0.3,
   },
   detailDate: {
     fontSize: 10,
