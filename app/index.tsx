@@ -1868,7 +1868,7 @@ export default function SinglePageLandingScreen() {
                       activeOpacity={0.6}
                       style={[
                         styles.weekStartToggleOption,
-                        { backgroundColor: weekStartDay === 0 ? '#3B82F6' : 'transparent' },
+                        { backgroundColor: weekStartDay === 0 ? '#10B981' : 'transparent' },
                       ]}
                     >
                       <Text
@@ -1885,7 +1885,7 @@ export default function SinglePageLandingScreen() {
                       activeOpacity={0.6}
                       style={[
                         styles.weekStartToggleOption,
-                        { backgroundColor: weekStartDay === 1 ? '#3B82F6' : 'transparent' },
+                        { backgroundColor: weekStartDay === 1 ? '#10B981' : 'transparent' },
                       ]}
                     >
                       <Text
@@ -4395,20 +4395,25 @@ const styles = StyleSheet.create({
   },
   weekStartToggle: {
     flexDirection: 'row',
-    borderRadius: 6,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#3B82F660',
-    overflow: 'hidden',
+    borderColor: '#10B98140',
+    padding: 2,
+    alignItems: 'center',
     marginRight: 4,
+    backgroundColor: '#10B98108',
   },
   weekStartToggleOption: {
     paddingHorizontal: 6,
     paddingVertical: 2,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   weekStartToggleText: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   weekDaysRow: {
     flexDirection: 'row',
