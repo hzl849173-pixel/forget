@@ -1471,11 +1471,11 @@ export default function SinglePageLandingScreen() {
   if (favoriteExercises.length > 0) {
     exerciseSections.push({ title: 'Favorites', data: favoriteExercises });
   }
+  if (customExercises.length > 0) {
+    exerciseSections.push({ title: 'Added Workouts', data: customExercises });
+  }
   if (popularExercises.length > 0) {
     exerciseSections.push({ title: 'Popular Workouts', data: popularExercises });
-  }
-  if (customExercises.length > 0) {
-    exerciseSections.push({ title: 'Added Exercises', data: customExercises });
   }
   INSTRUMENT_ORDER.forEach((inst) => {
     const data = defaultExercises.filter((ex) => (ex.instrument || 'Other') === inst);
@@ -2324,21 +2324,47 @@ export default function SinglePageLandingScreen() {
                     </Text>
                     <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>Select a workout to log completed sets</Text>
                   </View>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setSelectedModalMuscle(null);
-                      setSelectedSubGroup(null);
-                      setSelectedPickerExerciseIds(new Set());
-                      if (fromTemplateList) {
-                        setTemplateListVisible(true);
-                      }
-                      setCameFromActiveSessionPlus(false);
-                    }}
-                    activeOpacity={0.7}
-                    style={{ padding: 6 }}
-                  >
-                    <X size={22} color={theme.textSecondary} strokeWidth={2.5} />
-                  </TouchableOpacity>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setNewExerciseName('');
+                        setAddExerciseVisible(true);
+                      }}
+                      activeOpacity={0.7}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4,
+                        paddingVertical: 5,
+                        paddingHorizontal: 10,
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: '#10B98140',
+                        backgroundColor: '#10B98108',
+                        marginRight: 4,
+                      }}
+                    >
+                      <Plus size={12} color="#10B981" strokeWidth={2.5} />
+                      <Text style={{ color: '#10B981', fontSize: 10, fontWeight: '800', letterSpacing: 0.5 }}>
+                        ADD
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedModalMuscle(null);
+                        setSelectedSubGroup(null);
+                        setSelectedPickerExerciseIds(new Set());
+                        if (fromTemplateList) {
+                          setTemplateListVisible(true);
+                        }
+                        setCameFromActiveSessionPlus(false);
+                      }}
+                      activeOpacity={0.7}
+                      style={{ padding: 6 }}
+                    >
+                      <X size={22} color={theme.textSecondary} strokeWidth={2.5} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 {/* Top Horizontal Muscle Switcher to migrate groups */}
@@ -2560,19 +2586,6 @@ export default function SinglePageLandingScreen() {
                       </Card>
                     );
                   }}
-                  ListHeaderComponent={() => (
-                    <TouchableOpacity
-                      style={styles.addExerciseBtn}
-                      onPress={() => {
-                        setNewExerciseName('');
-                        setAddExerciseVisible(true);
-                      }}
-                      activeOpacity={0.5}
-                    >
-                      <Plus size={14} color="#6B7280" strokeWidth={2} />
-                      <Text style={styles.addExerciseBtnText}>Add Workout</Text>
-                    </TouchableOpacity>
-                  )}
                 />
 
                 {/* Modal Sticky Footer if active session is not empty */}
@@ -5937,13 +5950,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 10,
-    marginTop: 6,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#10B98140',
+    backgroundColor: '#10B98105',
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
   },
   addExerciseBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#6B7280',
-    letterSpacing: 0.3,
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#10B981',
+    letterSpacing: 0.5,
   },
   addExerciseOverlay: {
     flex: 1,
