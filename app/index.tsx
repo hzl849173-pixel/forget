@@ -3067,7 +3067,7 @@ export default function SinglePageLandingScreen() {
               </View>
 
               <DragList
-                containerStyle={{ maxHeight: 400, flexShrink: 1 }}
+                containerStyle={{ maxHeight: 520, flexShrink: 1 }}
                 data={activeSessionExercises}
                 keyExtractor={(item) => item.exerciseId}
                 onReordered={(fromIdx, toIdx) => {
@@ -3078,7 +3078,7 @@ export default function SinglePageLandingScreen() {
                   setActiveSessionExercises(updated);
                   AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
                 }}
-                style={{ maxHeight: 400, flexShrink: 1 }}
+                style={{ maxHeight: 520, flexShrink: 1 }}
                 renderItem={({ item, onDragStart, isActive }) => {
                   const details = exercises.find((e) => e.id === item.exerciseId);
                   if (!details) return null;
@@ -3545,7 +3545,7 @@ export default function SinglePageLandingScreen() {
                 </View>
               ) : (
                 <DragList
-                  containerStyle={{ maxHeight: 400, flexShrink: 1 }}
+                  containerStyle={{ maxHeight: 520, flexShrink: 1 }}
                   data={templateListExercises}
                   keyExtractor={(item) => item.exerciseId}
                   onReordered={(fromIdx, toIdx) => {
@@ -3556,7 +3556,7 @@ export default function SinglePageLandingScreen() {
                       return updated;
                     });
                   }}
-                  style={{ maxHeight: 400, flexShrink: 1 }}
+                  style={{ maxHeight: 520, flexShrink: 1 }}
                   renderItem={({ item, onDragStart, isActive }) => {
                     const details = exercises.find((e) => e.id === item.exerciseId);
                     if (!details) return null;
@@ -3755,7 +3755,7 @@ export default function SinglePageLandingScreen() {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+              <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
                 {templateListExercises.map((logEx) => {
                   const details = exercises.find((e) => e.id === logEx.exerciseId);
                   if (!details) return null;
