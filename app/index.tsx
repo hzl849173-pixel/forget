@@ -715,6 +715,34 @@ export default function SinglePageLandingScreen() {
     setSortedExerciseList(sortExercisesForMuscle(muscle));
   };
 
+  const getMostFrequentMuscleGroup = (loggedExercises: LoggedExercise[]): MuscleGroup => {
+    if (!loggedExercises || loggedExercises.length === 0) {
+      return 'Chest';
+    }
+
+    const counts: Record<string, number> = {};
+    for (const logEx of loggedExercises) {
+      const ex = exercises.find((e) => e.id === logEx.exerciseId);
+      if (ex && ex.muscleGroup) {
+        let muscle = ex.muscleGroup;
+        if (muscle === 'Abs' || muscle === 'Shoulders') {
+          muscle = 'Abs & Shoulders';
+        }
+        counts[muscle] = (counts[muscle] || 0) + 1;
+      }
+    }
+
+    let maxMuscle: MuscleGroup = 'Chest';
+    let maxCount = 0;
+    for (const m of Object.keys(counts)) {
+      if (counts[m] > maxCount) {
+        maxCount = counts[m];
+        maxMuscle = m as MuscleGroup;
+      }
+    }
+    return maxMuscle;
+  };
+
   // Auto-populate sets when expanding an exercise
   const handleToggleExpand = (exerciseId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -1192,7 +1220,7 @@ export default function SinglePageLandingScreen() {
       setFromTemplateList(true);
 
       // Instantly pop open the exercise selector to add workouts to this template
-      handleSelectMuscleCard('Chest');
+      handleSelectMuscleCard(getMostFrequentMuscleGroup(templateExercises));
     }
 
     setTemplateModalVisible(false);
@@ -1534,7 +1562,7 @@ export default function SinglePageLandingScreen() {
                       <TouchableOpacity
                         onPress={() => {
                           setCameFromActiveSessionPlus(true);
-                          handleSelectMuscleCard('Chest');
+                          handleSelectMuscleCard(getMostFrequentMuscleGroup(activeSessionExercises));
                         }}
                         activeOpacity={0.6}
                         style={{ padding: 6 }}
@@ -3469,7 +3497,7 @@ export default function SinglePageLandingScreen() {
                   {!isDeleteMode && (
                     <TouchableOpacity
                       onPress={() => {
-                        handleSelectMuscleCard('Chest');
+                        handleSelectMuscleCard(getMostFrequentMuscleGroup(templateListExercises));
                       }}
                       activeOpacity={0.6}
                       style={{ padding: 4 }}
@@ -3501,7 +3529,7 @@ export default function SinglePageLandingScreen() {
                   </Text>
                   <TouchableOpacity
                     onPress={() => {
-                      handleSelectMuscleCard('Chest');
+                      handleSelectMuscleCard(getMostFrequentMuscleGroup(templateListExercises));
                     }}
                     activeOpacity={0.7}
                     style={{
