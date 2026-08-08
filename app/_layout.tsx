@@ -12,7 +12,10 @@ LogBox.ignoreLogs([
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { WorkoutProvider } from '@/hooks/use-workout-storage';
 import { isOnboardingCompleted } from '@/lib/profile/profileStorage';
+import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useState } from 'react';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export const unstable_settings = {
   anchor: 'index',
@@ -32,7 +35,10 @@ export default function RootLayout() {
         if (!mounted) return;
         setOnboardingCompleted(done);
       } finally {
-        if (mounted) setDecided(true);
+        if (mounted) {
+          setDecided(true);
+          SplashScreen.hideAsync().catch(() => {});
+        }
       }
     })();
     return () => {

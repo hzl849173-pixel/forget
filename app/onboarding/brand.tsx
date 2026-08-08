@@ -22,12 +22,14 @@ export default function BrandingScreen() {
     const forgetScale = useRef(new Animated.Value(1)).current;
     const forgetY = useRef(new Animated.Value(0)).current;
 
+    const fadeInOpacity = useRef(new Animated.Value(0)).current;
     const transitionOpacity = useRef(new Animated.Value(1)).current;
 
     const stylesMemo = useMemo(() => styles, []);
 
     useEffect(() => {
-        // Reset values (all visible immediately, no animation)
+        // Smooth opening fade-in from beginning (0 to 1)
+        fadeInOpacity.setValue(0);
         logoOpacity.setValue(1);
         logoScale.setValue(1);
         weRememberOpacity.setValue(1);
@@ -39,10 +41,16 @@ export default function BrandingScreen() {
         forgetY.setValue(0);
         transitionOpacity.setValue(1);
 
-        // Transition to next screen (1200ms readable display delay + 250ms fade)
+        Animated.timing(fadeInOpacity, {
+            toValue: 1,
+            duration: 350,
+            useNativeDriver: true,
+        }).start();
+
+        // Transition to next screen (1200ms readable display delay + 250ms fade out)
         const t = setTimeout(() => {
             Animated.timing(transitionOpacity, {
-                toValue: 0.1,
+                toValue: 0,
                 duration: 250,
                 useNativeDriver: true,
             }).start(() => {
@@ -53,11 +61,13 @@ export default function BrandingScreen() {
         return () => {
             clearTimeout(t);
         };
-    }, [router, logoOpacity, logoScale, weRememberOpacity, weRememberY, soYouCanOpacity, soYouCanY, forgetOpacity, forgetScale, forgetY, transitionOpacity]);
+    }, [router, fadeInOpacity, logoOpacity, logoScale, weRememberOpacity, weRememberY, soYouCanOpacity, soYouCanY, forgetOpacity, forgetScale, forgetY, transitionOpacity]);
+
+    const combinedOpacity = Animated.multiply(fadeInOpacity, transitionOpacity);
 
     return (
         <SafeAreaView style={stylesMemo.safe}>
-            <Animated.View style={[stylesMemo.screen, { opacity: transitionOpacity }]}>
+            <Animated.View style={[stylesMemo.screen, { opacity: combinedOpacity }]}>
                 {/* Center content */}
                 <View style={stylesMemo.center}>
                     <Animated.View style={[stylesMemo.logoWrap, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}>

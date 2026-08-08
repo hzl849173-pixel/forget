@@ -764,7 +764,12 @@ export default function SinglePageLandingScreen() {
     }
   }, [highlightedTemplateId]);
 
+  const isFirstTabRender = React.useRef(true);
   React.useEffect(() => {
+    if (isFirstTabRender.current) {
+      isFirstTabRender.current = false;
+      return;
+    }
     tabOpacity.setValue(0);
     Animated.timing(tabOpacity, {
       toValue: 1,
