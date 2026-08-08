@@ -32,7 +32,7 @@ export default function NameScreen() {
             weightKg: 0,
             goal: '' as FitnessGoal,
         });
-        router.push('/onboarding/templates');
+        router.replace('/onboarding/signin');
     };
 
     return (
@@ -77,6 +77,7 @@ export default function NameScreen() {
                 <View style={styles.footer}>
                     <View style={styles.progressDots}>
                         <View style={[styles.dot, styles.activeDot]} />
+                        <View style={styles.dot} />
                         <View style={styles.dot} />
                     </View>
                 </View>

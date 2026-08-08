@@ -3,6 +3,11 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
+import { LogBox } from 'react-native';
+
+LogBox.ignoreLogs([
+  'Unable to activate keep awake',
+]);
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { WorkoutProvider } from '@/hooks/use-workout-storage';

@@ -38,14 +38,7 @@ export default function SignInScreen() {
     }, []);
 
     const handleSkip = async () => {
-        try {
-            // User skipped sign-in: still mark onboarding completed.
-            // Do NOT mark signed-in=true; we want “local mode” later.
-            await setOnboardingCompleted();
-        } catch {
-            // ignore
-        }
-        router.replace('/');
+        router.replace('/onboarding/templates');
     };
 
     const handleContinueWithGoogle = async () => {
@@ -87,8 +80,7 @@ export default function SignInScreen() {
                 }
             }
 
-            await setOnboardingCompleted();
-            router.replace('/');
+            router.replace('/onboarding/templates');
         } catch (e: any) {
             Alert.alert(
                 'Google Sign-In',
@@ -102,11 +94,9 @@ export default function SignInScreen() {
     return (
         <SafeAreaView style={styles.safe}>
             <View style={styles.screen}>
-                {router.canGoBack() && (
-                    <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={styles.backBtn}>
-                        <Text style={styles.backText}>{'< Back'}</Text>
-                    </TouchableOpacity>
-                )}
+                <TouchableOpacity onPress={() => router.replace('/onboarding/name')} activeOpacity={0.7} style={styles.backBtn}>
+                    <Text style={styles.backText}>{'< Back'}</Text>
+                </TouchableOpacity>
 
                 <View style={styles.header}>
                     <Text style={styles.kicker}>SECURE SYNC</Text>
@@ -141,6 +131,14 @@ export default function SignInScreen() {
                 <Text style={styles.finePrint}>
                     You can sign in later when you use cloud sync, restore data, or unlock Pro features.
                 </Text>
+
+                <View style={styles.footer}>
+                    <View style={styles.progressDots}>
+                        <View style={styles.dot} />
+                        <View style={[styles.dot, styles.activeDot]} />
+                        <View style={styles.dot} />
+                    </View>
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -176,4 +174,26 @@ const styles = StyleSheet.create({
     },
     skipText: { color: '#111827', fontWeight: '900', letterSpacing: 0.3 },
     finePrint: { marginTop: 18, textAlign: 'center', color: '#9CA3AF', fontWeight: '600', fontSize: 12, lineHeight: 16 },
+    footer: {
+        marginTop: 'auto',
+        paddingBottom: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    progressDots: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    dot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#E5E7EB',
+    },
+    activeDot: {
+        backgroundColor: '#10B981',
+        width: 24,
+    },
 });

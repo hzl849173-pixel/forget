@@ -63,18 +63,17 @@ export default function TemplatesScreen() {
         router.replace('/');
     };
 
-    const handleSkip = () => {
-        router.push('/onboarding/signin');
+    const handleSkip = async () => {
+        await setOnboardingCompleted();
+        router.replace('/');
     };
 
     return (
         <SafeAreaView style={styles.safe}>
             <View style={styles.screen}>
-                {router.canGoBack() && (
-                    <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={styles.backBtn}>
-                        <Text style={styles.backText}>{'< Back'}</Text>
-                    </TouchableOpacity>
-                )}
+                <TouchableOpacity onPress={() => router.replace('/onboarding/signin')} activeOpacity={0.7} style={styles.backBtn}>
+                    <Text style={styles.backText}>{'< Back'}</Text>
+                </TouchableOpacity>
 
                 <View style={styles.header}>
                     <Text style={styles.kicker}>QUICK START</Text>
@@ -152,6 +151,7 @@ export default function TemplatesScreen() {
 
                 <View style={styles.footer}>
                     <View style={styles.progressDots}>
+                        <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={[styles.dot, styles.activeDot]} />
                     </View>
