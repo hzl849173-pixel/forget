@@ -153,8 +153,6 @@ export default function TemplatesScreen() {
                 <View style={styles.footer}>
                     <View style={styles.progressDots}>
                         <View style={styles.dot} />
-                        <View style={styles.dot} />
-                        <View style={styles.dot} />
                         <View style={[styles.dot, styles.activeDot]} />
                     </View>
                 </View>

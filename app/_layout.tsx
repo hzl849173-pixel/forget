@@ -53,9 +53,6 @@ export default function RootLayout() {
             {/* onboarding routes */}
             <Stack.Screen name="onboarding/brand" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/name" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding/height" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding/weight" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding/goal" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/templates" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/signin" options={{ headerShown: false }} />
 
