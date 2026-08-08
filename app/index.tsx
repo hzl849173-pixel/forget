@@ -1654,35 +1654,37 @@ export default function SinglePageLandingScreen() {
                       <Text style={[styles.finishSessionBtnText, { fontSize: 11, letterSpacing: 0.3 }]}>SAVE WORKOUT</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity
-                      style={[
-                        styles.finishSessionBtn,
-                        {
-                          flex: 1,
-                          backgroundColor: 'transparent',
-                          borderWidth: 1.5,
-                          borderColor: '#10B981',
-                          paddingVertical: 8.5,
-                          borderRadius: 10,
-                        }
-                      ]}
-                      onPress={async () => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        const suggestedTitle = suggestWorkoutTitle(activeSessionExercises);
-                        setIsSavingActiveSessionAsTemplate(true);
-                        const exercisesToSave = activeSessionExercises.map((le) => ({
-                          id: le.id || generateId(),
-                          exerciseId: le.exerciseId,
-                          sets: le.sets.map((s) => ({ ...s })),
-                        }));
-                        setTemplateExercises(exercisesToSave);
-                        setTemplateName(suggestedTitle);
-                        setTemplateModalVisible(true);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.finishSessionBtnText, { color: '#10B981', fontSize: 11, letterSpacing: 0.3 }]}>SAVE AS TEMPLATE</Text>
-                    </TouchableOpacity>
+                    {!sessionTemplateId && !sessionStartedFromTemplate && (
+                      <TouchableOpacity
+                        style={[
+                          styles.finishSessionBtn,
+                          {
+                            flex: 1,
+                            backgroundColor: 'transparent',
+                            borderWidth: 1.5,
+                            borderColor: '#10B981',
+                            paddingVertical: 8.5,
+                            borderRadius: 10,
+                          }
+                        ]}
+                        onPress={async () => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          const suggestedTitle = suggestWorkoutTitle(activeSessionExercises);
+                          setIsSavingActiveSessionAsTemplate(true);
+                          const exercisesToSave = activeSessionExercises.map((le) => ({
+                            id: le.id || generateId(),
+                            exerciseId: le.exerciseId,
+                            sets: le.sets.map((s) => ({ ...s })),
+                          }));
+                          setTemplateExercises(exercisesToSave);
+                          setTemplateName(suggestedTitle);
+                          setTemplateModalVisible(true);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.finishSessionBtnText, { color: '#10B981', fontSize: 11, letterSpacing: 0.3 }]}>SAVE AS TEMPLATE</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </Card>
               )}
