@@ -1050,43 +1050,8 @@ export default function SinglePageLandingScreen() {
       }
     };
 
-    if (sessionStartedFromTemplate) {
-      // Just save directly with absolutely no popup dialog!
-      await performSave();
-      return;
-    }
-
-    showCustomAlert(
-      'Finish Workout Day',
-      `Save today's session as "${suggestedTitle}"?`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Save',
-          style: 'default',
-          onPress: performSave,
-        },
-        {
-          text: 'Create Template',
-          style: 'default',
-          onPress: async () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setIsSavingActiveSessionAsTemplate(true);
-            const exercisesToSave = activeSessionExercises.map((le) => ({
-              exerciseId: le.exerciseId,
-              sets: le.sets.map((s) => ({ ...s })),
-            }));
-            setTemplateExercises(exercisesToSave);
-            setTemplateName(suggestedTitle);
-            setTemplateModalVisible(true);
-          },
-        },
-      ],
-      <Trophy size={28} color="#10B981" />
-    );
+    // Just save directly with absolutely no popup dialog!
+    await performSave();
   };
 
   const handleCancelSession = () => {
@@ -1686,6 +1651,26 @@ export default function SinglePageLandingScreen() {
                     activeOpacity={0.8}
                   >
                     <Text style={styles.finishSessionBtnText}>SAVE WORKOUT DAY</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.finishSessionBtn, { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#10B981', marginTop: 10 }]}
+                    onPress={async () => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      const suggestedTitle = suggestWorkoutTitle(activeSessionExercises);
+                      setIsSavingActiveSessionAsTemplate(true);
+                      const exercisesToSave = activeSessionExercises.map((le) => ({
+                        id: le.id || generateId(),
+                        exerciseId: le.exerciseId,
+                        sets: le.sets.map((s) => ({ ...s })),
+                      }));
+                      setTemplateExercises(exercisesToSave);
+                      setTemplateName(suggestedTitle);
+                      setTemplateModalVisible(true);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.finishSessionBtnText, { color: '#10B981' }]}>SAVE AS TEMPLATE</Text>
                   </TouchableOpacity>
                 </Card>
               )}
@@ -2569,11 +2554,9 @@ export default function SinglePageLandingScreen() {
                     <TouchableOpacity
                       style={[styles.modalFinishBtn, { backgroundColor: '#10B981' }]}
                       onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         setSelectedModalMuscle(null);
                         setSelectedSubGroup(null);
-                        setTimeout(() => {
-                          handleFinishWorkoutDay();
-                        }, 400);
                       }}
                       activeOpacity={0.8}
                     >
