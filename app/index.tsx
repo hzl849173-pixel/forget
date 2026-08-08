@@ -38,12 +38,15 @@ import * as Notifications from 'expo-notifications';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
+  handleNotification: async (notification) => {
+    const isOngoing = notification.request.identifier === 'rest-timer-active-ongoing';
+    return {
+      shouldShowBanner: !isOngoing,
+      shouldShowList: true,
+      shouldPlaySound: !isOngoing,
+      shouldSetBadge: false,
+    };
+  },
 });
 
 const MUSCLE_IMAGES = {
@@ -84,13 +87,13 @@ const Haptics = {
 };
 
 import { auth } from '@/lib/firebase/firebaseConfig';
-import { loadLocalProfile, OnboardingProfile, setSignedOut, saveLocalProfile, FitnessGoal } from '@/lib/profile/profileStorage';
+import { loadLocalProfile, OnboardingProfile, setSignedOut, setSignedIn, saveLocalProfile, FitnessGoal } from '@/lib/profile/profileStorage';
 import { getProfileFromFirestore, saveProfileToFirestore } from '@/lib/firestore/profileFirestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { signOut } from 'firebase/auth';
-import { signOutFromGoogle } from '@/lib/auth/googleAuth';
+import { useGoogleSignIn, signOutFromGoogle } from '@/lib/auth/googleAuth';
 
 import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
 import { Button } from '@/components/ui/button';
@@ -374,27 +377,82 @@ export default function SinglePageLandingScreen() {
   const soundObjectRef = React.useRef<any>(null);
 
   React.useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
     async function configureNotifications() {
       try {
         if (Platform.OS === 'android') {
-          await Notifications.setNotificationChannelAsync('rest-timer', {
-            name: 'Rest Timer',
-            importance: Notifications.AndroidImportance.HIGH,
-            vibrationPattern: [0, 250, 250, 250],
+          await Notifications.setNotificationChannelAsync('rest-timer-alarm-v3', {
+            name: 'Rest Timer Alarm',
+            importance: Notifications.AndroidImportance.MAX,
+            vibrationPattern: [0, 500, 250, 500],
             lightColor: '#10B981',
             sound: 'default',
+            audioAttributes: {
+              usage: Notifications.AndroidAudioUsage.ALARM,
+              contentType: Notifications.AndroidAudioContentType.SONIFICATION,
+            },
+            bypassDnd: true,
+          });
+
+          await Notifications.setNotificationChannelAsync('rest-timer-ongoing-v3', {
+            name: 'Rest Timer Countdown',
+            importance: Notifications.AndroidImportance.LOW,
+            sound: null,
+            vibrationPattern: null,
+            showBadge: false,
           });
         }
-        const { status } = await Notifications.getPermissionsAsync();
-        if (status !== 'granted') {
-          await Notifications.requestPermissionsAsync();
-        }
+        timer = setTimeout(async () => {
+          try {
+            const { status } = await Notifications.getPermissionsAsync();
+            if (status !== 'granted') {
+              await Notifications.requestPermissionsAsync();
+            }
+          } catch (err) {
+            console.warn('Deferred notification permission error:', err);
+          }
+        }, 500);
       } catch (e) {
         console.warn('Notification setup error:', e);
       }
     }
     configureNotifications();
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
+
+  const updateOngoingNotification = async (sec: number, targetEndMs?: number | null) => {
+    try {
+      const formatted = formatRestTime(sec);
+      let bodyText = `${formatted} remaining`;
+      if (targetEndMs) {
+        const targetDate = new Date(targetEndMs);
+        const timeStr = targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        bodyText = `${formatted} remaining • Finish at ${timeStr}`;
+      }
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'rest-timer-active-ongoing',
+        content: {
+          title: 'Rest Timer ⏱️',
+          body: bodyText,
+          sound: false,
+          priority: Notifications.AndroidNotificationPriority.LOW,
+          sticky: true,
+          autoDismiss: false,
+        },
+        trigger: {
+          channelId: 'rest-timer-ongoing-v3',
+        } as any,
+      });
+    } catch (err) {}
+  };
+
+  const dismissOngoingNotification = async () => {
+    try {
+      await Notifications.dismissNotificationAsync('rest-timer-active-ongoing');
+    } catch (err) {}
+  };
 
   const scheduleRestTimerNotification = async (seconds: number) => {
     try {
@@ -407,13 +465,14 @@ export default function SinglePageLandingScreen() {
         content: {
           title: "Time's up! ⏱️",
           body: "Rest period over. Time to start your next set!",
-          sound: true,
-          priority: Notifications.AndroidNotificationPriority.HIGH,
+          sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          vibrate: [0, 500, 250, 500],
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
           seconds: Math.max(1, Math.floor(seconds)),
-          channelId: 'rest-timer',
+          channelId: 'rest-timer-alarm-v3',
         },
       });
     } catch (err) {
@@ -438,6 +497,8 @@ export default function SinglePageLandingScreen() {
         setRestTimerSeconds(remainingSec);
         if (remainingSec <= 0) {
           handleTimerFinished();
+        } else {
+          updateOngoingNotification(remainingSec, restTimerTargetEndRef.current);
         }
       }
     });
@@ -493,6 +554,7 @@ export default function SinglePageLandingScreen() {
     restTimerRef.current = null;
     restTimerTargetEndRef.current = null;
     setRestTimerRunning(false);
+    dismissOngoingNotification();
     cancelRestTimerNotification();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     if (restTimerSound !== 'none') {
@@ -508,6 +570,7 @@ export default function SinglePageLandingScreen() {
 
   const startRestTimer = (seconds: number) => {
     stopTimerSound();
+    dismissOngoingNotification();
     cancelRestTimerNotification();
     if (restTimerRef.current) clearInterval(restTimerRef.current);
     
@@ -519,12 +582,14 @@ export default function SinglePageLandingScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     scheduleRestTimerNotification(seconds);
+    updateOngoingNotification(seconds, targetEnd);
 
     restTimerRef.current = setInterval(() => {
       if (!restTimerTargetEndRef.current) return;
       const remainingMs = restTimerTargetEndRef.current - Date.now();
       const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
       setRestTimerSeconds(remainingSec);
+      updateOngoingNotification(remainingSec, restTimerTargetEndRef.current);
       if (remainingSec <= 0) {
         handleTimerFinished();
       }
@@ -533,6 +598,7 @@ export default function SinglePageLandingScreen() {
 
   const stopRestTimer = () => {
     stopTimerSound();
+    dismissOngoingNotification();
     cancelRestTimerNotification();
     if (restTimerRef.current) clearInterval(restTimerRef.current);
     restTimerRef.current = null;
@@ -542,6 +608,7 @@ export default function SinglePageLandingScreen() {
 
   const resetRestTimer = () => {
     stopTimerSound();
+    dismissOngoingNotification();
     cancelRestTimerNotification();
     if (restTimerRef.current) clearInterval(restTimerRef.current);
     restTimerRef.current = null;
@@ -1103,6 +1170,57 @@ export default function SinglePageLandingScreen() {
     return "Full Body Day";
   };
 
+  const { signIn: signInWithGoogle } = useGoogleSignIn();
+
+  const ensureGoogleSignedIn = async (onSuccess: () => Promise<void>) => {
+    if (auth.currentUser || userEmail) {
+      await onSuccess();
+      return;
+    }
+
+    showCustomAlert(
+      'Log In to Save',
+      'Log in with Google to save your workout and sync your consistency streak.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log In with Google',
+          onPress: async () => {
+            try {
+              const user = await signInWithGoogle();
+              if (user) {
+                await setSignedIn();
+                setUserEmail(user.email);
+                setUserDisplayName(user.displayName);
+                const cloudProfile = await getProfileFromFirestore(user.uid);
+                if (cloudProfile) {
+                  const p = {
+                    name: cloudProfile.name || '',
+                    heightCm: cloudProfile.heightCm || 0,
+                    weightKg: cloudProfile.weightKg || 0,
+                    goal: cloudProfile.goal || ('' as FitnessGoal),
+                    updatedAt: new Date().toISOString(),
+                  };
+                  setUserProfile(p);
+                  await saveLocalProfile({
+                    name: p.name,
+                    heightCm: p.heightCm,
+                    weightKg: p.weightKg,
+                    goal: p.goal,
+                  });
+                }
+                await onSuccess();
+              }
+            } catch (e: any) {
+              console.warn('Google Sign-In failed during save:', e);
+            }
+          },
+        },
+      ],
+      <User size={28} color="#10B981" />
+    );
+  };
+
   const handleFinishWorkoutDay = async () => {
     if (activeSessionExercises.length === 0) {
       showCustomAlert(
@@ -1181,8 +1299,7 @@ export default function SinglePageLandingScreen() {
       }
     };
 
-    // Just save directly with absolutely no popup dialog!
-    await performSave();
+    await ensureGoogleSignedIn(performSave);
   };
 
   const handleCancelSession = () => {
@@ -1800,16 +1917,18 @@ export default function SinglePageLandingScreen() {
                         ]}
                         onPress={async () => {
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          const suggestedTitle = suggestWorkoutTitle(activeSessionExercises);
-                          setIsSavingActiveSessionAsTemplate(true);
-                          const exercisesToSave = activeSessionExercises.map((le) => ({
-                            id: le.id || generateId(),
-                            exerciseId: le.exerciseId,
-                            sets: le.sets.map((s) => ({ ...s })),
-                          }));
-                          setTemplateExercises(exercisesToSave);
-                          setTemplateName(suggestedTitle);
-                          setTemplateModalVisible(true);
+                          await ensureGoogleSignedIn(async () => {
+                            const suggestedTitle = suggestWorkoutTitle(activeSessionExercises);
+                            setIsSavingActiveSessionAsTemplate(true);
+                            const exercisesToSave = activeSessionExercises.map((le) => ({
+                              id: le.id || generateId(),
+                              exerciseId: le.exerciseId,
+                              sets: le.sets.map((s) => ({ ...s })),
+                            }));
+                            setTemplateExercises(exercisesToSave);
+                            setTemplateName(suggestedTitle);
+                            setTemplateModalVisible(true);
+                          });
                         }}
                         activeOpacity={0.7}
                       >
@@ -2114,11 +2233,13 @@ export default function SinglePageLandingScreen() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, marginTop: 4 }}>
                 <Text style={[styles.sectionHeader, { color: theme.textSecondary, marginBottom: 0, marginTop: 0 }]}>TEMPLATES</Text>
                 <TouchableOpacity
-                  onPress={() => {
-                    setTemplateName('');
-                    setTemplateExercises([]);
-                    setIsSavingActiveSessionAsTemplate(false);
-                    setTemplateModalVisible(true);
+                  onPress={async () => {
+                    await ensureGoogleSignedIn(async () => {
+                      setTemplateName('');
+                      setTemplateExercises([]);
+                      setIsSavingActiveSessionAsTemplate(false);
+                      setTemplateModalVisible(true);
+                    });
                   }}
                   activeOpacity={0.7}
                   style={{
