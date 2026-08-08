@@ -331,6 +331,7 @@ export default function SinglePageLandingScreen() {
   const [cameFromEditModal, setCameFromEditModal] = useState(false);
   const [cameFromActiveSessionPlus, setCameFromActiveSessionPlus] = useState(false);
   const [sessionStartedFromTemplate, setSessionStartedFromTemplate] = useState(false);
+  const [sessionTemplateId, setSessionTemplateId] = useState<string | null>(null);
 
   // Add exercise state
   const [addExerciseVisible, setAddExerciseVisible] = useState(false);
@@ -584,6 +585,12 @@ export default function SinglePageLandingScreen() {
       }
     });
 
+    AsyncStorage.getItem('@session_template_id').then((val) => {
+      if (val !== null) {
+        setSessionTemplateId(val);
+      }
+    });
+
     AsyncStorage.getItem('@custom_shoulder_ids').then((val) => {
       if (val !== null) {
         setCustomShoulderIds(new Set(JSON.parse(val)));
@@ -760,13 +767,12 @@ export default function SinglePageLandingScreen() {
       const initialSets: WorkoutSet[] = [];
 
       if (existingInActive && existingInActive.sets.length > 0) {
-        const isLogged = existingInActive.sets.every(s => s.isCompleted);
         existingInActive.sets.forEach((set) => {
           initialSets.push({
             id: set.id,
-            weight: isLogged ? 0 : set.weight,
-            reps: isLogged ? 0 : set.reps,
-            isCompleted: isLogged ? false : set.isCompleted,
+            weight: set.weight,
+            reps: set.reps,
+            isCompleted: set.isCompleted,
           });
         });
         setExerciseNote(existingInActive.notes || '');
@@ -777,8 +783,8 @@ export default function SinglePageLandingScreen() {
           previousLog.sets.forEach((set) => {
             initialSets.push({
               id: generateId(),
-              weight: 0,
-              reps: 0,
+              weight: set.weight,
+              reps: set.reps,
               isCompleted: false,
             });
           });
@@ -801,9 +807,10 @@ export default function SinglePageLandingScreen() {
     let newWeight = 0;
     let newReps = 0;
 
-    if (sameForAll && activeSets.length > 0) {
-      newWeight = activeSets[0].weight;
-      newReps = activeSets[0].reps;
+    if (activeSets.length > 0) {
+      const lastSet = activeSets[activeSets.length - 1];
+      newWeight = lastSet.weight;
+      newReps = lastSet.reps;
     }
 
     setActiveSets([
@@ -875,7 +882,9 @@ export default function SinglePageLandingScreen() {
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+    const existingEx = (fromTemplateList ? templateListExercises : activeSessionExercises).find(le => le.exerciseId === exerciseId);
     const newLog = {
+      id: existingEx?.id || generateId(),
       exerciseId,
       sets: activeSets.map((s) => ({ ...s, isCompleted: true })),
       notes: exerciseNote.trim() || undefined,
@@ -985,14 +994,45 @@ export default function SinglePageLandingScreen() {
 
       const detectedPrs = await addCompletedWorkout(suggestedTitle, activeSessionExercises, elapsedMinutes);
 
+      // If started from a template, update the template's default sets/reps/notes
+      if (sessionTemplateId) {
+        const currentTmpl = templates.find(t => t.id === sessionTemplateId);
+        if (currentTmpl) {
+          const updatedTmplExercises = [...currentTmpl.exercises];
+          
+          for (const activeEx of activeSessionExercises) {
+            const idx = updatedTmplExercises.findIndex(te => te.exerciseId === activeEx.exerciseId);
+            const mappedEx = {
+              exerciseId: activeEx.exerciseId,
+              sets: activeEx.sets.map(s => ({
+                id: generateId(),
+                weight: s.weight,
+                reps: s.reps,
+                isCompleted: false
+              })),
+              notes: activeEx.notes
+            };
+            
+            if (idx !== -1) {
+              updatedTmplExercises[idx] = mappedEx;
+            } else {
+              updatedTmplExercises.push(mappedEx);
+            }
+          }
+          await updateTemplate(sessionTemplateId, updatedTmplExercises);
+        }
+      }
+
       // Clear active session
       setActiveSessionExercises([]);
       setSessionStartTime(0);
       setSessionStartedFromTemplate(false);
+      setSessionTemplateId(null);
       await Promise.all([
         AsyncStorage.removeItem('@active_session_exercises'),
         AsyncStorage.removeItem('@session_start_time'),
         AsyncStorage.removeItem('@session_started_from_template'),
+        AsyncStorage.removeItem('@session_template_id'),
       ]);
 
       // Reset modal, logger, and views
@@ -1063,10 +1103,12 @@ export default function SinglePageLandingScreen() {
             setActiveSessionExercises([]);
             setSessionStartTime(0);
             setSessionStartedFromTemplate(false);
+            setSessionTemplateId(null);
             await Promise.all([
               AsyncStorage.removeItem('@active_session_exercises'),
               AsyncStorage.removeItem('@session_start_time'),
               AsyncStorage.removeItem('@session_started_from_template'),
+              AsyncStorage.removeItem('@session_template_id'),
             ]);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           },
@@ -1189,9 +1231,13 @@ export default function SinglePageLandingScreen() {
       // Clear active session
       setActiveSessionExercises([]);
       setSessionStartTime(0);
+      setSessionStartedFromTemplate(false);
+      setSessionTemplateId(null);
       await Promise.all([
         AsyncStorage.removeItem('@active_session_exercises'),
         AsyncStorage.removeItem('@session_start_time'),
+        AsyncStorage.removeItem('@session_started_from_template'),
+        AsyncStorage.removeItem('@session_template_id'),
       ]);
 
       // Reset modal, logger, and views
@@ -1582,7 +1628,7 @@ export default function SinglePageLandingScreen() {
                   <DragList
                     scrollEnabled={false}
                     data={activeSessionExercises}
-                    keyExtractor={(item) => item.exerciseId}
+                    keyExtractor={(item, index) => item.id || `${item.exerciseId}-${index}`}
                     onReordered={(fromIdx, toIdx) => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       const updated = [...activeSessionExercises];
@@ -1592,13 +1638,13 @@ export default function SinglePageLandingScreen() {
                       AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
                     }}
                     style={styles.activeSessionList}
-                    renderItem={({ item, onDragStart, isActive }) => {
+                    renderItem={({ item, index, onDragStart, isActive }) => {
                       const details = exercises.find((e) => e.id === item.exerciseId);
                       if (!details) return null;
                       const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
                       return (
                         <TouchableOpacity
-                          key={item.exerciseId}
+                          key={item.id || `${item.exerciseId}-${index}`}
                           style={[
                             styles.activeSessionItem,
                             { borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1 }
@@ -1887,10 +1933,10 @@ export default function SinglePageLandingScreen() {
                                   {new Date(w.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                                 </Text>
                               </View>
-                              {w.exercises.map((logEx) => {
+                              {w.exercises.map((logEx, exIndex) => {
                                 const exDetails = exercises.find((e) => e.id === logEx.exerciseId);
                                 return (
-                                  <View key={logEx.exerciseId} style={styles.weeklyDetailExercise}>
+                                  <View key={logEx.id || `${logEx.exerciseId}-${exIndex}`} style={styles.weeklyDetailExercise}>
                                     <Text style={[styles.weeklyDetailExerciseName, { color: theme.textPrimary }]}>
                                       {exDetails?.name || 'Unknown'}
                                     </Text>
@@ -2077,10 +2123,12 @@ export default function SinglePageLandingScreen() {
                                 setActiveSessionExercises(exercisesToLoad);
                                 setSessionStartTime(now);
                                 setSessionStartedFromTemplate(true);
+                                setSessionTemplateId(tmpl.id);
                                 setActiveSegment('log');
                                 AsyncStorage.setItem('@active_session_exercises', JSON.stringify(exercisesToLoad));
                                 AsyncStorage.setItem('@session_start_time', String(now));
                                 AsyncStorage.setItem('@session_started_from_template', 'true');
+                                AsyncStorage.setItem('@session_template_id', tmpl.id);
                               }}
                               activeOpacity={0.7}
                             >
@@ -2407,13 +2455,12 @@ export default function SinglePageLandingScreen() {
                               const existingInActive = targetList.find((le) => le.exerciseId === item.id);
                               const initialSets: WorkoutSet[] = [];
                               if (existingInActive && existingInActive.sets.length > 0) {
-                                const isLogged = existingInActive.sets.every(s => s.isCompleted);
                                 existingInActive.sets.forEach((set) => {
                                   initialSets.push({
                                     id: set.id,
-                                    weight: fromTemplateList ? set.weight : (isLogged ? 0 : set.weight),
-                                    reps: fromTemplateList ? set.reps : (isLogged ? 0 : set.reps),
-                                    isCompleted: fromTemplateList ? true : (isLogged ? false : set.isCompleted),
+                                    weight: set.weight,
+                                    reps: set.reps,
+                                    isCompleted: fromTemplateList ? true : set.isCompleted,
                                   });
                                 });
                               } else {
@@ -2422,8 +2469,8 @@ export default function SinglePageLandingScreen() {
                                   previousLog.sets.forEach((set) => {
                                     initialSets.push({
                                       id: generateId(),
-                                      weight: fromTemplateList ? set.weight : 0,
-                                      reps: fromTemplateList ? set.reps : 0,
+                                      weight: set.weight,
+                                      reps: set.reps,
                                       isCompleted: false,
                                     });
                                   });
@@ -2561,6 +2608,7 @@ export default function SinglePageLandingScreen() {
                             initialSets.push({ id: generateId(), weight: 0, reps: 0, isCompleted: false });
                           }
                           newExercises.push({
+                            id: generateId(),
                             exerciseId: id,
                             sets: initialSets,
                           });
@@ -2903,12 +2951,12 @@ export default function SinglePageLandingScreen() {
 
                     <View style={[styles.detailDivider, { backgroundColor: theme.borderColor }]} />
 
-                    {selectedHistoryItem.exercises.map((logEx) => {
+                    {selectedHistoryItem.exercises.map((logEx, exIndex) => {
                       const exDetails = exercises.find((e) => e.id === logEx.exerciseId);
                       const isEditing = editingHistoryWorkoutId === selectedHistoryItem.id;
                       const editSets = historyEditSets[logEx.exerciseId];
                       return (
-                        <View key={logEx.exerciseId} style={styles.detailExerciseGroup}>
+                        <View key={logEx.id || `${logEx.exerciseId}-${exIndex}`} style={styles.detailExerciseGroup}>
                           <View style={styles.detailExerciseHeader}>
                             <View style={[styles.detailExerciseDot, { backgroundColor: categoryColors[exDetails?.muscleGroup || ''] || '#10B981' }]} />
                             <Text style={[styles.detailExerciseName, { color: theme.textPrimary }]}>
@@ -3069,7 +3117,7 @@ export default function SinglePageLandingScreen() {
               <DragList
                 containerStyle={{ maxHeight: 580, flexShrink: 1 }}
                 data={activeSessionExercises}
-                keyExtractor={(item) => item.exerciseId}
+                keyExtractor={(item, index) => item.id || `${item.exerciseId}-${index}`}
                 onReordered={(fromIdx, toIdx) => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   const updated = [...activeSessionExercises];
@@ -3079,13 +3127,13 @@ export default function SinglePageLandingScreen() {
                   AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
                 }}
                 style={{ maxHeight: 580, flexShrink: 1 }}
-                renderItem={({ item, onDragStart, isActive }) => {
+                renderItem={({ item, index, onDragStart, isActive }) => {
                   const details = exercises.find((e) => e.id === item.exerciseId);
                   if (!details) return null;
                   const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
                   return (
                     <TouchableOpacity
-                      key={item.exerciseId}
+                      key={item.id || `${item.exerciseId}-${index}`}
                       style={[styles.editWorkoutItem, { borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1 }]}
                       activeOpacity={0.6}
                       onPress={() => {
@@ -3134,7 +3182,7 @@ export default function SinglePageLandingScreen() {
             }
           }}
         >
-          <View style={styles.exerciseLoggerOverlayContainer}>
+          <View style={[styles.exerciseLoggerOverlayContainer, { padding: 12 }]}>
             <Pressable
               style={styles.exerciseLoggerBackdrop}
               onPress={() => {
@@ -3143,7 +3191,18 @@ export default function SinglePageLandingScreen() {
               }}
             />
             <View
-              style={[styles.exerciseLoggerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '85%', flexShrink: 1 }]}
+              style={[
+                styles.exerciseLoggerCard,
+                {
+                  backgroundColor: theme.cardBg,
+                  borderColor: theme.borderColor,
+                  maxHeight: '92%',
+                  width: '98%',
+                  maxWidth: undefined,
+                  padding: 20,
+                  flexShrink: 1
+                }
+              ]}
             >
               {(() => {
                 const exItem = expandedExerciseId ? exercises.find((e) => e.id === expandedExerciseId) : null;
@@ -3547,7 +3606,7 @@ export default function SinglePageLandingScreen() {
                 <DragList
                   containerStyle={{ maxHeight: 580, flexShrink: 1 }}
                   data={templateListExercises}
-                  keyExtractor={(item) => item.exerciseId}
+                  keyExtractor={(item, index) => item.id || `${item.exerciseId}-${index}`}
                   onReordered={(fromIdx, toIdx) => {
                     setTemplateListExercises((prev) => {
                       const updated = [...prev];
@@ -3701,6 +3760,7 @@ export default function SinglePageLandingScreen() {
                       setActiveSessionExercises(selectedExercises);
                       setSessionStartTime(now);
                       setSessionStartedFromTemplate(true);
+                      setSessionTemplateId(activeTemplateId);
                       setTemplateListVisible(false);
                       setFromTemplateList(false);
                       setActiveTemplateId(null);
@@ -3709,6 +3769,11 @@ export default function SinglePageLandingScreen() {
                       AsyncStorage.setItem('@active_session_exercises', JSON.stringify(selectedExercises));
                       AsyncStorage.setItem('@session_start_time', String(now));
                       AsyncStorage.setItem('@session_started_from_template', 'true');
+                      if (activeTemplateId) {
+                        AsyncStorage.setItem('@session_template_id', activeTemplateId);
+                      } else {
+                        AsyncStorage.removeItem('@session_template_id');
+                      }
                       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                     }}
                     activeOpacity={0.8}
@@ -3756,14 +3821,14 @@ export default function SinglePageLandingScreen() {
               </View>
 
               <ScrollView style={{ maxHeight: 580 }} showsVerticalScrollIndicator={false}>
-                {templateListExercises.map((logEx) => {
+                {templateListExercises.map((logEx, exIndex) => {
                   const details = exercises.find((e) => e.id === logEx.exerciseId);
                   if (!details) return null;
                   const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
                   const isSelected = templateLogSelectedIds.has(logEx.exerciseId);
                   return (
                     <TouchableOpacity
-                      key={logEx.exerciseId}
+                      key={logEx.id || `${logEx.exerciseId}-${exIndex}`}
                       activeOpacity={0.6}
                       onPress={() => {
                         setTemplateLogSelectedIds((prev) => {
@@ -3832,6 +3897,8 @@ export default function SinglePageLandingScreen() {
                     const now = Date.now();
                     setActiveSessionExercises(selectedExercises);
                     setSessionStartTime(now);
+                    setSessionStartedFromTemplate(true);
+                    setSessionTemplateId(activeTemplateId);
                     setTemplateLogSelectVisible(false);
                     setTemplateListVisible(false);
                     setFromTemplateList(false);
@@ -3840,6 +3907,12 @@ export default function SinglePageLandingScreen() {
                     setActiveSegment('log');
                     AsyncStorage.setItem('@active_session_exercises', JSON.stringify(selectedExercises));
                     AsyncStorage.setItem('@session_start_time', String(now));
+                    AsyncStorage.setItem('@session_started_from_template', 'true');
+                    if (activeTemplateId) {
+                      AsyncStorage.setItem('@session_template_id', activeTemplateId);
+                    } else {
+                      AsyncStorage.removeItem('@session_template_id');
+                    }
                   }}
                   activeOpacity={0.8}
                   disabled={templateLogSelectedIds.size === 0}

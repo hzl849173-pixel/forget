@@ -10,6 +10,7 @@ export interface WorkoutSet {
 }
 
 export interface LoggedExercise {
+  id?: string;
   exerciseId: string;
   sets: WorkoutSet[];
   notes?: string;

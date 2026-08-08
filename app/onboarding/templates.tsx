@@ -44,6 +44,7 @@ export default function TemplatesScreen() {
     const handleSelectTemplate = async (tmpl: typeof DEFAULT_TEMPLATES[0]) => {
         const sorted = sortTemplateExercises(tmpl.exercises);
         const exercisesToLoad = sorted.map((logEx) => ({
+            id: generateId(),
             exerciseId: logEx.exerciseId,
             sets: logEx.sets.map((s) => ({
                 id: generateId(),
@@ -58,6 +59,7 @@ export default function TemplatesScreen() {
         await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(exercisesToLoad));
         await AsyncStorage.setItem('@session_start_time', String(now));
         await AsyncStorage.setItem('@session_started_from_template', 'true');
+        await AsyncStorage.setItem('@session_template_id', tmpl.id);
 
         await setOnboardingCompleted();
         router.replace('/');
