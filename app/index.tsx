@@ -3053,8 +3053,8 @@ export default function SinglePageLandingScreen() {
           animationType="none"
           onRequestClose={() => setEditSessionExerciseModalVisible(false)}
         >
-          <View style={styles.timerOverlay}>
-            <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+          <View style={[styles.timerOverlay, { padding: 12 }]}>
+            <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '92%', width: '98%', padding: 20 }]}>
               <View style={styles.editWorkoutHeader}>
                 <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Edit Workout</Text>
                 <TouchableOpacity
@@ -3067,7 +3067,7 @@ export default function SinglePageLandingScreen() {
               </View>
 
               <DragList
-                containerStyle={{ maxHeight: 520, flexShrink: 1 }}
+                containerStyle={{ maxHeight: 580, flexShrink: 1 }}
                 data={activeSessionExercises}
                 keyExtractor={(item) => item.exerciseId}
                 onReordered={(fromIdx, toIdx) => {
@@ -3078,7 +3078,7 @@ export default function SinglePageLandingScreen() {
                   setActiveSessionExercises(updated);
                   AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
                 }}
-                style={{ maxHeight: 520, flexShrink: 1 }}
+                style={{ maxHeight: 580, flexShrink: 1 }}
                 renderItem={({ item, onDragStart, isActive }) => {
                   const details = exercises.find((e) => e.id === item.exerciseId);
                   if (!details) return null;
@@ -3462,8 +3462,8 @@ export default function SinglePageLandingScreen() {
             pointerEvents: templateListVisible ? 'auto' : 'none',
           }}
         >
-          <View style={styles.timerOverlay}>
-            <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '90%', width: '95%' }]}>
+          <View style={[styles.timerOverlay, { padding: 12 }]}>
+            <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '92%', width: '98%', padding: 20 }]}>
               <View style={styles.editWorkoutHeader}>
                 <View>
                   <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>
@@ -3545,7 +3545,7 @@ export default function SinglePageLandingScreen() {
                 </View>
               ) : (
                 <DragList
-                  containerStyle={{ maxHeight: 520, flexShrink: 1 }}
+                  containerStyle={{ maxHeight: 580, flexShrink: 1 }}
                   data={templateListExercises}
                   keyExtractor={(item) => item.exerciseId}
                   onReordered={(fromIdx, toIdx) => {
@@ -3556,7 +3556,7 @@ export default function SinglePageLandingScreen() {
                       return updated;
                     });
                   }}
-                  style={{ maxHeight: 520, flexShrink: 1 }}
+                  style={{ maxHeight: 580, flexShrink: 1 }}
                   renderItem={({ item, onDragStart, isActive }) => {
                     const details = exercises.find((e) => e.id === item.exerciseId);
                     if (!details) return null;
@@ -3729,8 +3729,8 @@ export default function SinglePageLandingScreen() {
           animationType="none"
           onRequestClose={() => setTemplateLogSelectVisible(false)}
         >
-          <View style={styles.timerOverlay}>
-            <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '85%', width: '95%' }]}>
+          <View style={[styles.timerOverlay, { padding: 12 }]}>
+            <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '92%', width: '98%', padding: 20 }]}>
               <View style={styles.editWorkoutHeader}>
                 <View>
                   <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>Select Workouts</Text>
@@ -3755,7 +3755,7 @@ export default function SinglePageLandingScreen() {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
+              <ScrollView style={{ maxHeight: 580 }} showsVerticalScrollIndicator={false}>
                 {templateListExercises.map((logEx) => {
                   const details = exercises.find((e) => e.id === logEx.exerciseId);
                   if (!details) return null;
