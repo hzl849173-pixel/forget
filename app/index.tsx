@@ -19,6 +19,7 @@ import {
 import React, { useState } from 'react';
 import {
   Animated,
+  AppState,
   BackHandler,
   KeyboardAvoidingView,
   Modal,
@@ -33,7 +34,17 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 const MUSCLE_IMAGES = {
   Chest: require('@/assets/images/muscle_chest.png'),
@@ -95,6 +106,14 @@ import DragList from 'react-native-draglist';
 
 const generateId = () => Date.now().toString() + Math.random().toString(36).substring(2, 9);
 
+const CONSISTENCY_QUOTES = [
+  "Consistency is what transforms average into excellence. Show up today.",
+  "Success isn't always about greatness. It's about consistency. Keep going!",
+  "The secret of your future is hidden in your daily routine. Rest or work, stay committed.",
+  "Small daily improvements over time lead to stunning results. Trust the process.",
+  "Consistency is the playground of dullness, but the foundation of mastery."
+];
+
 export default function SinglePageLandingScreen() {
   const {
     exercises,
@@ -116,6 +135,8 @@ export default function SinglePageLandingScreen() {
     weekStartDay,
     setWeekStartDay,
     incrementTemplateUsage,
+    restDaysOfWeek = [],
+    toggleRestDayOfWeek,
   } = useWorkout();
 
   const {
@@ -333,6 +354,10 @@ export default function SinglePageLandingScreen() {
   const [sessionStartedFromTemplate, setSessionStartedFromTemplate] = useState(false);
   const [sessionTemplateId, setSessionTemplateId] = useState<string | null>(null);
 
+  // Consistency Modal state
+  const [consistencyModalVisible, setConsistencyModalVisible] = useState(false);
+  const [currentQuote, setCurrentQuote] = useState('');
+
   // Add exercise state
   const [addExerciseVisible, setAddExerciseVisible] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState('');
@@ -344,7 +369,81 @@ export default function SinglePageLandingScreen() {
   const [restTimerDuration, setRestTimerDuration] = useState(60);
   const [restTimerSound, setRestTimerSound] = useState<'alarm' | 'none'>('alarm');
   const restTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const restTimerTargetEndRef = React.useRef<number | null>(null);
+  const notificationIdRef = React.useRef<string | null>(null);
   const soundObjectRef = React.useRef<any>(null);
+
+  React.useEffect(() => {
+    async function configureNotifications() {
+      try {
+        if (Platform.OS === 'android') {
+          await Notifications.setNotificationChannelAsync('rest-timer', {
+            name: 'Rest Timer',
+            importance: Notifications.AndroidImportance.HIGH,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: '#10B981',
+            sound: 'default',
+          });
+        }
+        const { status } = await Notifications.getPermissionsAsync();
+        if (status !== 'granted') {
+          await Notifications.requestPermissionsAsync();
+        }
+      } catch (e) {
+        console.warn('Notification setup error:', e);
+      }
+    }
+    configureNotifications();
+  }, []);
+
+  const scheduleRestTimerNotification = async (seconds: number) => {
+    try {
+      if (notificationIdRef.current) {
+        await Notifications.cancelScheduledNotificationAsync(notificationIdRef.current);
+        notificationIdRef.current = null;
+      }
+      if (seconds <= 0) return;
+      notificationIdRef.current = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Time's up! ⏱️",
+          body: "Rest period over. Time to start your next set!",
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: Math.max(1, Math.floor(seconds)),
+          channelId: 'rest-timer',
+        },
+      });
+    } catch (err) {
+      console.warn('Failed to schedule rest timer notification:', err);
+    }
+  };
+
+  const cancelRestTimerNotification = async () => {
+    if (notificationIdRef.current) {
+      try {
+        await Notifications.cancelScheduledNotificationAsync(notificationIdRef.current);
+      } catch (e) {}
+      notificationIdRef.current = null;
+    }
+  };
+
+  React.useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active' && restTimerTargetEndRef.current) {
+        const remainingMs = restTimerTargetEndRef.current - Date.now();
+        const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+        setRestTimerSeconds(remainingSec);
+        if (remainingSec <= 0) {
+          handleTimerFinished();
+        }
+      }
+    });
+    return () => subscription.remove();
+  }, [restTimerSound]);
+
   const exerciseSwipeGestureX = React.useRef(0);
   const navigateToExerciseRef = React.useRef<(direction: 'prev' | 'next') => void>(() => { });
   const exercisePanResponder = React.useRef(
@@ -389,44 +488,64 @@ export default function SinglePageLandingScreen() {
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
+  const handleTimerFinished = () => {
+    if (restTimerRef.current) clearInterval(restTimerRef.current);
+    restTimerRef.current = null;
+    restTimerTargetEndRef.current = null;
+    setRestTimerRunning(false);
+    cancelRestTimerNotification();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (restTimerSound !== 'none') {
+      playTimerSound();
+    }
+    showCustomAlert(
+      'Rest Timer Done',
+      'Time to start your next set!',
+      [{ text: 'OK', onPress: () => stopTimerSound() }],
+      <Timer size={28} color="#10B981" />
+    );
+  };
+
   const startRestTimer = (seconds: number) => {
     stopTimerSound();
+    cancelRestTimerNotification();
     if (restTimerRef.current) clearInterval(restTimerRef.current);
+    
+    const targetEnd = Date.now() + seconds * 1000;
+    restTimerTargetEndRef.current = targetEnd;
     setRestTimerDuration(seconds);
     setRestTimerSeconds(seconds);
     setRestTimerRunning(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    scheduleRestTimerNotification(seconds);
+
     restTimerRef.current = setInterval(() => {
-      setRestTimerSeconds((prev) => {
-        if (prev <= 1) {
-          if (restTimerRef.current) clearInterval(restTimerRef.current);
-          setRestTimerRunning(false);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          if (restTimerSound !== 'none') {
-            playTimerSound();
-          }
-          showCustomAlert(
-            'Rest Timer Done',
-            'Time to start your next set!',
-            [{ text: 'OK', onPress: () => stopTimerSound() }],
-            <Timer size={28} color="#10B981" />
-          );
-          return 0;
-        }
-        return prev - 1;
-      });
+      if (!restTimerTargetEndRef.current) return;
+      const remainingMs = restTimerTargetEndRef.current - Date.now();
+      const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+      setRestTimerSeconds(remainingSec);
+      if (remainingSec <= 0) {
+        handleTimerFinished();
+      }
     }, 1000);
   };
 
   const stopRestTimer = () => {
     stopTimerSound();
+    cancelRestTimerNotification();
     if (restTimerRef.current) clearInterval(restTimerRef.current);
+    restTimerRef.current = null;
+    restTimerTargetEndRef.current = null;
     setRestTimerRunning(false);
   };
 
   const resetRestTimer = () => {
     stopTimerSound();
+    cancelRestTimerNotification();
     if (restTimerRef.current) clearInterval(restTimerRef.current);
+    restTimerRef.current = null;
+    restTimerTargetEndRef.current = null;
     setRestTimerRunning(false);
     setRestTimerSeconds(restTimerDuration);
   };
@@ -663,6 +782,13 @@ export default function SinglePageLandingScreen() {
       [{ text: "OK" }],
       <Trophy size={28} color="#FACC15" fill="#FACC15" />
     );
+  };
+
+  const handleOpenConsistency = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const rand = CONSISTENCY_QUOTES[Math.floor(Math.random() * CONSISTENCY_QUOTES.length)];
+    setCurrentQuote(rand);
+    setConsistencyModalVisible(true);
   };
 
   const isDarkMode = false;
@@ -1470,7 +1596,7 @@ export default function SinglePageLandingScreen() {
                     styles.workoutDaysBadge,
                     { backgroundColor: theme.cardBg, borderColor: theme.borderColor }
                   ]}
-                  onPress={handleShowWorkoutDaysInfo}
+                  onPress={handleOpenConsistency}
                   activeOpacity={0.7}
                 >
                   <Trophy size={14} color="#FACC15" fill="#FACC15" style={{ marginRight: 5 }} />
@@ -3930,6 +4056,144 @@ export default function SinglePageLandingScreen() {
           </View>
         </Modal>
 
+        {/* Consistency / Rest Day Modal */}
+        <Modal
+          visible={consistencyModalVisible}
+          transparent={true}
+          animationType="none"
+          onRequestClose={() => setConsistencyModalVisible(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.4)',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: theme.cardBg,
+                borderColor: theme.borderColor,
+                width: '94%',
+                paddingVertical: 28,
+                paddingHorizontal: 24,
+                borderRadius: 24,
+                borderWidth: 1.5,
+                alignItems: 'center',
+              }}
+            >
+              {/* Header */}
+              <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Flame size={18} color="#EF4444" fill="#EF4444" />
+                  <Text style={{ fontSize: 13, fontWeight: '900', color: theme.textPrimary, letterSpacing: 0.3 }}>
+                    REST DAYS & STREAK
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setConsistencyModalVisible(false)}
+                  activeOpacity={0.7}
+                  style={{ padding: 4 }}
+                >
+                  <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Day Streak & Workout Days Summary */}
+              <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-around', backgroundColor: theme.background, borderRadius: 10, paddingVertical: 14, paddingHorizontal: 6, marginBottom: 24 }}>
+                <View style={{ flex: 1, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: theme.textPrimary }}>
+                    {overallStats.currentStreak}
+                  </Text>
+                  <Text style={{ fontSize: 8.5, fontWeight: '800', color: theme.textSecondary, marginTop: 2 }}>
+                    ACTIVE STREAK
+                  </Text>
+                </View>
+                <View style={{ width: 1, backgroundColor: theme.borderColor }} />
+                <View style={{ flex: 1, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: theme.textPrimary }}>
+                    {overallStats.longestStreak}
+                  </Text>
+                  <Text style={{ fontSize: 8.5, fontWeight: '800', color: theme.textSecondary, marginTop: 2 }}>
+                    LONGEST STREAK
+                  </Text>
+                </View>
+                <View style={{ width: 1, backgroundColor: theme.borderColor }} />
+                <View style={{ flex: 1, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: theme.textPrimary }}>
+                    {totalWorkoutDays}
+                  </Text>
+                  <Text style={{ fontSize: 8.5, fontWeight: '800', color: theme.textSecondary, marginTop: 2 }}>
+                    WORKOUT DAYS
+                  </Text>
+                </View>
+              </View>
+
+              {/* Sub-label */}
+              <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textSecondary, alignSelf: 'flex-start', marginBottom: 10 }}>
+                SELECT YOUR RECURRING REST DAYS:
+              </Text>
+
+              {/* Days of the week row */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 24 }}>
+                {[
+                  { label: 'M', value: 1 },
+                  { label: 'T', value: 2 },
+                  { label: 'W', value: 3 },
+                  { label: 'T', value: 4 },
+                  { label: 'F', value: 5 },
+                  { label: 'S', value: 6 },
+                  { label: 'S', value: 0 },
+                ].map((day) => {
+                  const isSelected = restDaysOfWeek.includes(day.value);
+                  return (
+                    <TouchableOpacity
+                      key={day.value}
+                      style={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: 15,
+                        backgroundColor: isSelected ? '#10B981' : 'transparent',
+                        borderWidth: isSelected ? 0 : 1.2,
+                        borderColor: theme.borderColor,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                      onPress={async () => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        await toggleRestDayOfWeek(day.value);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: isSelected ? '#FFFFFF' : theme.textSecondary }}>
+                        {day.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Quote Block */}
+              <View style={{ width: '100%', borderTopWidth: 1, borderTopColor: theme.borderColor, marginTop: 20, paddingTop: 20, alignItems: 'center' }}>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    fontStyle: 'italic',
+                    color: theme.textPrimary,
+                    textAlign: 'center',
+                    lineHeight: 18,
+                    paddingHorizontal: 8,
+                  }}
+                >
+                  "{currentQuote}"
+                </Text>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         {/* Profile Full Screen */}
         <Modal
           visible={profileModalVisible}
@@ -3973,10 +4237,19 @@ export default function SinglePageLandingScreen() {
                   <Text style={[styles.profileStatNumber, { color: theme.textPrimary }]}>{overallStats.totalWorkouts}</Text>
                   <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>Workouts</Text>
                 </View>
-                <View style={[styles.profileStatCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                <TouchableOpacity
+                  style={[styles.profileStatCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
+                  onPress={() => {
+                    setProfileModalVisible(false);
+                    setTimeout(() => {
+                      handleOpenConsistency();
+                    }, 400);
+                  }}
+                  activeOpacity={0.7}
+                >
                   <Text style={[styles.profileStatNumber, { color: '#FACC15' }]}>{overallStats.currentStreak}</Text>
                   <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>Day Streak</Text>
-                </View>
+                </TouchableOpacity>
                 <View style={[styles.profileStatCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
                   <Text style={[styles.profileStatNumber, { color: theme.textPrimary }]}>{achievements.filter(a => a.isUnlocked).length}</Text>
                   <Text style={[styles.profileStatLabel, { color: theme.textSecondary }]}>Unlocked</Text>

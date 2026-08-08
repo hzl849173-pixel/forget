@@ -73,7 +73,7 @@ export interface Achievement {
 }
 
 export const useWorkoutAnalytics = () => {
-  const { history, prs, exercises } = useWorkout();
+  const { history, prs, exercises, restDaysOfWeek = [] } = useWorkout();
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>('');
 
   // 1. Overall Stats
@@ -93,16 +93,40 @@ export const useWorkoutAnalytics = () => {
     }
 
     // Streak calculations
-    const uniqueDates = Array.from(new Set(history.map((s) => s.date.split('T')[0]))).sort();
+    const historyDates = new Set(history.map((s) => s.date.split('T')[0]));
+    const activeDates: string[] = [];
+
+    if (historyDates.size > 0) {
+      const datesList = Array.from(historyDates).sort();
+      const firstDate = new Date(datesList[0]);
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      
+      const checkDate = new Date(firstDate);
+      while (true) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        if (dateStr > todayStr) break;
+        
+        const dayOfWeek = checkDate.getDay();
+        const isWorkout = historyDates.has(dateStr);
+        const isRest = restDaysOfWeek.includes(dayOfWeek);
+        
+        if (isWorkout || isRest) {
+          activeDates.push(dateStr);
+        }
+        
+        checkDate.setDate(checkDate.getDate() + 1);
+      }
+    }
     
     let longestStreak = 0;
     let tempStreak = 0;
-    for (let i = 0; i < uniqueDates.length; i++) {
+    for (let i = 0; i < activeDates.length; i++) {
       if (i === 0) {
         tempStreak = 1;
       } else {
-        const prevDate = new Date(uniqueDates[i - 1]);
-        const currDate = new Date(uniqueDates[i]);
+        const prevDate = new Date(activeDates[i - 1]);
+        const currDate = new Date(activeDates[i]);
         const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
         if (diffDays === 1) {
           tempStreak++;
@@ -117,7 +141,7 @@ export const useWorkoutAnalytics = () => {
     // Current Streak (ending today or yesterday)
     const todayStr = new Date().toISOString().split('T')[0];
     const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    const datesSet = new Set(uniqueDates);
+    const datesSet = new Set(activeDates);
     let currentStreak = 0;
     const checkDateStr = datesSet.has(todayStr) ? todayStr : (datesSet.has(yesterdayStr) ? yesterdayStr : null);
 
@@ -137,7 +161,7 @@ export const useWorkoutAnalytics = () => {
       currentStreak,
       longestStreak,
     };
-  }, [history]);
+  }, [history, restDaysOfWeek]);
 
   // 2. Personal Records (PRs)
   const prDisplayList = useMemo<PRDisplay[]>(() => {

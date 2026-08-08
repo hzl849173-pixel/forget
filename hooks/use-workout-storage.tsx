@@ -313,6 +313,8 @@ interface WorkoutContextType {
   updateTemplate: (id: string, exercises: LoggedExercise[]) => Promise<void>;
   deleteTemplate: (id: string) => Promise<void>;
   incrementTemplateUsage: (id: string) => Promise<void>;
+  restDaysOfWeek: number[];
+  toggleRestDayOfWeek: (day: number) => Promise<void>;
 }
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
@@ -324,6 +326,7 @@ const STORAGE_KEYS = {
   PRS: '@workout_journal_prs_v1',
   TEMPLATES: '@workout_journal_templates_v1',
   WEEK_START_DAY: '@workout_journal_week_start_day',
+  REST_DAYS_OF_WEEK: '@workout_journal_rest_days_of_week',
 };
 
 const generateId = () => Date.now().toString() + Math.random().toString(36).substring(2, 9);
@@ -335,6 +338,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [prs, setPrs] = useState<PersonalRecord[]>([]);
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [weekStartDay, setWeekStartDayState] = useState(0);
+  const [restDaysOfWeek, setRestDaysOfWeek] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load initial data
@@ -438,6 +442,11 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const storedWeekStart = await AsyncStorage.getItem(STORAGE_KEYS.WEEK_START_DAY);
         if (storedWeekStart !== null) {
           setWeekStartDayState(Number(storedWeekStart));
+        }
+
+        const storedRestDays = await AsyncStorage.getItem(STORAGE_KEYS.REST_DAYS_OF_WEEK);
+        if (storedRestDays !== null) {
+          setRestDaysOfWeek(JSON.parse(storedRestDays));
         }
       } catch (error) {
         console.error('Failed to load local storage workout data:', error);
@@ -676,6 +685,18 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await saveFavoriteOrder(newOrder);
   };
 
+  const toggleRestDayOfWeek = async (day: number) => {
+    const exists = restDaysOfWeek.includes(day);
+    let newDays: number[];
+    if (exists) {
+      newDays = restDaysOfWeek.filter((d) => d !== day);
+    } else {
+      newDays = [...restDaysOfWeek, day];
+    }
+    setRestDaysOfWeek(newDays);
+    await AsyncStorage.setItem(STORAGE_KEYS.REST_DAYS_OF_WEEK, JSON.stringify(newDays));
+  };
+
   return (
     <WorkoutContext.Provider
       value={{
@@ -701,6 +722,8 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateTemplate,
         deleteTemplate,
         incrementTemplateUsage,
+        restDaysOfWeek,
+        toggleRestDayOfWeek,
       }}
     >
       {children}
