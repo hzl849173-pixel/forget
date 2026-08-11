@@ -115,17 +115,17 @@ const styles = StyleSheet.create({
     logoWrap: {
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 32,
+        marginBottom: 12,
     },
     logo: {
-        width: 350,
-        height: 350,
+        width: 180,
+        height: 180,
     },
     textBlock: {
         alignItems: 'center',
         justifyContent: 'center',
         width: '100%',
-        marginTop: 16,
+        marginTop: 0,
     },
     row: {
         flexDirection: 'row',
@@ -136,10 +136,10 @@ const styles = StyleSheet.create({
     phraseContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginVertical: 10, // increased vertical gap
+        marginVertical: 4,
     },
     forgetContainer: {
-        marginVertical: 10, // increased vertical gap
+        marginVertical: 4,
     },
     word: {
         color: '#E5E7EB', // softer white for general text
@@ -152,9 +152,9 @@ const styles = StyleSheet.create({
     forget: {
         color: '#10B981',
         fontWeight: '900',
-        fontSize: 24, // larger size to prioritize app name
+        fontSize: 22, // larger size to prioritize app name
         letterSpacing: 2.5,
-        marginHorizontal: 8,
+        marginHorizontal: 6,
     },
     debugTap: { position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 },
 });

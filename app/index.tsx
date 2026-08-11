@@ -35,6 +35,7 @@ import {
   View
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import notifee, { AndroidImportance, AndroidVisibility, TriggerType, TimestampTrigger } from '@notifee/react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 Notifications.setNotificationHandler({
@@ -380,26 +381,38 @@ export default function SinglePageLandingScreen() {
     let timer: ReturnType<typeof setTimeout>;
     async function configureNotifications() {
       try {
+        try {
+          await notifee.requestPermission();
+        } catch (e) {}
+
         if (Platform.OS === 'android') {
+          await notifee.createChannel({
+            id: 'rest-timer-alarm-v4',
+            name: 'Rest Timer Alarm',
+            importance: AndroidImportance.HIGH,
+            sound: 'default',
+            vibration: true,
+            vibrationPattern: [0, 500, 250, 500],
+            bypassDnd: true,
+            visibility: AndroidVisibility.PUBLIC,
+          });
+
+          await notifee.createChannel({
+            id: 'rest-timer-ongoing-v4',
+            name: 'Rest Timer Live Countdown',
+            importance: AndroidImportance.LOW,
+            sound: undefined,
+            vibration: false,
+            visibility: AndroidVisibility.PUBLIC,
+          });
+
           await Notifications.setNotificationChannelAsync('rest-timer-alarm-v3', {
             name: 'Rest Timer Alarm',
             importance: Notifications.AndroidImportance.MAX,
             vibrationPattern: [0, 500, 250, 500],
             lightColor: '#10B981',
             sound: 'default',
-            audioAttributes: {
-              usage: Notifications.AndroidAudioUsage.ALARM,
-              contentType: Notifications.AndroidAudioContentType.SONIFICATION,
-            },
             bypassDnd: true,
-          });
-
-          await Notifications.setNotificationChannelAsync('rest-timer-ongoing-v3', {
-            name: 'Rest Timer Countdown',
-            importance: Notifications.AndroidImportance.LOW,
-            sound: null,
-            vibrationPattern: null,
-            showBadge: false,
           });
         }
         timer = setTimeout(async () => {
@@ -408,9 +421,7 @@ export default function SinglePageLandingScreen() {
             if (status !== 'granted') {
               await Notifications.requestPermissionsAsync();
             }
-          } catch (err) {
-            console.warn('Deferred notification permission error:', err);
-          }
+          } catch (err) {}
         }, 500);
       } catch (e) {
         console.warn('Notification setup error:', e);
@@ -424,44 +435,86 @@ export default function SinglePageLandingScreen() {
 
   const updateOngoingNotification = async (sec: number, targetEndMs?: number | null) => {
     try {
-      const formatted = formatRestTime(sec);
-      let bodyText = `${formatted} remaining`;
-      if (targetEndMs) {
-        const targetDate = new Date(targetEndMs);
-        const timeStr = targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        bodyText = `${formatted} remaining • Finish at ${timeStr}`;
-      }
-      await Notifications.scheduleNotificationAsync({
-        identifier: 'rest-timer-active-ongoing',
-        content: {
+      const endMs = targetEndMs || (restTimerTargetEndRef.current ?? (Date.now() + sec * 1000));
+      if (Platform.OS === 'android') {
+        await notifee.displayNotification({
+          id: 'rest-timer-active-ongoing',
           title: 'Rest Timer ⏱️',
-          body: bodyText,
-          sound: false,
-          priority: Notifications.AndroidNotificationPriority.LOW,
-          sticky: true,
-          autoDismiss: false,
-        },
-        trigger: {
-          channelId: 'rest-timer-ongoing-v3',
-        } as any,
-      });
+          body: 'Rest period in progress',
+          android: {
+            channelId: 'rest-timer-ongoing-v4',
+            smallIcon: 'notification_icon',
+            color: '#10B981',
+            chronometerDirection: 'down',
+            timestamp: endMs,
+            showTimestamp: true,
+            ongoing: true,
+            asForegroundService: false,
+            pressAction: { id: 'default' },
+          },
+        });
+      } else {
+        const formatted = formatRestTime(sec);
+        await Notifications.scheduleNotificationAsync({
+          identifier: 'rest-timer-active-ongoing',
+          content: {
+            title: 'Rest Timer ⏱️',
+            body: `${formatted} remaining`,
+            sound: false,
+            priority: Notifications.AndroidNotificationPriority.LOW,
+            sticky: true,
+            autoDismiss: false,
+          },
+          trigger: {
+            channelId: 'rest-timer-ongoing-v3',
+          } as any,
+        });
+      }
     } catch (err) {}
   };
 
   const dismissOngoingNotification = async () => {
     try {
+      await notifee.cancelNotification('rest-timer-active-ongoing');
       await Notifications.dismissNotificationAsync('rest-timer-active-ongoing');
     } catch (err) {}
   };
 
-  const scheduleRestTimerNotification = async (seconds: number) => {
+  const scheduleRestTimerNotification = async (seconds: number, targetEndMs?: number | null) => {
     try {
-      if (notificationIdRef.current) {
-        await Notifications.cancelScheduledNotificationAsync(notificationIdRef.current);
-        notificationIdRef.current = null;
-      }
+      await cancelRestTimerNotification();
       if (seconds <= 0) return;
-      notificationIdRef.current = await Notifications.scheduleNotificationAsync({
+      const triggerTime = targetEndMs || (Date.now() + seconds * 1000);
+
+      const trigger: TimestampTrigger = {
+        type: TriggerType.TIMESTAMP,
+        timestamp: triggerTime,
+        alarmManager: {
+          allowWhileIdle: true,
+        },
+      };
+
+      notificationIdRef.current = await notifee.createTriggerNotification(
+        {
+          id: 'rest-timer-alarm-trigger',
+          title: "Time's up! ⏱️",
+          body: "Rest period over. Time to start your next set!",
+          android: {
+            channelId: 'rest-timer-alarm-v4',
+            smallIcon: 'notification_icon',
+            color: '#10B981',
+            importance: AndroidImportance.HIGH,
+            sound: 'default',
+            vibrationPattern: [0, 500, 250, 500],
+            pressAction: { id: 'default' },
+            alarmManager: true,
+          },
+        },
+        trigger
+      );
+
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'rest-timer-alarm-expo',
         content: {
           title: "Time's up! ⏱️",
           body: "Rest period over. Time to start your next set!",
@@ -481,12 +534,14 @@ export default function SinglePageLandingScreen() {
   };
 
   const cancelRestTimerNotification = async () => {
-    if (notificationIdRef.current) {
-      try {
-        await Notifications.cancelScheduledNotificationAsync(notificationIdRef.current);
-      } catch (e) {}
-      notificationIdRef.current = null;
-    }
+    try {
+      await notifee.cancelNotification('rest-timer-alarm-trigger');
+      if (notificationIdRef.current) {
+        await notifee.cancelTriggerNotification(notificationIdRef.current);
+        notificationIdRef.current = null;
+      }
+      await Notifications.cancelScheduledNotificationAsync('rest-timer-alarm-expo');
+    } catch (e) {}
   };
 
   React.useEffect(() => {
@@ -498,7 +553,7 @@ export default function SinglePageLandingScreen() {
         if (remainingSec <= 0) {
           handleTimerFinished();
         } else {
-          updateOngoingNotification(remainingSec, restTimerTargetEndRef.current);
+          updateOngoingNotification(remainingSec);
         }
       }
     });
@@ -581,7 +636,7 @@ export default function SinglePageLandingScreen() {
     setRestTimerRunning(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    scheduleRestTimerNotification(seconds);
+    scheduleRestTimerNotification(seconds, targetEnd);
     updateOngoingNotification(seconds, targetEnd);
 
     restTimerRef.current = setInterval(() => {
@@ -589,7 +644,7 @@ export default function SinglePageLandingScreen() {
       const remainingMs = restTimerTargetEndRef.current - Date.now();
       const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
       setRestTimerSeconds(remainingSec);
-      updateOngoingNotification(remainingSec, restTimerTargetEndRef.current);
+      updateOngoingNotification(remainingSec);
       if (remainingSec <= 0) {
         handleTimerFinished();
       }
