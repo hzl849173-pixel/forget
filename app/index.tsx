@@ -223,6 +223,131 @@ const SwipeableActiveExerciseRow: React.FC<{
   );
 };
 
+const SwipeableLoggerCard: React.FC<{
+  children: React.ReactNode;
+  onGoNext?: () => void;
+  onGoPrev?: () => void;
+  canGoNext: boolean;
+  canGoPrev: boolean;
+}> = ({ children, onGoNext, onGoPrev, canGoNext, canGoPrev }) => {
+  const pan = React.useRef(new Animated.Value(0)).current;
+
+  const onGoNextRef = React.useRef(onGoNext);
+  const onGoPrevRef = React.useRef(onGoPrev);
+  const canGoNextRef = React.useRef(canGoNext);
+  const canGoPrevRef = React.useRef(canGoPrev);
+
+  React.useEffect(() => {
+    onGoNextRef.current = onGoNext;
+    onGoPrevRef.current = onGoPrev;
+    canGoNextRef.current = canGoNext;
+    canGoPrevRef.current = canGoPrev;
+  });
+
+  // Next exercise action backdrop (revealed on Right side when swiping LEFT pan < 0)
+  const nextOpacity = pan.interpolate({
+    inputRange: [-60, -15, 0],
+    outputRange: [1, 0.5, 0],
+    extrapolate: 'clamp',
+  });
+
+  // Prev exercise action backdrop (revealed on Left side when swiping RIGHT pan > 0)
+  const prevOpacity = pan.interpolate({
+    inputRange: [0, 15, 60],
+    outputRange: [0, 0.5, 1],
+    extrapolate: 'clamp',
+  });
+
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 8 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
+      },
+      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.3;
+      },
+      onPanResponderMove: Animated.event([null, { dx: pan }], { useNativeDriver: false }),
+      onPanResponderRelease: (_, gestureState) => {
+        const threshold = 25;
+        const velocityThreshold = 0.2;
+        const isFlickLeft = gestureState.dx < -threshold || gestureState.vx < -velocityThreshold;
+        const isFlickRight = gestureState.dx > threshold || gestureState.vx > velocityThreshold;
+
+        if (gestureState.dx < -5 && isFlickLeft && canGoNextRef.current && onGoNextRef.current) {
+          // Swiping LEFT -> NEXT EXERCISE
+          Animated.timing(pan, {
+            toValue: -350,
+            duration: 120,
+            useNativeDriver: false,
+          }).start(() => {
+            onGoNextRef.current?.();
+            pan.setValue(0);
+          });
+        } else if (gestureState.dx > 5 && isFlickRight && canGoPrevRef.current && onGoPrevRef.current) {
+          // Swiping RIGHT -> PREVIOUS EXERCISE
+          Animated.timing(pan, {
+            toValue: 350,
+            duration: 120,
+            useNativeDriver: false,
+          }).start(() => {
+            onGoPrevRef.current?.();
+            pan.setValue(0);
+          });
+        } else {
+          Animated.spring(pan, {
+            toValue: 0,
+            useNativeDriver: false,
+            bounciness: 4,
+          }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(pan, {
+          toValue: 0,
+          useNativeDriver: false,
+        }).start();
+      },
+    })
+  ).current;
+
+  return (
+    <View style={{ flexShrink: 1, maxHeight: '100%', position: 'relative', overflow: 'hidden' }}>
+      {/* Right backdrop revealed when swiping LEFT -> NEXT */}
+      {canGoNext && (
+        <Animated.View
+          style={[
+            styles.loggerSwipeBackdrop,
+            { backgroundColor: '#10B98115', opacity: nextOpacity, justifyContent: 'flex-end', paddingRight: 18 }
+          ]}
+        >
+          <Text style={[styles.loggerSwipeText, { color: '#10B981' }]}>NEXT</Text>
+          <ChevronRight size={16} color="#10B981" strokeWidth={3} />
+        </Animated.View>
+      )}
+
+      {/* Left backdrop revealed when swiping RIGHT -> BACK */}
+      {canGoPrev && (
+        <Animated.View
+          style={[
+            styles.loggerSwipeBackdrop,
+            { backgroundColor: '#3B82F615', opacity: prevOpacity, justifyContent: 'flex-start', paddingLeft: 18 }
+          ]}
+        >
+          <ChevronLeft size={16} color="#3B82F6" strokeWidth={3} />
+          <Text style={[styles.loggerSwipeText, { color: '#3B82F6' }]}>BACK</Text>
+        </Animated.View>
+      )}
+
+      <Animated.View
+        style={{ transform: [{ translateX: pan }], flexShrink: 1, maxHeight: '100%' }}
+        {...panResponder.panHandlers}
+      >
+        {children}
+      </Animated.View>
+    </View>
+  );
+};
+
 const CONSISTENCY_QUOTES = [
   "Consistency is what transforms average into excellence. Show up today.",
   "Success isn't always about greatness. It's about consistency. Keep going!",
@@ -3824,14 +3949,20 @@ export default function SinglePageLandingScreen() {
                 const categoryColor = categoryColors[exItem.muscleGroup] || '#10B981';
                 const exerciseList = fromTemplateList ? templateListExercises : activeSessionExercises;
                 const currentExIndex = exerciseList.findIndex((le) => le.exerciseId === expandedExerciseId);
-                const canGoPrev = currentExIndex > 0;
-                const canGoNext = currentExIndex < exerciseList.length - 1;
+                const canGoPrev = exerciseList.length > 1;
+                const canGoNext = exerciseList.length > 1;
 
                 const navigateToExercise = (direction: 'prev' | 'next') => {
-                  const exerciseList = fromTemplateList ? templateListExercises : activeSessionExercises;
-                  const curIdx = exerciseList.findIndex((le) => le.exerciseId === expandedExerciseId);
-                  const nextIndex = direction === 'next' ? curIdx + 1 : curIdx - 1;
-                  const nextEx = exerciseList[nextIndex];
+                  const list = fromTemplateList ? templateListExercises : activeSessionExercises;
+                  if (list.length <= 1) return;
+
+                  const curIdx = list.findIndex((le) => le.exerciseId === expandedExerciseId);
+                  if (curIdx === -1) return;
+
+                  const nextIndex = direction === 'next'
+                    ? (curIdx + 1) % list.length
+                    : (curIdx - 1 + list.length) % list.length;
+                  const nextEx = list[nextIndex];
                   if (!nextEx) return;
 
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -3853,12 +3984,11 @@ export default function SinglePageLandingScreen() {
                   }
 
                   setExpandedExerciseId(nextEx.exerciseId);
-                  const isLogged = nextEx.sets.every(s => s.isCompleted);
                   const nextSets: WorkoutSet[] = nextEx.sets.map((s) => ({
                     id: s.id,
-                    weight: fromTemplateList ? s.weight : (isLogged ? 0 : s.weight),
-                    reps: fromTemplateList ? s.reps : (isLogged ? 0 : s.reps),
-                    isCompleted: fromTemplateList ? true : (isLogged ? false : s.isCompleted),
+                    weight: s.weight,
+                    reps: s.reps,
+                    isCompleted: fromTemplateList ? true : s.isCompleted,
                   }));
 
                   setActiveSets(nextSets);
@@ -3867,58 +3997,71 @@ export default function SinglePageLandingScreen() {
                 };
 
                 return (
-                  <View style={{ flexShrink: 1, maxHeight: '100%' }}>
-                    <View style={styles.exerciseLoggerHeader}>
-                      {fromTemplateList ? (
-                        <TouchableOpacity
-                          style={[
-                            styles.exerciseNavBtn,
-                            {
-                              backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
-                              borderColor: theme.borderColor,
-                            }
-                          ]}
-                          onPress={() => handleTemplateListBackFromLogger()}
-                          activeOpacity={0.7}
-                        >
-                          <ChevronLeft size={16} color={theme.textPrimary} strokeWidth={2.5} />
-                        </TouchableOpacity>
-                      ) : (
-                        <TouchableOpacity
-                          style={[
-                            styles.exerciseNavBtn,
-                            {
-                              backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
-                              borderColor: theme.borderColor,
-                              opacity: canGoPrev ? 1 : 0.25,
-                            }
-                          ]}
-                          onPress={() => navigateToExercise('prev')}
-                          disabled={!canGoPrev}
-                          activeOpacity={0.7}
-                        >
-                          <ChevronLeft size={16} color={theme.textPrimary} strokeWidth={2.5} />
-                        </TouchableOpacity>
-                      )}
-                      <View style={styles.exerciseLoggerTitleCol}>
-                        <Text
-                          style={[styles.exerciseLoggerName, { color: theme.textPrimary }]}
-                          numberOfLines={1}
-                          ellipsizeMode="tail"
-                        >
-                          {exItem.name}
-                        </Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                          <Text style={[styles.exerciseLoggerMuscle, { color: categoryColor }]}>
-                            {exItem.muscleGroup.toUpperCase()}
+                  <SwipeableLoggerCard
+                    onGoNext={() => navigateToExercise('next')}
+                    onGoPrev={() => navigateToExercise('prev')}
+                    canGoNext={canGoNext}
+                    canGoPrev={canGoPrev}
+                  >
+                    <View style={{ flexShrink: 1, maxHeight: '100%' }}>
+                      <View style={styles.exerciseLoggerHeader}>
+                        {fromTemplateList ? (
+                          <TouchableOpacity
+                            style={[
+                              styles.exerciseNavBtn,
+                              {
+                                backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
+                                borderColor: theme.borderColor,
+                              }
+                            ]}
+                            onPress={() => handleTemplateListBackFromLogger()}
+                            activeOpacity={0.7}
+                          >
+                            <ChevronLeft size={16} color={theme.textPrimary} strokeWidth={2.5} />
+                          </TouchableOpacity>
+                        ) : (
+                          <TouchableOpacity
+                            style={[
+                              styles.exerciseNavBtn,
+                              {
+                                backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
+                                borderColor: theme.borderColor,
+                                opacity: canGoPrev ? 1 : 0.25,
+                              }
+                            ]}
+                            onPress={() => navigateToExercise('prev')}
+                            disabled={!canGoPrev}
+                            activeOpacity={0.7}
+                          >
+                            <ChevronLeft size={16} color={theme.textPrimary} strokeWidth={2.5} />
+                          </TouchableOpacity>
+                        )}
+                        <View style={styles.exerciseLoggerTitleCol}>
+                          <Text
+                            style={[styles.exerciseLoggerName, { color: theme.textPrimary }]}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {exItem.name}
                           </Text>
-                          {exerciseList.length > 1 && (
-                            <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary, letterSpacing: 0.3 }}>
-                              · {currentExIndex + 1} of {exerciseList.length}
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                            <Text style={[styles.exerciseLoggerMuscle, { color: categoryColor }]}>
+                              {exItem.muscleGroup.toUpperCase()}
                             </Text>
-                          )}
+                            {exerciseList.length > 1 && (
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary, letterSpacing: 0.3 }}>
+                                  · {currentExIndex + 1} of {exerciseList.length}
+                                </Text>
+                                <View style={[styles.loggerSwipeHintTag, { backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6', borderColor: theme.borderColor }]}>
+                                  <ChevronLeft size={8} color={theme.textSecondary} strokeWidth={2.5} />
+                                  <Text style={[styles.loggerSwipeHintText, { color: theme.textSecondary }]}>SWIPE</Text>
+                                  <ChevronRight size={8} color={theme.textSecondary} strokeWidth={2.5} />
+                                </View>
+                              </View>
+                            )}
+                          </View>
                         </View>
-                      </View>
                       {fromTemplateList ? (
                         <View style={{ width: 32 }} />
                       ) : (
@@ -4135,7 +4278,8 @@ export default function SinglePageLandingScreen() {
                         style={styles.saveWorkoutBtn}
                       />
                     </View>
-                  </View>
+                    </View>
+                  </SwipeableLoggerCard>
                 );
               })()}
             </View>
@@ -6510,6 +6654,34 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.8,
+  },
+  loggerSwipeBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    gap: 6,
+    zIndex: 0,
+  },
+  loggerSwipeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  loggerSwipeHintTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 99,
+    borderWidth: 1,
+    marginLeft: 2,
+  },
+  loggerSwipeHintText: {
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   activeSessionCard: {
     padding: 16,
