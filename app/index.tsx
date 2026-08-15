@@ -38,6 +38,7 @@ import {
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import notifee, { AndroidImportance, AndroidVisibility, TriggerType, TimestampTrigger } from '@notifee/react-native';
+import Svg, { Defs, LinearGradient as SvgGradient, Rect, Stop } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 Notifications.setNotificationHandler({
@@ -850,22 +851,30 @@ export default function SinglePageLandingScreen() {
     });
   }, []);
 
+  const pillLayouts = React.useRef<Record<string, { x: number; width: number }>>({});
+  const switcherContainerWidth = React.useRef<number>(360);
+
+  const scrollToPill = React.useCallback((pillName: string) => {
+    const layout = pillLayouts.current[pillName];
+    const containerW = switcherContainerWidth.current || 360;
+    if (layout && switcherScrollRef.current) {
+      const targetX = Math.max(0, layout.x - containerW / 2 + layout.width / 2);
+      switcherScrollRef.current.scrollTo({ x: targetX, animated: true });
+    }
+  }, []);
+
   React.useEffect(() => {
     if (selectedModalMuscle && switcherScrollRef.current) {
-      const index = MUSCLE_GROUPS.indexOf(selectedModalMuscle);
-      if (index !== -1) {
-        setTimeout(() => {
-          if (index >= 4) {
-            switcherScrollRef.current?.scrollToEnd({ animated: false });
-          } else if (index <= 1) {
-            switcherScrollRef.current?.scrollTo({ x: 0, animated: false });
-          } else {
-            switcherScrollRef.current?.scrollTo({ x: index * 72, animated: false });
-          }
-        }, 150);
-      }
+      const pillName = selectedModalMuscle === 'Abs & Shoulders'
+        ? (selectedSubGroup || 'Shoulders')
+        : selectedModalMuscle;
+      
+      const timer = setTimeout(() => {
+        scrollToPill(pillName);
+      }, 60);
+      return () => clearTimeout(timer);
     }
-  }, [selectedModalMuscle]);
+  }, [selectedModalMuscle, selectedSubGroup, scrollToPill]);
 
   React.useEffect(() => {
     if (!targetScrollTemplateId) {
@@ -2725,13 +2734,43 @@ export default function SinglePageLandingScreen() {
                   </View>
                 </View>
 
-                {/* Top Horizontal Muscle Switcher to migrate groups */}
-                <View style={styles.modalSwitcherRow}>
+                {/* Top Horizontal Muscle Switcher with Smooth Centering & Edge Fades */}
+                <View
+                  style={styles.modalSwitcherRow}
+                  onLayout={(e) => {
+                    switcherContainerWidth.current = e.nativeEvent.layout.width;
+                  }}
+                >
+                  <View style={styles.switcherLeftFade} pointerEvents="none">
+                    <Svg height="100%" width="100%">
+                      <Defs>
+                        <SvgGradient id="fadeLeft" x1="0" y1="0" x2="1" y2="0">
+                          <Stop offset="0" stopColor={theme.background} stopOpacity="1" />
+                          <Stop offset="1" stopColor={theme.background} stopOpacity="0" />
+                        </SvgGradient>
+                      </Defs>
+                      <Rect x="0" y="0" width="100%" height="100%" fill="url(#fadeLeft)" />
+                    </Svg>
+                  </View>
+                  <View style={styles.switcherRightFade} pointerEvents="none">
+                    <Svg height="100%" width="100%">
+                      <Defs>
+                        <SvgGradient id="fadeRight" x1="0" y1="0" x2="1" y2="0">
+                          <Stop offset="0" stopColor={theme.background} stopOpacity="0" />
+                          <Stop offset="1" stopColor={theme.background} stopOpacity="1" />
+                        </SvgGradient>
+                      </Defs>
+                      <Rect x="0" y="0" width="100%" height="100%" fill="url(#fadeRight)" />
+                    </Svg>
+                  </View>
+
                   <ScrollView
                     ref={switcherScrollRef}
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.modalSwitcherScroll}
+                    decelerationRate="fast"
+                    keyboardShouldPersistTaps="handled"
                   >
                     {(() => {
                       const pills: { display: string; actual: MuscleGroup }[] = [];
@@ -2751,6 +2790,16 @@ export default function SinglePageLandingScreen() {
                       return (
                         <TouchableOpacity
                           key={pill.display}
+                          onLayout={(e) => {
+                            const { x, width } = e.nativeEvent.layout;
+                            pillLayouts.current[pill.display] = { x, width };
+                            const currentActiveName = selectedModalMuscle === 'Abs & Shoulders'
+                              ? (selectedSubGroup || 'Shoulders')
+                              : selectedModalMuscle;
+                            if (pill.display === currentActiveName) {
+                              scrollToPill(pill.display);
+                            }
+                          }}
                           style={[
                             styles.modalSwitcherPill,
                             { backgroundColor: theme.cardBg, borderColor: theme.borderColor },
@@ -2766,6 +2815,7 @@ export default function SinglePageLandingScreen() {
                             setSearch('');
                             setExpandedExerciseId(null);
                             setSortedExerciseList(sortExercisesForMuscle(pill.actual));
+                            scrollToPill(pill.display);
                           }}
                           activeOpacity={0.8}
                         >
@@ -6012,13 +6062,32 @@ const styles = StyleSheet.create({
   },
   // Modal Switcher Pills Styles
   modalSwitcherRow: {
-    paddingHorizontal: 24,
+    position: 'relative',
     marginTop: 14,
     marginBottom: 4,
+    height: 34,
+    justifyContent: 'center',
   },
   modalSwitcherScroll: {
     gap: 8,
-    paddingRight: 24,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  switcherLeftFade: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 28,
+    zIndex: 10,
+  },
+  switcherRightFade: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 28,
+    zIndex: 10,
   },
   modalSwitcherPill: {
     paddingVertical: 6,
