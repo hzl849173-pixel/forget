@@ -40,6 +40,7 @@ interface IncrementInputProps {
   accentColor?: string;
   style?: any;
   textColor?: string;
+  allowDecimals?: boolean;
 }
 
 export const IncrementInput: React.FC<IncrementInputProps> = ({
@@ -52,13 +53,22 @@ export const IncrementInput: React.FC<IncrementInputProps> = ({
   accentColor,
   style,
   textColor,
+  allowDecimals = false,
 }) => {
   const [isFocused, setIsFocused] = React.useState(false);
+  const [localText, setLocalText] = React.useState(value === 0 ? '' : value.toString());
+
+  React.useEffect(() => {
+    if (!isFocused) {
+      setLocalText(value === 0 ? '' : value.toString());
+    }
+  }, [value, isFocused]);
 
   const handleDecrement = () => {
     if (value - step >= min) {
       const newVal = parseFloat((value - step).toFixed(2));
       onChange(newVal);
+      setLocalText(newVal === 0 ? '' : newVal.toString());
     }
   };
 
@@ -66,15 +76,54 @@ export const IncrementInput: React.FC<IncrementInputProps> = ({
     if (value + step <= max) {
       const newVal = parseFloat((value + step).toFixed(2));
       onChange(newVal);
+      setLocalText(newVal === 0 ? '' : newVal.toString());
     }
   };
 
-  const handleTextChange = (text: string) => {
-    const numeric = parseFloat(text);
-    if (isNaN(numeric)) {
+  const handleTextChange = (rawText: string) => {
+    let cleanText = rawText.replace(',', '.');
+
+    if (!allowDecimals) {
+      // Reps: integers only, no decimal points or commas allowed!
+      cleanText = cleanText.replace(/[^0-9]/g, '');
+    } else {
+      // Weight: allow digits and a single decimal point
+      cleanText = cleanText.replace(/[^0-9.]/g, '');
+      const parts = cleanText.split('.');
+      if (parts.length > 2) {
+        cleanText = parts[0] + '.' + parts.slice(1).join('');
+      }
+    }
+
+    setLocalText(cleanText);
+
+    if (cleanText === '' || cleanText === '.') {
+      onChange(0);
+      return;
+    }
+
+    const numeric = parseFloat(cleanText);
+    if (!isNaN(numeric)) {
+      const clamped = Math.min(max, Math.max(min, numeric));
+      onChange(clamped);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (localText === '' || localText === '.') {
+      setLocalText('');
       onChange(0);
     } else {
-      onChange(Math.min(max, Math.max(min, numeric)));
+      const numeric = parseFloat(localText);
+      if (isNaN(numeric)) {
+        setLocalText('');
+        onChange(0);
+      } else {
+        const clamped = Math.min(max, Math.max(min, numeric));
+        setLocalText(clamped === 0 ? '' : clamped.toString());
+        onChange(clamped);
+      }
     }
   };
 
@@ -96,14 +145,17 @@ export const IncrementInput: React.FC<IncrementInputProps> = ({
       
       <TextInput
         style={[styles.adjusterInput, textColor ? { color: textColor } : null]}
-        keyboardType="decimal-pad"
-        value={value === 0 ? '' : value.toString()}
+        keyboardType={allowDecimals ? 'decimal-pad' : 'number-pad'}
+        value={isFocused ? localText : (value === 0 ? '' : value.toString())}
         placeholder={placeholder}
         placeholderTextColor="#6B7280"
         onChangeText={handleTextChange}
         selectTextOnFocus
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
+        onFocus={() => {
+          setIsFocused(true);
+          setLocalText(value === 0 ? '' : value.toString());
+        }}
+        onBlur={handleBlur}
       />
       
       <TouchableOpacity

@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Dumbbell,
   Flame,
+  Minus,
   Plus,
   Star,
   Timer,
@@ -507,7 +508,6 @@ export default function SinglePageLandingScreen() {
             sound: 'default',
             vibrationPattern: [0, 500, 250, 500],
             pressAction: { id: 'default' },
-            alarmManager: true,
           },
         },
         trigger
@@ -560,19 +560,9 @@ export default function SinglePageLandingScreen() {
     return () => subscription.remove();
   }, [restTimerSound]);
 
-  const exerciseSwipeGestureX = React.useRef(0);
-  const navigateToExerciseRef = React.useRef<(direction: 'prev' | 'next') => void>(() => { });
-  const exercisePanResponder = React.useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 15 && Math.abs(gs.dx) > Math.abs(gs.dy) * 1.5,
-      onPanResponderGrant: (_, gs) => { exerciseSwipeGestureX.current = gs.x0; },
-      onPanResponderRelease: (_, gs) => {
-        if (gs.dx < -40) navigateToExerciseRef.current('next');
-        else if (gs.dx > 40) navigateToExerciseRef.current('prev');
-      },
-    })
-  ).current;
+  const loggerScrollViewRef = React.useRef<ScrollView | null>(null);
+
+
 
   const playTimerSound = async () => {
     try {
@@ -1041,15 +1031,19 @@ export default function SinglePageLandingScreen() {
               isCompleted: false,
             });
           });
-        } else {
+        }
+
+        while (initialSets.length < 3) {
+          const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
           initialSets.push({
             id: generateId(),
-            weight: 0,
-            reps: 0,
+            weight: lastSet ? lastSet.weight : 0,
+            reps: lastSet ? lastSet.reps : 0,
             isCompleted: false,
           });
         }
       }
+
       setActiveSets(initialSets);
     }
   };
@@ -1108,6 +1102,12 @@ export default function SinglePageLandingScreen() {
     setActiveSets(activeSets.filter((s) => s.id !== setId));
   };
 
+  const handleRemoveLastSet = () => {
+    if (activeSets.length <= 1) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setActiveSets((prev) => prev.slice(0, prev.length - 1));
+  };
+
 
 
   const handleSaveWorkout = async (exerciseId: string) => {
@@ -1144,6 +1144,7 @@ export default function SinglePageLandingScreen() {
     };
 
     if (fromTemplateList) {
+      let updatedList: LoggedExercise[] = [];
       setTemplateListExercises((prev) => {
         const updated = [...prev];
         const existingIndex = updated.findIndex((le) => le.exerciseId === exerciseId);
@@ -1152,8 +1153,20 @@ export default function SinglePageLandingScreen() {
         } else {
           updated.push(newLog);
         }
+        updatedList = updated;
         return updated;
       });
+
+      const curIdx = templateListExercises.findIndex((le) => le.exerciseId === exerciseId);
+      const nextEx = templateListExercises[curIdx + 1];
+      if (nextEx) {
+        setExpandedExerciseId(nextEx.exerciseId);
+        setActiveSets(nextEx.sets.map((s) => ({ ...s, isCompleted: true })));
+        setExerciseNote(nextEx.notes || '');
+        setSameForAll(true);
+        return;
+      }
+
       handleTemplateListBackFromLogger(true);
       return;
     }
@@ -1185,7 +1198,27 @@ export default function SinglePageLandingScreen() {
       setCameFromActiveSessionPlus(false);
     }
 
-    // Reset logger states
+    // Check if there is a next workout in the session to log
+    const curIdx = updatedExercises.findIndex((le) => le.exerciseId === exerciseId);
+    const nextEx = updatedExercises[curIdx + 1];
+
+    if (nextEx) {
+      setExpandedExerciseId(nextEx.exerciseId);
+      const isLogged = nextEx.sets.every(s => s.isCompleted);
+      const nextSets: WorkoutSet[] = nextEx.sets.map((s) => ({
+        id: s.id,
+        weight: isLogged ? 0 : s.weight,
+        reps: isLogged ? 0 : s.reps,
+        isCompleted: isLogged ? false : s.isCompleted,
+      }));
+
+      setActiveSets(nextSets);
+      setExerciseNote(nextEx.notes || '');
+      setSameForAll(true);
+      return;
+    }
+
+    // Reset logger states if last exercise
     handleCloseActiveExerciseLogger(true);
   };
 
@@ -2780,8 +2813,16 @@ export default function SinglePageLandingScreen() {
                                       isCompleted: false,
                                     });
                                   });
-                                } else {
-                                  initialSets.push({ id: generateId(), weight: 0, reps: 0, isCompleted: false });
+                                }
+
+                                while (initialSets.length < 3) {
+                                  const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
+                                  initialSets.push({
+                                    id: generateId(),
+                                    weight: lastSet ? lastSet.weight : 0,
+                                    reps: lastSet ? lastSet.reps : 0,
+                                    isCompleted: false,
+                                  });
                                 }
                               }
                               setActiveSets(initialSets);
@@ -2908,8 +2949,16 @@ export default function SinglePageLandingScreen() {
                             previousLog.sets.forEach((set) => {
                               initialSets.push({ id: generateId(), weight: set.weight, reps: set.reps, isCompleted: false });
                             });
-                          } else {
-                            initialSets.push({ id: generateId(), weight: 0, reps: 0, isCompleted: false });
+                          }
+
+                          while (initialSets.length < 3) {
+                            const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
+                            initialSets.push({
+                              id: generateId(),
+                              weight: lastSet ? lastSet.weight : 0,
+                              reps: lastSet ? lastSet.reps : 0,
+                              isCompleted: false,
+                            });
                           }
                           newExercises.push({
                             id: generateId(),
@@ -3313,6 +3362,7 @@ export default function SinglePageLandingScreen() {
                                   <IncrementInput
                                     value={set.weight}
                                     step={2.5}
+                                    allowDecimals={true}
                                     onChange={(val) => {
                                       setHistoryEditSets((prev) => ({
                                         ...prev,
@@ -3329,6 +3379,7 @@ export default function SinglePageLandingScreen() {
                                   <IncrementInput
                                     value={set.reps}
                                     step={1}
+                                    allowDecimals={false}
                                     onChange={(val) => {
                                       setHistoryEditSets((prev) => ({
                                         ...prev,
@@ -3504,7 +3555,7 @@ export default function SinglePageLandingScreen() {
                   width: '98%',
                   maxWidth: undefined,
                   padding: 20,
-                  flexShrink: 1
+                  flexShrink: 1,
                 }
               ]}
             >
@@ -3523,6 +3574,9 @@ export default function SinglePageLandingScreen() {
                   const nextIndex = direction === 'next' ? curIdx + 1 : curIdx - 1;
                   const nextEx = exerciseList[nextIndex];
                   if (!nextEx) return;
+
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
                   if (expandedExerciseId && activeSets.length > 0) {
                     const save = (prev: LoggedExercise[]) =>
                       prev.map((ex) =>
@@ -3538,81 +3592,103 @@ export default function SinglePageLandingScreen() {
                       AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
                     }
                   }
+
                   setExpandedExerciseId(nextEx.exerciseId);
                   const isLogged = nextEx.sets.every(s => s.isCompleted);
-                  setActiveSets(nextEx.sets.map((s) => ({
+                  const nextSets: WorkoutSet[] = nextEx.sets.map((s) => ({
                     id: s.id,
                     weight: fromTemplateList ? s.weight : (isLogged ? 0 : s.weight),
                     reps: fromTemplateList ? s.reps : (isLogged ? 0 : s.reps),
                     isCompleted: fromTemplateList ? true : (isLogged ? false : s.isCompleted),
-                  })));
+                  }));
+
+                  setActiveSets(nextSets);
                   setExerciseNote(nextEx.notes || '');
-                  setSameForAll(false);
+                  setSameForAll(true);
                 };
-                navigateToExerciseRef.current = navigateToExercise;
 
                 return (
                   <View style={{ flexShrink: 1, maxHeight: '100%' }}>
-                    <View {...exercisePanResponder.panHandlers} style={styles.exerciseLoggerHeader}>
+                    <View style={styles.exerciseLoggerHeader}>
                       {fromTemplateList ? (
                         <TouchableOpacity
-                          style={styles.exerciseNavArrow}
-                          onPress={() => handleTemplateListBackFromLogger()}
-                          activeOpacity={0.6}
-                        >
-                          <ChevronLeft size={18} color={theme.textPrimary} strokeWidth={2.5} />
-                        </TouchableOpacity>
-                      ) : (
-                        <TouchableOpacity
-                          style={[styles.exerciseNavArrow, { opacity: canGoPrev ? 1 : 0.2 }]}
-                          onPress={() => navigateToExercise('prev')}
-                          disabled={!canGoPrev}
-                          activeOpacity={0.6}
-                        >
-                          <ChevronLeft size={18} color={theme.textPrimary} strokeWidth={2.5} />
-                        </TouchableOpacity>
-                      )}
-                      <View style={styles.exerciseLoggerTitleCol}>
-                        <Text style={[styles.exerciseLoggerName, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>{exItem.name}</Text>
-                        <Text style={[styles.exerciseLoggerMuscle, { color: categoryColor }]}>
-                          {exItem.muscleGroup.toUpperCase()}
-                          {activeSets.length > 2 && (
-                            <Text style={{ fontSize: 9, fontWeight: '700', color: theme.textSecondary }}>
-                              {"  "}·{"  "}SCROLL ↕ FOR SETS & NOTE
-                            </Text>
-                          )}
-                        </Text>
-                      </View>
-                      {fromTemplateList ? (
-                        <TouchableOpacity
-                          style={[styles.exerciseLoggerCloseBtn, { backgroundColor: '#F3F4F6', borderColor: theme.borderColor }]}
+                          style={[
+                            styles.exerciseNavBtn,
+                            {
+                              backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
+                              borderColor: theme.borderColor,
+                            }
+                          ]}
                           onPress={() => handleTemplateListBackFromLogger()}
                           activeOpacity={0.7}
                         >
-                          <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
+                          <ChevronLeft size={16} color={theme.textPrimary} strokeWidth={2.5} />
                         </TouchableOpacity>
                       ) : (
-                        <>
-                          <TouchableOpacity
-                            style={[styles.exerciseNavArrow, { opacity: canGoNext ? 1 : 0.2 }]}
-                            onPress={() => navigateToExercise('next')}
-                            disabled={!canGoNext}
-                            activeOpacity={0.6}
-                          >
-                            <ChevronRight size={18} color={theme.textPrimary} strokeWidth={2.5} />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[styles.exerciseLoggerCloseBtn, { backgroundColor: '#F3F4F6', borderColor: theme.borderColor }]}
-                            onPress={() => handleCloseActiveExerciseLogger()}
-                            activeOpacity={0.7}
-                          >
-                            <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
-                          </TouchableOpacity>
-                        </>
+                        <TouchableOpacity
+                          style={[
+                            styles.exerciseNavBtn,
+                            {
+                              backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
+                              borderColor: theme.borderColor,
+                              opacity: canGoPrev ? 1 : 0.25,
+                            }
+                          ]}
+                          onPress={() => navigateToExercise('prev')}
+                          disabled={!canGoPrev}
+                          activeOpacity={0.7}
+                        >
+                          <ChevronLeft size={16} color={theme.textPrimary} strokeWidth={2.5} />
+                        </TouchableOpacity>
+                      )}
+                      <View style={styles.exerciseLoggerTitleCol}>
+                        <Text
+                          style={[styles.exerciseLoggerName, { color: theme.textPrimary }]}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {exItem.name}
+                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                          <Text style={[styles.exerciseLoggerMuscle, { color: categoryColor }]}>
+                            {exItem.muscleGroup.toUpperCase()}
+                          </Text>
+                          {exerciseList.length > 1 && (
+                            <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary, letterSpacing: 0.3 }}>
+                              · {currentExIndex + 1} of {exerciseList.length}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                      {fromTemplateList ? (
+                        <View style={{ width: 32 }} />
+                      ) : (
+                        <TouchableOpacity
+                          style={[
+                            styles.exerciseNavBtn,
+                            {
+                              backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
+                              borderColor: theme.borderColor,
+                              opacity: canGoNext ? 1 : 0.25,
+                            }
+                          ]}
+                          onPress={() => navigateToExercise('next')}
+                          disabled={!canGoNext}
+                          activeOpacity={0.7}
+                        >
+                          <ChevronRight size={16} color={theme.textPrimary} strokeWidth={2.5} />
+                        </TouchableOpacity>
                       )}
                     </View>
 
-                    <ScrollView style={{ flexShrink: 1, marginVertical: 12 }} showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                      ref={loggerScrollViewRef}
+                      style={{ flexShrink: 1, marginVertical: 12 }}
+                      contentContainerStyle={{ paddingBottom: 40 }}
+                      showsVerticalScrollIndicator={true}
+                      nestedScrollEnabled={true}
+                      keyboardShouldPersistTaps="handled"
+                    >
 
                       {(() => {
                         const prev = expandedExerciseId ? getPreviousSessionForExercise(expandedExerciseId) : null;
@@ -3674,6 +3750,7 @@ export default function SinglePageLandingScreen() {
                         <Text style={[styles.labelCol, styles.widthSet, { color: theme.textPrimary }]}>SET</Text>
                         <Text style={[styles.labelCol, styles.widthWeight, { color: theme.textSecondary }]}>WEIGHT</Text>
                         <Text style={[styles.labelCol, styles.widthReps, { color: theme.textSecondary }]}>REPS</Text>
+                        <View style={styles.widthActions} />
                       </View>
 
                       {activeSets.map((set, index) => (
@@ -3683,6 +3760,7 @@ export default function SinglePageLandingScreen() {
                             <IncrementInput
                               value={set.weight}
                               step={2.5}
+                              allowDecimals={true}
                               onChange={(val) => handleUpdateSet(set.id, { weight: val })}
                               placeholder="kg"
                               accentColor={categoryColor}
@@ -3694,6 +3772,7 @@ export default function SinglePageLandingScreen() {
                             <IncrementInput
                               value={set.reps}
                               step={1}
+                              allowDecimals={false}
                               onChange={(val) => handleUpdateSet(set.id, { reps: val })}
                               placeholder="reps"
                               accentColor={categoryColor}
@@ -3701,16 +3780,18 @@ export default function SinglePageLandingScreen() {
                               textColor={theme.textPrimary}
                             />
                           </View>
-                          {index === activeSets.length - 1 && activeSets.length > 1 && (
-                            <TouchableOpacity
-                              style={styles.setDeleteBtn}
-                              onPress={() => handleRemoveSet(set.id)}
-                              activeOpacity={0.6}
-                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            >
-                              <X size={10} color="#EF4444" strokeWidth={2.5} />
-                            </TouchableOpacity>
-                          )}
+                          <View style={styles.widthActions}>
+                            {index === activeSets.length - 1 && activeSets.length > 1 && (
+                              <TouchableOpacity
+                                style={styles.setDeleteBtn}
+                                onPress={() => handleRemoveSet(set.id)}
+                                activeOpacity={0.6}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                              >
+                                <Trash2 size={12} color="#EF4444" strokeWidth={2} />
+                              </TouchableOpacity>
+                            )}
+                          </View>
                         </View>
                       ))}
 
@@ -3725,16 +3806,21 @@ export default function SinglePageLandingScreen() {
                             borderWidth: 1,
                             borderRadius: 10,
                             paddingHorizontal: 12,
-                            paddingVertical: 8,
+                            paddingVertical: 10,
                             color: theme.textPrimary,
-                            fontSize: 13,
-                            minHeight: 48,
+                            fontSize: 14,
+                            minHeight: 64,
                             textAlignVertical: 'top',
                           }}
                           placeholder="Add an optional workout note..."
                           placeholderTextColor={theme.inputPlaceholder}
                           value={exerciseNote}
                           onChangeText={setExerciseNote}
+                          onFocus={() => {
+                            setTimeout(() => {
+                              loggerScrollViewRef.current?.scrollToEnd({ animated: true });
+                            }, 150);
+                          }}
                           multiline
                           maxLength={150}
                         />
@@ -5071,18 +5157,23 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   widthSet: {
-    width: '12%',
+    width: '14%',
     textAlign: 'left',
     color: '#FFFFFF',
     fontWeight: '800',
   },
   widthWeight: {
-    width: '44%',
+    width: '37%',
     alignItems: 'center',
   },
   widthReps: {
-    width: '44%',
+    width: '37%',
     alignItems: 'center',
+  },
+  widthActions: {
+    width: '12%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   widthCheck: {
     width: '14%',
@@ -5106,13 +5197,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   setDeleteBtn: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: '#EF444415',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 6,
   },
   checkBtn: {
     height: 26, // Larger check button
@@ -5138,11 +5228,38 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1,
     borderLeftColor: '#252525',
   },
+  exerciseNavBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   loggerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 18,
     gap: 12,
+  },
+  removeSetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 42,
+    paddingHorizontal: 12,
+    borderRadius: 99,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#EF444450',
+    backgroundColor: '#EF44440D',
+    gap: 6,
+  },
+  removeSetBtnText: {
+    fontSize: 11,
+    color: '#EF4444',
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   addSetBtn: {
     flexDirection: 'row',
@@ -6282,16 +6399,17 @@ const styles = StyleSheet.create({
   exerciseLoggerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 4,
+    alignItems: 'center',
+    marginBottom: 12,
+    width: '100%',
   },
   exerciseLoggerTitleCol: {
     flex: 1,
-    marginRight: 12,
-    gap: 3,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
   },
   exerciseLoggerName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
     letterSpacing: -0.3,
   },
