@@ -10,6 +10,7 @@ import {
   Flame,
   Minus,
   Plus,
+  RefreshCw,
   Star,
   Timer,
   Trash2,
@@ -105,13 +106,122 @@ import { Card } from '@/components/ui/card';
 import { IncrementInput } from '@/components/ui/input';
 import { MuscleBadge } from '@/components/ui/muscle-badge';
 import { ProgressGrid } from '@/components/ui/progress-grid';
-import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS } from '@/constants/exercises';
+import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS, getMovementPatternGroup } from '@/constants/exercises';
 import { getExerciseImage } from '@/constants/equipmentImages';
 import { useWorkoutAnalytics } from '@/hooks/use-workout-analytics';
 import { Exercise, LoggedExercise, PersonalRecord, useWorkout, WorkoutSession, WorkoutSet, WorkoutTemplate } from '@/hooks/use-workout-storage';
 import DragList from 'react-native-draglist';
 
 const generateId = () => Date.now().toString() + Math.random().toString(36).substring(2, 9);
+
+const SwipeableActiveExerciseRow: React.FC<{
+  children: React.ReactNode;
+  onSwipeLeft: () => void;
+  onSwipeRight: () => void;
+  cardBgColor: string;
+}> = ({ children, onSwipeLeft, onSwipeRight, cardBgColor }) => {
+  const pan = React.useRef(new Animated.Value(0)).current;
+
+  // Delete action backdrop opacity (revealed on Left side when swiping RIGHT pan > 0)
+  const deleteOpacity = pan.interpolate({
+    inputRange: [0, 15, 60],
+    outputRange: [0, 0.5, 1],
+    extrapolate: 'clamp',
+  });
+
+  // Variation action backdrop opacity (revealed on Right side when swiping LEFT pan < 0)
+  const variationOpacity = pan.interpolate({
+    inputRange: [-60, -15, 0],
+    outputRange: [1, 0.5, 0],
+    extrapolate: 'clamp',
+  });
+
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 8 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
+      },
+      onPanResponderMove: Animated.event([null, { dx: pan }], { useNativeDriver: false }),
+      onPanResponderRelease: (_, gestureState) => {
+        const threshold = 35;
+        const velocityThreshold = 0.3;
+        const isFlickLeft = gestureState.dx < -threshold || gestureState.vx < -velocityThreshold;
+        const isFlickRight = gestureState.dx > threshold || gestureState.vx > velocityThreshold;
+
+        if (gestureState.dx < -10 && isFlickLeft) {
+          // Swiping LEFT -> VARIATION SWAP
+          Animated.timing(pan, {
+            toValue: -350,
+            duration: 120,
+            useNativeDriver: false,
+          }).start(() => {
+            onSwipeLeft();
+            pan.setValue(0);
+          });
+        } else if (gestureState.dx > 10 && isFlickRight) {
+          // Swiping RIGHT -> DELETE
+          Animated.timing(pan, {
+            toValue: 350,
+            duration: 120,
+            useNativeDriver: false,
+          }).start(() => {
+            onSwipeRight();
+            pan.setValue(0);
+          });
+        } else {
+          Animated.spring(pan, {
+            toValue: 0,
+            useNativeDriver: false,
+            bounciness: 4,
+          }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(pan, {
+          toValue: 0,
+          useNativeDriver: false,
+        }).start();
+      },
+    })
+  ).current;
+
+  return (
+    <View style={{ position: 'relative', overflow: 'hidden', borderRadius: 14, marginBottom: 2 }}>
+      {/* Left side action backdrop (Swiping RIGHT -> DELETE) */}
+      <Animated.View
+        style={[
+          styles.activeSwipeActionBackground,
+          { backgroundColor: '#EF444418', opacity: deleteOpacity, justifyContent: 'flex-start', paddingLeft: 18 }
+        ]}
+      >
+        <Trash2 size={15} color="#EF4444" strokeWidth={2.5} />
+        <Text style={[styles.activeSwipeActionText, { color: '#EF4444' }]}>DELETE</Text>
+      </Animated.View>
+
+      {/* Right side action backdrop (Swiping LEFT -> VARIATION) */}
+      <Animated.View
+        style={[
+          styles.activeSwipeActionBackground,
+          { backgroundColor: '#10B98118', opacity: variationOpacity, justifyContent: 'flex-end', paddingRight: 18 }
+        ]}
+      >
+        <Text style={[styles.activeSwipeActionText, { color: '#10B981' }]}>VARIATION</Text>
+        <RefreshCw size={15} color="#10B981" strokeWidth={2.5} />
+      </Animated.View>
+
+      {/* Solid Opaque Sliding Card Container */}
+      <Animated.View
+        style={{
+          transform: [{ translateX: pan }],
+          backgroundColor: cardBgColor || '#13141C',
+        }}
+        {...panResponder.panHandlers}
+      >
+        {children}
+      </Animated.View>
+    </View>
+  );
+};
 
 const CONSISTENCY_QUOTES = [
   "Consistency is what transforms average into excellence. Show up today.",
@@ -993,6 +1103,43 @@ export default function SinglePageLandingScreen() {
     setActiveSets([]);
     setSameForAll(true);
     setSortedExerciseList(sortExercisesForMuscle(muscle));
+  };
+
+  const handleSwapExerciseVariation = (activeId: string, currentExerciseId: string) => {
+    const currentEx = exercises.find((e) => e.id === currentExerciseId);
+    if (!currentEx) return;
+
+    const group = getMovementPatternGroup(currentExerciseId, currentEx.muscleGroup, exercises);
+    if (group.length <= 1) return;
+
+    // Filter out variations already present in activeSessionExercises (except current item being swapped)
+    const existingIds = new Set(
+      activeSessionExercises
+        .filter((le) => (le.id ? le.id !== activeId : le.exerciseId !== currentExerciseId))
+        .map((le) => le.exerciseId)
+    );
+
+    const availableGroup = group.filter((ex) => !existingIds.has(ex.id));
+    if (availableGroup.length <= 1) return;
+
+    const currentIndex = availableGroup.findIndex((ex) => ex.id === currentExerciseId);
+    const nextIndex = currentIndex !== -1 ? (currentIndex + 1) % availableGroup.length : 0;
+    const nextExercise = availableGroup[nextIndex];
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    const updated = activeSessionExercises.map((le) => {
+      if (le.id === activeId || (le.id ? le.id === activeId : le.exerciseId === currentExerciseId)) {
+        return {
+          ...le,
+          exerciseId: nextExercise.id,
+        };
+      }
+      return le;
+    });
+
+    setActiveSessionExercises(updated);
+    AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
   };
 
   const getMostFrequentMuscleGroup = (loggedExercises: LoggedExercise[]): MuscleGroup => {
@@ -2000,35 +2147,50 @@ export default function SinglePageLandingScreen() {
                       if (!details) return null;
                       const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
                       return (
-                        <TouchableOpacity
+                        <SwipeableActiveExerciseRow
                           key={item.id || `${item.exerciseId}-${index}`}
-                          style={[
-                            styles.activeSessionItem,
-                            { borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1 }
-                          ]}
-                          activeOpacity={0.6}
-                          onPress={() => handleToggleExpand(item.exerciseId)}
-                          onLongPress={onDragStart}
-                          delayLongPress={150}
+                          cardBgColor={theme.cardBg}
+                          onSwipeLeft={() => {
+                            // Swipe LEFT = VARIATION SWAP
+                            handleSwapExerciseVariation(item.id || item.exerciseId, item.exerciseId);
+                          }}
+                          onSwipeRight={() => {
+                            // Swipe RIGHT = DELETE
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            const updated = activeSessionExercises.filter((le) => (item.id ? le.id !== item.id : le.exerciseId !== item.exerciseId));
+                            setActiveSessionExercises(updated);
+                            AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                          }}
                         >
-                          <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor }]} />
-                          <View style={styles.activeSessionItemContent}>
-                            <Text style={[styles.activeSessionItemName, { color: theme.textPrimary }]} numberOfLines={1}>
-                              {details.name}
-                            </Text>
-                            <View style={styles.activeSessionItemMeta}>
-                              <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${muscleColor}15` }]}>
-                                <Text style={[styles.activeSessionMuscleBadgeText, { color: muscleColor }]}>
-                                  {details.muscleGroup.toUpperCase()}
+                          <TouchableOpacity
+                            style={[
+                              styles.activeSessionItem,
+                              { borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1, backgroundColor: theme.cardBg }
+                            ]}
+                            activeOpacity={0.6}
+                            onPress={() => handleToggleExpand(item.exerciseId)}
+                            onLongPress={onDragStart}
+                            delayLongPress={150}
+                          >
+                            <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor }]} />
+                            <View style={styles.activeSessionItemContent}>
+                              <Text style={[styles.activeSessionItemName, { color: theme.textPrimary }]} numberOfLines={1}>
+                                {details.name}
+                              </Text>
+                              <View style={styles.activeSessionItemMeta}>
+                                <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${muscleColor}15` }]}>
+                                  <Text style={[styles.activeSessionMuscleBadgeText, { color: muscleColor }]}>
+                                    {details.muscleGroup.toUpperCase()}
+                                  </Text>
+                                </View>
+                                <Text style={[styles.activeSessionItemSets, { color: theme.textSecondary }]}>
+                                  {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
                                 </Text>
                               </View>
-                              <Text style={[styles.activeSessionItemSets, { color: theme.textSecondary }]}>
-                                {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
-                              </Text>
                             </View>
-                          </View>
-                          <ChevronRight size={16} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
-                        </TouchableOpacity>
+                            <ChevronRight size={16} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
+                          </TouchableOpacity>
+                        </SwipeableActiveExerciseRow>
                       );
                     }}
                   />
@@ -6336,6 +6498,18 @@ const styles = StyleSheet.create({
   timerSoundBtnText: {
     fontSize: 11,
     fontWeight: '800',
+  },
+  activeSwipeActionBackground: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    gap: 8,
+  },
+  activeSwipeActionText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
   activeSessionCard: {
     padding: 16,

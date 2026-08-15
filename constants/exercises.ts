@@ -358,3 +358,94 @@ export const POPULAR_EXERCISE_IDS = [
   'plank'
 ];
 
+export const MOVEMENT_PATTERN_GROUPS: string[][] = [
+  // Chest Presses
+  ['bb-bench-press', 'bb-incline-press', 'bb-decline-press', 'floor-press', 'landmine-press', 'reverse-grip-bench', 'guillotine-press', 'db-bench-press', 'db-incline-press', 'db-decline-press', 'db-hex-press', 'chest-press-machine', 'hammer-strength-press', 'machine-decline-press', 'single-arm-cable-press', 'svend-press'],
+  // Chest Push-ups
+  ['push-ups', 'weighted-pushups', 'incline-pushup', 'banded-pushups'],
+  // Chest Flyes
+  ['db-flyes', 'db-incline-flyes', 'cable-crossover', 'high-to-low-cable', 'low-to-high-cable', 'leaning-cable-fly', 'pec-deck'],
+  // Chest Pullover
+  ['db-pullover', 'cable-pullover'],
+
+  // Tricep Pushdowns
+  ['tricep-pushdown', 'rope-pushdown', 'cable-vbar-pushdown', 'rev-grip-pushdown', 'rev-grip-cable-pushdown', 'straight-bar-pushdown', 'single-arm-pushdown', 'band-tricep-pushdown'],
+  // Tricep Lying Extensions / Skull Crushers
+  ['skull-crushers', 'db-skull-crushers', 'lying-db-ext', 'bench-cable-ext', 'ez-french-press', 'tate-press'],
+  // Tricep Overhead Extensions
+  ['cable-overhead-ext', 'cable-rope-overhead', 'bb-overhead-ext', 'overhead-db-extension', 'two-arm-db-overhead-ext'],
+  // Tricep Kickbacks
+  ['cable-kickbacks', 'db-kickbacks'],
+  // Tricep Dips & Close Grip Presses
+  ['close-grip-bench', 'jm-press', 'bench-dips', 'weighted-dips', 'close-grip-pushups', 'diamond-pushups', 'bodyweight-tricep-ext', 'kb-tricep-press', 'tricep-dip-machine', 'single-arm-machine-ext'],
+
+  // Bicep Standard Curls
+  ['db-bicep-curl', 'incline-db-curl', 'bb-curl', 'ez-bar-curl', 'ez-wide-curl', 'cable-bicep-curl', 'dual-cable-curl', 'kb-bicep-curl', 'machine-bicep-curl', 'band-curl', '21s-bicep-curl'],
+  // Bicep Hammer Curls
+  ['db-hammer-curl', 'crossbody-hammer', 'incline-hammer-curl', 'cable-hammer-curl', 'cable-rope-curl'],
+  // Bicep Preacher & Concentration Curls
+  ['concentration-curl', 'spider-curl', 'db-preacher-curl', 'preacher-curl', 'cable-preacher-curl', 'single-arm-machine-preacher'],
+  // Bicep Reverse & Zottman Curls
+  ['zottman-curl', 'rev-db-curl', 'rev-bb-curl'],
+
+  // Back Rows
+  ['bb-row', 'tbar-row', 'meadows-row', 'pendlay-row', 'db-row', 'db-renegade-row', 'cable-row', 'single-arm-cable-row', 'chest-supported-row', 'machine-row', 'inverted-row'],
+  // Back Pulldowns & Pullups
+  ['lat-pulldown', 'underhand-pulldown', 'single-arm-pulldown', 'pull-ups', 'assisted-pullup'],
+  // Back Pullovers & Lat Pushdowns
+  ['lat-pushdowns', 'straight-arm-pulldown', 'back-db-pullover'],
+  // Back Deadlifts & Hinges
+  ['deadlift', 'rack-pulls', 'trap-bar-deadlift', 'good-morning', 'hyperextensions'],
+  // Back Shrugs
+  ['bb-shrugs', 'db-shrugs'],
+
+  // Leg Squats & Leg Press
+  ['bb-squat', 'front-squat', 'box-squats', 'goblet-squat', 'hack-squat', 'leg-press', 'belt-squat', 'sissy-squat'],
+  // Leg Lunges & Step-ups
+  ['bulgarian-split-squat', 'bb-walking-lunge', 'db-walking-lunges', 'db-stepups', 'rev-lunge'],
+  // Leg RDL & Hip Thrusts
+  ['rdl', 'sumo-deadlift', 'snatch-grip-deadlift', 'hip-thrust', 'kb-swings', 'cable-pullthroughs'],
+  // Leg Curls
+  ['seated-leg-curls', 'lying-leg-curls', 'glute-ham-raise', 'nordic-hamstring-curl'],
+  // Leg Extensions
+  ['leg-extensions'],
+  // Calf Raises
+  ['standing-calf-raises', 'seated-calf-raises', 'calf-press-legpress', 'donkey-calf-raise'],
+
+  // Shoulder Overhead Presses
+  ['bb-overhead-press', 'db-shoulder-press', 'arnold-press', 'machine-shoulder-press'],
+  // Shoulder Lateral Raises
+  ['db-lateral-raise', 'cable-lateral-raise'],
+  // Shoulder Rear Delt Flyes & Face Pulls
+  ['db-rear-delt-fly', 'face-pull', 'face-pulls', 'reverse-pec-deck', 'bb-upright-row', 'band-pull-apart'],
+
+  // Ab Crunches
+  ['ab-crunch', 'decline-situp', 'bicycle-crunches', 'cable-crunch', 'russian-twist'],
+  // Ab Leg Raises
+  ['lying-leg-raises', 'hanging-leg-raise', 'captains-chair-raises'],
+  // Ab Planks & Rollouts
+  ['plank', 'ab-wheel'],
+];
+
+export const getMovementPatternGroup = (exerciseId: string, muscleGroup: MuscleGroup, allExercises: ExerciseSeed[]): ExerciseSeed[] => {
+  const explicitGroup = MOVEMENT_PATTERN_GROUPS.find((group) => group.includes(exerciseId));
+  if (explicitGroup) {
+    const list = explicitGroup
+      .map((id) => allExercises.find((e) => e.id === id))
+      .filter((e): e is ExerciseSeed => e !== undefined);
+    if (list.length > 0) return list;
+  }
+
+  const currentEx = allExercises.find((e) => e.id === exerciseId);
+  if (!currentEx) return [];
+
+  const sameMuscle = allExercises.filter((e) => e.muscleGroup === muscleGroup);
+  const words = currentEx.name.toLowerCase().split(' ').filter(w => w.length > 3 && !['barbell', 'dumbbell', 'cable', 'machine'].includes(w));
+  if (words.length > 0) {
+    const matchingByName = sameMuscle.filter((e) => words.some((w) => e.name.toLowerCase().includes(w)));
+    if (matchingByName.length > 1) return matchingByName;
+  }
+
+  return sameMuscle;
+};
+
