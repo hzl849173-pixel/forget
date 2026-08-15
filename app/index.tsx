@@ -22,6 +22,7 @@ import {
   Animated,
   AppState,
   BackHandler,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   PanResponder,
@@ -561,6 +562,26 @@ export default function SinglePageLandingScreen() {
   }, [restTimerSound]);
 
   const loggerScrollViewRef = React.useRef<ScrollView | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  React.useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
 
 
@@ -1731,16 +1752,42 @@ export default function SinglePageLandingScreen() {
     ex.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Extract ordered list of recently logged exercise IDs from workout history
+  const recentExerciseIdsInOrder: string[] = [];
+  history.forEach((session) => {
+    session.exercises.forEach((logEx) => {
+      if (!recentExerciseIdsInOrder.includes(logEx.exerciseId)) {
+        recentExerciseIdsInOrder.push(logEx.exerciseId);
+      }
+    });
+  });
+
   const favoriteExercises = displayedExercises.filter((ex) => ex.isFavorite);
-  const customExercises = displayedExercises.filter((ex) => ex.isCustom && !ex.isFavorite);
+
+  // Recent exercises for this muscle group (not in favorites)
+  const recentExercises = displayedExercises
+    .filter((ex) => !ex.isFavorite && recentExerciseIdsInOrder.includes(ex.id))
+    .sort((a, b) => recentExerciseIdsInOrder.indexOf(a.id) - recentExerciseIdsInOrder.indexOf(b.id));
+
+  // Popular exercises (not in favorites or recent)
   const popularExercises = displayedExercises
-    .filter((ex) => POPULAR_EXERCISE_IDS.includes(ex.id) && !ex.isCustom && !ex.isFavorite)
+    .filter((ex) => POPULAR_EXERCISE_IDS.includes(ex.id) && !ex.isFavorite && !recentExerciseIdsInOrder.includes(ex.id))
     .sort((a, b) => POPULAR_EXERCISE_IDS.indexOf(a.id) - POPULAR_EXERCISE_IDS.indexOf(b.id));
-  const defaultExercises = displayedExercises.filter((ex) => !ex.isCustom && !ex.isFavorite && !POPULAR_EXERCISE_IDS.includes(ex.id));
-  
+
+  // Custom / Added exercises (not in favorites or recent)
+  const customExercises = displayedExercises.filter((ex) => ex.isCustom && !ex.isFavorite && !recentExerciseIdsInOrder.includes(ex.id));
+
+  // Remaining default exercises grouped by instrument
+  const defaultExercises = displayedExercises.filter(
+    (ex) => !ex.isCustom && !ex.isFavorite && !recentExerciseIdsInOrder.includes(ex.id) && !POPULAR_EXERCISE_IDS.includes(ex.id)
+  );
+
   const exerciseSections: { title: string; data: typeof displayedExercises }[] = [];
   if (favoriteExercises.length > 0) {
     exerciseSections.push({ title: 'Favorites', data: favoriteExercises });
+  }
+  if (recentExercises.length > 0) {
+    exerciseSections.push({ title: 'Recent Workouts', data: recentExercises });
   }
   if (customExercises.length > 0) {
     exerciseSections.push({ title: 'Added Workouts', data: customExercises });
@@ -3684,41 +3731,74 @@ export default function SinglePageLandingScreen() {
                     <ScrollView
                       ref={loggerScrollViewRef}
                       style={{ flexShrink: 1, marginVertical: 12 }}
-                      contentContainerStyle={{ paddingBottom: 40 }}
+                      contentContainerStyle={{ paddingBottom: keyboardHeight > 0 ? keyboardHeight + 10 : 20 }}
                       showsVerticalScrollIndicator={true}
                       nestedScrollEnabled={true}
                       keyboardShouldPersistTaps="handled"
                     >
 
                       {(() => {
-                        const prev = expandedExerciseId ? getPreviousSessionForExercise(expandedExerciseId) : null;
-                        const exercisePr = expandedExerciseId ? getExercisePR(expandedExerciseId) : null;
-                        return prev ? (
-                          <View style={[styles.prevWorkoutCard, { borderColor: theme.borderColor, backgroundColor: theme.background }]}>
+                        if (!expandedExerciseId) return null;
+                        const prFromState = getExercisePR(expandedExerciseId);
+                        let pr = prFromState;
+
+                        if (!pr) {
+                          let max1RM = 0;
+                          let bestWeight = 0;
+                          let bestReps = 0;
+                          let bestDate = '';
+                          for (const session of history) {
+                            const logEx = session.exercises.find((e) => e.exerciseId === expandedExerciseId);
+                            if (logEx) {
+                              for (const set of logEx.sets) {
+                                if (set.weight > 0 && set.reps > 0) {
+                                  const e1RM = set.weight * (1 + set.reps / 30);
+                                  if (e1RM > max1RM) {
+                                    max1RM = e1RM;
+                                    bestWeight = set.weight;
+                                    bestReps = set.reps;
+                                    bestDate = session.date;
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          if (bestWeight > 0) {
+                            pr = { exerciseId: expandedExerciseId, weight: bestWeight, reps: bestReps, date: bestDate, estimatedOneRM: max1RM };
+                          }
+                        }
+
+                        if (!pr) return null;
+
+                        const formattedDate = new Date(pr.date).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        });
+
+                        return (
+                          <View style={[styles.prevWorkoutCard, { borderColor: `${categoryColor}40`, backgroundColor: `${categoryColor}08` }]}>
                             <View style={styles.prevWorkoutHeader}>
-                              <Text style={[styles.prevWorkoutLabel, { color: theme.textSecondary }]}>PREVIOUS</Text>
-                              <Text style={[styles.prevWorkoutDate, { color: theme.textSecondary }]}>{new Date(prev.session.date).toLocaleDateString()}</Text>
-                            </View>
-                            {prev.log.sets.map((s, i) => (
-                              <View key={s.id} style={styles.prevWorkoutSetRow}>
-                                <Text style={[styles.prevWorkoutSetNum, { color: theme.textSecondary }]}>{i + 1}</Text>
-                                <Text style={[styles.prevWorkoutSetDetail, { color: theme.textPrimary }]}>{s.weight} kg × {s.reps}</Text>
-                              </View>
-                            ))}
-                            {prev.log.notes && (
-                              <View style={{ marginTop: 8, paddingHorizontal: 4 }}>
-                                <Text style={{ fontSize: 11, color: '#10B981', fontStyle: 'italic', lineHeight: 15 }}>
-                                  Note: {prev.log.notes}
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                <Trophy size={14} color="#FACC15" fill="#FACC15" />
+                                <Text style={[styles.prevWorkoutLabel, { color: theme.textPrimary, fontWeight: '800' }]}>
+                                  PERSONAL RECORD
                                 </Text>
                               </View>
-                            )}
-                            {exercisePr && (
-                              <View style={styles.prevWorkoutPrBadge}>
-                                <Text style={{ fontSize: 10, fontWeight: '800', color: '#10B981', letterSpacing: 0.3 }}>PR: {exercisePr.weight} kg × {exercisePr.reps}</Text>
-                              </View>
-                            )}
+                              <Text style={[styles.prevWorkoutDate, { color: theme.textSecondary, fontWeight: '600' }]}>
+                                {formattedDate.toUpperCase()}
+                              </Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+                              <Text style={{ fontSize: 18, fontWeight: '800', color: theme.textPrimary }}>
+                                {pr.weight} kg
+                              </Text>
+                              <Text style={{ fontSize: 14, fontWeight: '600', color: theme.textSecondary }}>
+                                × {pr.reps} reps
+                              </Text>
+                            </View>
                           </View>
-                        ) : null;
+                        );
                       })()}
 
                       <View style={[styles.exerciseLoggerDivider, { backgroundColor: theme.borderColor }]} />
