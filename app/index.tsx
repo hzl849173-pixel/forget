@@ -4137,38 +4137,27 @@ export default function SinglePageLandingScreen() {
                               flexDirection: 'row',
                               alignItems: 'center',
                               justifyContent: 'space-between',
-                              backgroundColor: isDarkMode ? 'rgba(234, 179, 8, 0.08)' : '#FEFCE8',
+                              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : '#F9FAFB',
                               borderWidth: 1,
-                              borderColor: isDarkMode ? 'rgba(234, 179, 8, 0.25)' : '#FEF08A',
-                              borderRadius: 12,
+                              borderColor: theme.borderColor,
+                              borderRadius: 10,
                               paddingHorizontal: 12,
-                              paddingVertical: 7,
-                              marginVertical: 6,
+                              paddingVertical: 8,
+                              marginTop: 4,
+                              marginBottom: 8,
                             }}
                           >
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-                              <View
-                                style={{
-                                  backgroundColor: 'rgba(234, 179, 8, 0.18)',
-                                  borderRadius: 6,
-                                  paddingHorizontal: 6,
-                                  paddingVertical: 2,
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  gap: 4,
-                                }}
-                              >
-                                <Trophy size={11} color="#EAB308" fill="#EAB308" />
-                                <Text style={{ fontSize: 10, fontWeight: '900', color: '#CA8A04', letterSpacing: 0.6 }}>
-                                  PR
-                                </Text>
-                              </View>
-                              <Text style={{ fontSize: 13, fontWeight: '900', color: theme.textPrimary }}>
-                                {pr.weight} kg <Text style={{ fontSize: 12, fontWeight: '600', color: theme.textSecondary }}>× {pr.reps} reps</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Trophy size={13} color="#10B981" strokeWidth={2} />
+                              <Text style={{ fontSize: 10, fontWeight: '800', color: '#10B981', letterSpacing: 1 }}>
+                                BEST
+                              </Text>
+                              <Text style={{ fontSize: 13, fontWeight: '800', color: theme.textPrimary, marginLeft: 4 }}>
+                                {pr.weight} <Text style={{ fontSize: 11, fontWeight: '600', color: theme.textSecondary }}>kg</Text> × {pr.reps} <Text style={{ fontSize: 11, fontWeight: '600', color: theme.textSecondary }}>reps</Text>
                               </Text>
                             </View>
-                            <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary, letterSpacing: 0.2 }}>
-                              {formattedDate.toUpperCase()}
+                            <Text style={{ fontSize: 11, fontWeight: '500', color: theme.textSecondary }}>
+                              {formattedDate}
                             </Text>
                           </View>
                         );
