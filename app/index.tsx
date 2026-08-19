@@ -4132,26 +4132,44 @@ export default function SinglePageLandingScreen() {
                         });
 
                         return (
-                          <View style={[styles.prevWorkoutCard, { borderColor: `${categoryColor}40`, backgroundColor: `${categoryColor}08` }]}>
-                            <View style={styles.prevWorkoutHeader}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                <Trophy size={14} color="#FACC15" fill="#FACC15" />
-                                <Text style={[styles.prevWorkoutLabel, { color: theme.textPrimary, fontWeight: '800' }]}>
-                                  PERSONAL RECORD
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              backgroundColor: isDarkMode ? 'rgba(234, 179, 8, 0.08)' : '#FEFCE8',
+                              borderWidth: 1,
+                              borderColor: isDarkMode ? 'rgba(234, 179, 8, 0.25)' : '#FEF08A',
+                              borderRadius: 12,
+                              paddingHorizontal: 12,
+                              paddingVertical: 7,
+                              marginVertical: 6,
+                            }}
+                          >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                              <View
+                                style={{
+                                  backgroundColor: 'rgba(234, 179, 8, 0.18)',
+                                  borderRadius: 6,
+                                  paddingHorizontal: 6,
+                                  paddingVertical: 2,
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 4,
+                                }}
+                              >
+                                <Trophy size={11} color="#EAB308" fill="#EAB308" />
+                                <Text style={{ fontSize: 10, fontWeight: '900', color: '#CA8A04', letterSpacing: 0.6 }}>
+                                  PR
                                 </Text>
                               </View>
-                              <Text style={[styles.prevWorkoutDate, { color: theme.textSecondary, fontWeight: '600' }]}>
-                                {formattedDate.toUpperCase()}
+                              <Text style={{ fontSize: 13, fontWeight: '900', color: theme.textPrimary }}>
+                                {pr.weight} kg <Text style={{ fontSize: 12, fontWeight: '600', color: theme.textSecondary }}>× {pr.reps} reps</Text>
                               </Text>
                             </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
-                              <Text style={{ fontSize: 18, fontWeight: '800', color: theme.textPrimary }}>
-                                {pr.weight} kg
-                              </Text>
-                              <Text style={{ fontSize: 14, fontWeight: '600', color: theme.textSecondary }}>
-                                × {pr.reps} reps
-                              </Text>
-                            </View>
+                            <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary, letterSpacing: 0.2 }}>
+                              {formattedDate.toUpperCase()}
+                            </Text>
                           </View>
                         );
                       })()}
