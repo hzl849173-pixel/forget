@@ -9,6 +9,7 @@ import {
   Dumbbell,
   Flame,
   Minus,
+  Play,
   Plus,
   RefreshCw,
   Star,
@@ -60,7 +61,9 @@ const MUSCLE_IMAGES = {
   Biceps: require('@/assets/images/muscle_biceps.png'),
   Back: require('@/assets/images/muscle_back.png'),
   Legs: require('@/assets/images/muscle_legs.png'),
+  'Back & Shoulders': require('@/assets/images/muscle_shoulders_v2.png'),
   'Abs & Shoulders': require('@/assets/images/muscle_shoulders_v2.png'),
+  Shoulders: require('@/assets/images/muscle_shoulders_v2.png'),
 };
 
 const categoryColors: Record<string, string> = {
@@ -69,8 +72,9 @@ const categoryColors: Record<string, string> = {
   Biceps: '#3B82F6',
   Back: '#A855F7',
   Legs: '#FF8A00',
+  'Back & Shoulders': '#22C55E',
   'Abs & Shoulders': '#22C55E',
-  Abs: '#22C55E',
+  Abs: '#EAB308',
   Shoulders: '#22C55E',
 };
 
@@ -106,7 +110,7 @@ import { Card } from '@/components/ui/card';
 import { IncrementInput } from '@/components/ui/input';
 import { MuscleBadge } from '@/components/ui/muscle-badge';
 import { ProgressGrid } from '@/components/ui/progress-grid';
-import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS, getMovementPatternGroup } from '@/constants/exercises';
+import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, MUSCLE_GROUPS, ALL_MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS, getMovementPatternGroup } from '@/constants/exercises';
 import { getExerciseImage } from '@/constants/equipmentImages';
 import { useWorkoutAnalytics } from '@/hooks/use-workout-analytics';
 import { Exercise, LoggedExercise, PersonalRecord, useWorkout, WorkoutSession, WorkoutSet, WorkoutTemplate } from '@/hooks/use-workout-storage';
@@ -1164,8 +1168,16 @@ export default function SinglePageLandingScreen() {
   };
 
   const sortExercisesForMuscle = (muscle: MuscleGroup, extras?: Exercise[], excludeIds?: Set<string>) => {
-    const filtered = excludeIds ? exercises.filter((ex) => ex.muscleGroup === muscle && !excludeIds.has(ex.id)) : exercises.filter((ex) => ex.muscleGroup === muscle);
-    const list = extras ? [...filtered, ...extras] : filtered;
+    const all = extras ? [...exercises, ...extras] : exercises;
+    let filtered = all;
+    if (muscle === 'Back & Shoulders' || muscle === 'Abs & Shoulders') {
+      filtered = all.filter((ex) => ex.muscleGroup === 'Back' || ex.muscleGroup === 'Shoulders');
+    } else {
+      filtered = all.filter((ex) => ex.muscleGroup === muscle);
+    }
+    if (excludeIds) {
+      filtered = filtered.filter((ex) => !excludeIds.has(ex.id));
+    }
     const getFavoriteIndex = (exercise: Exercise) => {
       const idx = favoriteOrder.indexOf(exercise.id);
       if (idx !== -1) return idx;
@@ -1177,31 +1189,26 @@ export default function SinglePageLandingScreen() {
       return 999999;
     };
 
-    return [...list].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       if (a.isFavorite && b.isFavorite) {
         return getFavoriteIndex(a) - getFavoriteIndex(b);
       }
       if (a.isFavorite && !b.isFavorite) return -1;
       if (!a.isFavorite && b.isFavorite) return 1;
-      if (muscle === 'Abs & Shoulders') {
-        const aIsShoulder = SHOULDER_EXERCISE_IDS.has(a.id);
-        const bIsShoulder = SHOULDER_EXERCISE_IDS.has(b.id);
-        if (aIsShoulder && !bIsShoulder) return -1;
-        if (!aIsShoulder && bIsShoulder) return 1;
-      }
       return 0;
     });
   };
 
   const handleSelectMuscleCard = (muscle: MuscleGroup) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedModalMuscle(muscle);
-    setSelectedSubGroup(muscle === 'Abs & Shoulders' ? 'Shoulders' : null);
+    const targetMuscle = (muscle === 'Back & Shoulders' || muscle === 'Abs & Shoulders') ? 'Shoulders' : muscle;
+    setSelectedModalMuscle(targetMuscle);
+    setSelectedSubGroup(null);
     setSearch('');
     setExpandedExerciseId(null);
     setActiveSets([]);
     setSameForAll(true);
-    setSortedExerciseList(sortExercisesForMuscle(muscle));
+    setSortedExerciseList(sortExercisesForMuscle(targetMuscle));
   };
 
   const handleSwapExerciseVariation = (activeId: string, currentExerciseId: string) => {
@@ -2765,7 +2772,8 @@ export default function SinglePageLandingScreen() {
                               ))}
                             </View>
                             <TouchableOpacity
-                              style={[styles.templateStartBtn, { paddingVertical: 3, paddingHorizontal: 10 }]}
+                              style={styles.templateStartBtn}
+                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                               onPress={async () => {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                                 await incrementTemplateUsage(tmpl.id);
@@ -3033,32 +3041,18 @@ export default function SinglePageLandingScreen() {
                     decelerationRate="fast"
                     keyboardShouldPersistTaps="handled"
                   >
-                    {(() => {
-                      const pills: { display: string; actual: MuscleGroup }[] = [];
-                      MUSCLE_GROUPS.forEach((m) => {
-                        if (m === 'Abs & Shoulders') {
-                          pills.push({ display: 'Abs', actual: m });
-                          pills.push({ display: 'Shoulders', actual: m });
-                        } else {
-                          pills.push({ display: m, actual: m });
-                        }
-                      });
-                      return pills;
-                    })().map((pill) => {
-                      const isActive = selectedModalMuscle === pill.actual && (pill.actual !== 'Abs & Shoulders' || selectedSubGroup === pill.display);
-                      const activeColor = categoryColors[pill.actual] || '#10B981';
+                    {ALL_MUSCLE_GROUPS.map((m) => {
+                      const isActive = selectedModalMuscle === m;
+                      const activeColor = categoryColors[m] || '#10B981';
 
                       return (
                         <TouchableOpacity
-                          key={pill.display}
+                          key={m}
                           onLayout={(e) => {
                             const { x, width } = e.nativeEvent.layout;
-                            pillLayouts.current[pill.display] = { x, width };
-                            const currentActiveName = selectedModalMuscle === 'Abs & Shoulders'
-                              ? (selectedSubGroup || 'Shoulders')
-                              : selectedModalMuscle;
-                            if (pill.display === currentActiveName) {
-                              scrollToPill(pill.display);
+                            pillLayouts.current[m] = { x, width };
+                            if (m === selectedModalMuscle) {
+                              scrollToPill(m);
                             }
                           }}
                           style={[
@@ -3071,23 +3065,22 @@ export default function SinglePageLandingScreen() {
                           ]}
                           onPress={() => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            setSelectedModalMuscle(pill.actual);
-                            setSelectedSubGroup(pill.actual === 'Abs & Shoulders' ? (pill.display as 'Abs' | 'Shoulders') : null);
+                            setSelectedModalMuscle(m);
+                            setSelectedSubGroup(null);
                             setSearch('');
                             setExpandedExerciseId(null);
-                            setSortedExerciseList(sortExercisesForMuscle(pill.actual));
-                            scrollToPill(pill.display);
+                            setSortedExerciseList(sortExercisesForMuscle(m));
+                            scrollToPill(m);
                           }}
                           activeOpacity={0.8}
                         >
                           <Text
                             style={[
                               styles.modalSwitcherPillText,
-                              { color: theme.textSecondary },
-                              isActive && { color: activeColor, fontWeight: '800' },
+                              { color: isActive ? activeColor : theme.textSecondary },
                             ]}
                           >
-                            {pill.display.toUpperCase()}
+                            {m.toUpperCase()}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -6068,18 +6061,21 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   templateStartBtn: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#10B981',
-    paddingVertical: 4,
-    paddingHorizontal: 12,
+    backgroundColor: 'transparent',
+    paddingVertical: 7,
+    paddingHorizontal: 16,
     borderRadius: 99,
+    alignItems: 'center',
+    justifyContent: 'center',
     flexShrink: 0,
   },
   templateStartBtnText: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '800',
     color: '#10B981',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   prAlertEmoji: {
     fontSize: 40,

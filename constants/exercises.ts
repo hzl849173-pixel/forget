@@ -1,4 +1,4 @@
-export type MuscleGroup = 'Chest' | 'Triceps' | 'Biceps' | 'Back' | 'Legs' | 'Abs & Shoulders' | 'Abs' | 'Shoulders';
+export type MuscleGroup = 'Chest' | 'Triceps' | 'Biceps' | 'Back' | 'Shoulders' | 'Legs' | 'Abs' | 'Abs & Shoulders' | 'Back & Shoulders';
 
 export type Instrument = 'Barbell' | 'Dumbbell' | 'Cable' | 'Machine' | 'Bodyweight' | 'Kettlebell' | 'Other';
 
@@ -253,42 +253,42 @@ export const DEFAULT_EXERCISES: ExerciseSeed[] = [
   // -- Kettlebell --
   { id: 'kb-swings', name: 'Kettlebell Swings', muscleGroup: 'Legs', instrument: 'Kettlebell', isCustom: false, isFavorite: false },
 
-  // Abs & Shoulders (20 Exercises)
+  // Shoulders (11 Exercises)
   // -- Barbell --
-  { id: 'bb-overhead-press', name: 'Overhead Press', muscleGroup: 'Abs & Shoulders', instrument: 'Barbell', isCustom: false, isFavorite: true },
-  { id: 'bb-upright-row', name: 'Barbell Upright Row', muscleGroup: 'Abs & Shoulders', instrument: 'Barbell', isCustom: false, isFavorite: false },
+  { id: 'bb-overhead-press', name: 'Overhead Press', muscleGroup: 'Shoulders', instrument: 'Barbell', isCustom: false, isFavorite: true },
+  { id: 'bb-upright-row', name: 'Barbell Upright Row', muscleGroup: 'Shoulders', instrument: 'Barbell', isCustom: false, isFavorite: false },
 
   // -- Dumbbell --
-  { id: 'db-shoulder-press', name: 'Dumbbell Shoulder Press', muscleGroup: 'Abs & Shoulders', instrument: 'Dumbbell', isCustom: false, isFavorite: false },
-  { id: 'arnold-press', name: 'Arnold Press', muscleGroup: 'Abs & Shoulders', instrument: 'Dumbbell', isCustom: false, isFavorite: false },
-  { id: 'db-lateral-raise', name: 'Lateral Raise', muscleGroup: 'Abs & Shoulders', instrument: 'Dumbbell', isCustom: false, isFavorite: false },
-  { id: 'db-front-raise', name: 'Dumbbell Front Raise', muscleGroup: 'Abs & Shoulders', instrument: 'Dumbbell', isCustom: false, isFavorite: false },
-  { id: 'db-rear-delt-fly', name: 'Rear Delt Fly', muscleGroup: 'Abs & Shoulders', instrument: 'Dumbbell', isCustom: false, isFavorite: false },
+  { id: 'db-shoulder-press', name: 'Dumbbell Shoulder Press', muscleGroup: 'Shoulders', instrument: 'Dumbbell', isCustom: false, isFavorite: false },
+  { id: 'arnold-press', name: 'Arnold Press', muscleGroup: 'Shoulders', instrument: 'Dumbbell', isCustom: false, isFavorite: false },
+  { id: 'db-lateral-raise', name: 'Lateral Raise', muscleGroup: 'Shoulders', instrument: 'Dumbbell', isCustom: false, isFavorite: false },
+  { id: 'db-front-raise', name: 'Dumbbell Front Raise', muscleGroup: 'Shoulders', instrument: 'Dumbbell', isCustom: false, isFavorite: false },
+  { id: 'db-rear-delt-fly', name: 'Rear Delt Fly', muscleGroup: 'Shoulders', instrument: 'Dumbbell', isCustom: false, isFavorite: false },
 
   // -- Cable --
-  { id: 'cable-lateral-raise', name: 'Cable Lateral Raise', muscleGroup: 'Abs & Shoulders', instrument: 'Cable', isCustom: false, isFavorite: false },
-  { id: 'face-pull', name: 'Face Pull', muscleGroup: 'Abs & Shoulders', instrument: 'Cable', isCustom: false, isFavorite: false },
-  { id: 'cable-crunch', name: 'Cable Crunch', muscleGroup: 'Abs & Shoulders', instrument: 'Cable', isCustom: false, isFavorite: false },
+  { id: 'cable-lateral-raise', name: 'Cable Lateral Raise', muscleGroup: 'Shoulders', instrument: 'Cable', isCustom: false, isFavorite: false },
+  { id: 'face-pull', name: 'Face Pull', muscleGroup: 'Shoulders', instrument: 'Cable', isCustom: false, isFavorite: false },
 
   // -- Machine --
-  { id: 'machine-shoulder-press', name: 'Machine Shoulder Press', muscleGroup: 'Abs & Shoulders', instrument: 'Machine', isCustom: false, isFavorite: false },
-  { id: 'reverse-pec-deck', name: 'Reverse Pec Deck', muscleGroup: 'Abs & Shoulders', instrument: 'Machine', isCustom: false, isFavorite: false },
+  { id: 'machine-shoulder-press', name: 'Machine Shoulder Press', muscleGroup: 'Shoulders', instrument: 'Machine', isCustom: false, isFavorite: false },
+  { id: 'reverse-pec-deck', name: 'Reverse Pec Deck', muscleGroup: 'Shoulders', instrument: 'Machine', isCustom: false, isFavorite: false },
 
-  // -- Bodyweight --
-  { id: 'ab-crunch', name: 'Abdominal Crunch', muscleGroup: 'Abs & Shoulders', instrument: 'Bodyweight', isCustom: false, isFavorite: true },
-  { id: 'decline-situp', name: 'Decline Bench Sit-up', muscleGroup: 'Abs & Shoulders', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
-  { id: 'bicycle-crunches', name: 'Bicycle Crunches', muscleGroup: 'Abs & Shoulders', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
-  { id: 'russian-twist', name: 'Russian Twist', muscleGroup: 'Abs & Shoulders', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
-  { id: 'plank', name: 'Plank', muscleGroup: 'Abs & Shoulders', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
-  { id: 'lying-leg-raises', name: 'Lying Leg Raises', muscleGroup: 'Abs & Shoulders', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
-  { id: 'hanging-leg-raise', name: 'Hanging Leg Raise', muscleGroup: 'Abs & Shoulders', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
-  { id: 'captains-chair-raises', name: "Captain's Chair Knee Raise", muscleGroup: 'Abs & Shoulders', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
-
-  // -- Other --
-  { id: 'ab-wheel', name: 'Ab Wheel Rollout', muscleGroup: 'Abs & Shoulders', instrument: 'Other', isCustom: false, isFavorite: false },
+  // Abs (9 Exercises)
+  { id: 'cable-crunch', name: 'Cable Crunch', muscleGroup: 'Abs', instrument: 'Cable', isCustom: false, isFavorite: false },
+  { id: 'ab-crunch', name: 'Abdominal Crunch', muscleGroup: 'Abs', instrument: 'Bodyweight', isCustom: false, isFavorite: true },
+  { id: 'decline-situp', name: 'Decline Bench Sit-up', muscleGroup: 'Abs', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
+  { id: 'bicycle-crunches', name: 'Bicycle Crunches', muscleGroup: 'Abs', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
+  { id: 'russian-twist', name: 'Russian Twist', muscleGroup: 'Abs', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
+  { id: 'plank', name: 'Plank', muscleGroup: 'Abs', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
+  { id: 'lying-leg-raises', name: 'Lying Leg Raises', muscleGroup: 'Abs', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
+  { id: 'hanging-leg-raise', name: 'Hanging Leg Raise', muscleGroup: 'Abs', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
+  { id: 'captains-chair-raises', name: "Captain's Chair Knee Raise", muscleGroup: 'Abs', instrument: 'Bodyweight', isCustom: false, isFavorite: false },
+  { id: 'ab-wheel', name: 'Ab Wheel Rollout', muscleGroup: 'Abs', instrument: 'Other', isCustom: false, isFavorite: false },
 ];
 
-export const MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Abs & Shoulders', 'Back', 'Biceps', 'Legs'];
+export const HOME_MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Back & Shoulders', 'Biceps', 'Legs'];
+export const ALL_MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Biceps', 'Back', 'Shoulders', 'Legs', 'Abs'];
+export const MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Back & Shoulders', 'Biceps', 'Legs'];
 
 export const POPULAR_EXERCISE_IDS = [
   // Chest
