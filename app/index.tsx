@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Dumbbell,
   Flame,
+  GripVertical,
   Minus,
   Play,
   Plus,
@@ -123,8 +124,12 @@ const SwipeableActiveExerciseRow: React.FC<{
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
   cardBgColor: string;
-}> = ({ children, onSwipeLeft, onSwipeRight, cardBgColor }) => {
+  disabled?: boolean;
+}> = ({ children, onSwipeLeft, onSwipeRight, cardBgColor, disabled = false }) => {
   const pan = React.useRef(new Animated.Value(0)).current;
+
+  const disabledRef = React.useRef(disabled);
+  disabledRef.current = disabled;
 
   // Delete action backdrop opacity (revealed on Left side when swiping RIGHT pan > 0)
   const deleteOpacity = pan.interpolate({
@@ -142,9 +147,13 @@ const SwipeableActiveExerciseRow: React.FC<{
 
   const panResponder = React.useRef(
     PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 8 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
+        if (disabledRef.current) return false;
+        return Math.abs(gestureState.dx) > 16 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 2.2;
       },
+      onMoveShouldSetPanResponderCapture: () => false,
       onPanResponderMove: Animated.event([null, { dx: pan }], { useNativeDriver: false }),
       onPanResponderRelease: (_, gestureState) => {
         const threshold = 35;
@@ -2256,6 +2265,7 @@ export default function SinglePageLandingScreen() {
                         <SwipeableActiveExerciseRow
                           key={item.id || `${item.exerciseId}-${index}`}
                           cardBgColor={theme.cardBg}
+                          disabled={isActive}
                           onSwipeLeft={() => {
                             // Swipe LEFT = VARIATION SWAP
                             handleSwapExerciseVariation(item.id || item.exerciseId, item.exerciseId);
@@ -2271,12 +2281,12 @@ export default function SinglePageLandingScreen() {
                           <TouchableOpacity
                             style={[
                               styles.activeSessionItem,
-                              { borderBottomColor: theme.borderColor, opacity: isActive ? 0.5 : 1, backgroundColor: theme.cardBg }
+                              { borderBottomColor: theme.borderColor, opacity: isActive ? 0.6 : 1, backgroundColor: theme.cardBg }
                             ]}
                             activeOpacity={0.6}
                             onPress={() => handleToggleExpand(item.exerciseId)}
                             onLongPress={onDragStart}
-                            delayLongPress={150}
+                            delayLongPress={100}
                           >
                             <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor }]} />
                             <View style={styles.activeSessionItemContent}>
@@ -2294,7 +2304,16 @@ export default function SinglePageLandingScreen() {
                                 </Text>
                               </View>
                             </View>
-                            <ChevronRight size={16} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <TouchableOpacity
+                                onPressIn={onDragStart}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                style={{ padding: 4 }}
+                              >
+                                <GripVertical size={16} color={theme.textSecondary} opacity={0.5} />
+                              </TouchableOpacity>
+                              <ChevronRight size={16} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
+                            </View>
                           </TouchableOpacity>
                         </SwipeableActiveExerciseRow>
                       );
@@ -2460,7 +2479,7 @@ export default function SinglePageLandingScreen() {
                         style={[styles.muscleText, { color: isDarkMode ? muscleColor : '#111827' }]}
                         numberOfLines={2}
                       >
-                        {muscle.toUpperCase()}
+                        {muscle === 'Shoulders' ? 'SHOULDERS & ABS' : muscle.toUpperCase()}
                       </Text>
                       <Image
                         source={MUSCLE_IMAGES[muscle as keyof typeof MUSCLE_IMAGES]}

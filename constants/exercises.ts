@@ -286,9 +286,9 @@ export const DEFAULT_EXERCISES: ExerciseSeed[] = [
   { id: 'ab-wheel', name: 'Ab Wheel Rollout', muscleGroup: 'Abs', instrument: 'Other', isCustom: false, isFavorite: false },
 ];
 
-export const HOME_MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Back & Shoulders', 'Biceps', 'Legs'];
+export const HOME_MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Shoulders', 'Back', 'Biceps', 'Legs'];
 export const ALL_MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Biceps', 'Back', 'Shoulders', 'Legs', 'Abs'];
-export const MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Back & Shoulders', 'Biceps', 'Legs'];
+export const MUSCLE_GROUPS: MuscleGroup[] = ['Chest', 'Triceps', 'Shoulders', 'Back', 'Biceps', 'Legs'];
 
 export const POPULAR_EXERCISE_IDS = [
   // Chest
