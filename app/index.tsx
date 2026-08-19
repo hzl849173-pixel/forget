@@ -312,32 +312,6 @@ const SwipeableLoggerCard: React.FC<{
 
   return (
     <View style={{ flexShrink: 1, maxHeight: '100%', position: 'relative', overflow: 'hidden' }}>
-      {/* Right backdrop revealed when swiping LEFT -> NEXT */}
-      {canGoNext && (
-        <Animated.View
-          style={[
-            styles.loggerSwipeBackdrop,
-            { backgroundColor: '#10B98115', opacity: nextOpacity, justifyContent: 'flex-end', paddingRight: 18 }
-          ]}
-        >
-          <Text style={[styles.loggerSwipeText, { color: '#10B981' }]}>NEXT</Text>
-          <ChevronRight size={16} color="#10B981" strokeWidth={3} />
-        </Animated.View>
-      )}
-
-      {/* Left backdrop revealed when swiping RIGHT -> BACK */}
-      {canGoPrev && (
-        <Animated.View
-          style={[
-            styles.loggerSwipeBackdrop,
-            { backgroundColor: '#3B82F615', opacity: prevOpacity, justifyContent: 'flex-start', paddingLeft: 18 }
-          ]}
-        >
-          <ChevronLeft size={16} color="#3B82F6" strokeWidth={3} />
-          <Text style={[styles.loggerSwipeText, { color: '#3B82F6' }]}>BACK</Text>
-        </Animated.View>
-      )}
-
       <Animated.View
         style={{ transform: [{ translateX: pan }], flexShrink: 1, maxHeight: '100%' }}
         {...panResponder.panHandlers}
