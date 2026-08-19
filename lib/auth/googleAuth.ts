@@ -137,7 +137,17 @@ export async function signIn(): Promise<FirebaseUser | null> {
         console.log("[STEP] GoogleSignin.hasPlayServices() completed");
         lastStep = "[STEP 2] Check Play Services Completed";
 
-
+        // Clear cached Google session & revoke access to force the account selector picker directly on every sign-in attempt
+        try {
+            console.log("[STEP] Revoking previous Google access...");
+            await GoogleSignin.revokeAccess();
+        } catch (e) {}
+        try {
+            console.log("[STEP] Clearing previous Google session with GoogleSignin.signOut()...");
+            await GoogleSignin.signOut();
+        } catch (signOutErr) {
+            console.log("[googleAuth] Pre-sign-in signOut ignored (no active user session)");
+        }
 
         // Step 3: Start Google Sign-In
         console.log("[STEP 3] Start Google Sign-In");

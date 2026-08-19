@@ -21,14 +21,19 @@ export default function SignInScreen() {
     const [loading, setLoading] = useState(false);
     const { signIn: signInWithGoogle } = useGoogleSignIn();
 
+    const hasAttemptedRef = React.useRef(false);
+
     useEffect(() => {
         let mounted = true;
         (async () => {
-            // Warm up onboarding completion state (so “Skip” works instantly on return)
             try {
                 await isOnboardingCompleted();
                 await isSignedInFlag();
-            } finally {
+                if (mounted && !hasAttemptedRef.current) {
+                    hasAttemptedRef.current = true;
+                    await handleContinueWithGoogle();
+                }
+            } catch (e) {
                 if (!mounted) return;
             }
         })();
@@ -80,7 +85,8 @@ export default function SignInScreen() {
                 }
             }
 
-            router.replace('/onboarding/templates');
+            await setOnboardingCompleted();
+            router.replace('/');
         } catch (e: any) {
             Alert.alert(
                 'Google Sign-In',
