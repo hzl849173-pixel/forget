@@ -2304,16 +2304,7 @@ export default function SinglePageLandingScreen() {
                                 </Text>
                               </View>
                             </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <TouchableOpacity
-                                onPressIn={onDragStart}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                style={{ padding: 4 }}
-                              >
-                                <GripVertical size={16} color={theme.textSecondary} opacity={0.5} />
-                              </TouchableOpacity>
-                              <ChevronRight size={16} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
-                            </View>
+                            <ChevronRight size={16} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
                           </TouchableOpacity>
                         </SwipeableActiveExerciseRow>
                       );
