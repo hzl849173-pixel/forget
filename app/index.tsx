@@ -40,7 +40,7 @@ import {
   View
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import notifee, { AndroidImportance, AndroidVisibility, TriggerType, TimestampTrigger } from '@notifee/react-native';
+import notifee, { AndroidImportance, AndroidVisibility, TriggerType, TimestampTrigger, EventType } from '@notifee/react-native';
 import Svg, { Defs, LinearGradient as SvgGradient, Rect, Stop } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -622,18 +622,18 @@ export default function SinglePageLandingScreen() {
         if (Platform.OS === 'android') {
           try {
             await notifee.createChannel({
-              id: 'rest-timer-alarm-v4',
-              name: 'Rest Timer Alarm',
+              id: 'workout-alarm-v11',
+              name: 'Workout Alarm',
               importance: AndroidImportance.HIGH,
               sound: 'default',
               vibration: true,
-              vibrationPattern: [0, 500, 250, 500],
+              vibrationPattern: [100, 500, 250, 500],
               bypassDnd: true,
               visibility: AndroidVisibility.PUBLIC,
             });
 
             await notifee.createChannel({
-              id: 'rest-timer-ongoing-v4',
+              id: 'rest-timer-ongoing-v11',
               name: 'Rest Timer Live Countdown',
               importance: AndroidImportance.LOW,
               sound: undefined,
@@ -643,16 +643,18 @@ export default function SinglePageLandingScreen() {
           } catch (e) {}
 
           try {
-            await Notifications.setNotificationChannelAsync('rest-timer-alarm-v3', {
-              name: 'Rest Timer Alarm',
+            await Notifications.setNotificationChannelAsync('workout-alarm-v11', {
+              name: 'Workout Alarm',
               importance: Notifications.AndroidImportance.MAX,
-              vibrationPattern: [0, 500, 250, 500],
+              vibrationPattern: [100, 500, 250, 500],
               lightColor: '#10B981',
               sound: 'default',
+              enableVibrate: true,
               bypassDnd: true,
+              lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
             });
 
-            await Notifications.setNotificationChannelAsync('rest-timer-ongoing-v3', {
+            await Notifications.setNotificationChannelAsync('rest-timer-ongoing-v11', {
               name: 'Rest Timer Live Countdown',
               importance: Notifications.AndroidImportance.LOW,
               sound: undefined,
@@ -665,64 +667,18 @@ export default function SinglePageLandingScreen() {
       }
     }
     configureNotifications();
+
+    const unsubscribeForeground = notifee.onForegroundEvent(({ type, detail }) => {
+      if (type === EventType.ACTION_PRESS && detail.pressAction?.id === 'stop-alarm') {
+        stopRestTimer();
+      }
+    });
+
+    return () => unsubscribeForeground();
   }, []);
 
   const updateOngoingNotification = async (sec: number, targetEndMs?: number | null) => {
-    try {
-      const endMs = targetEndMs || (restTimerTargetEndRef.current ?? (Date.now() + sec * 1000));
-      const formatted = formatRestTime(sec);
-
-      if (Platform.OS === 'android') {
-        try {
-          await notifee.displayNotification({
-            id: 'rest-timer-active-ongoing',
-            title: 'Rest Timer ⏱️',
-            body: 'Rest period in progress',
-            android: {
-              channelId: 'rest-timer-ongoing-v4',
-              smallIcon: 'notification_icon',
-              color: '#10B981',
-              chronometerDirection: 'down',
-              timestamp: endMs,
-              showTimestamp: true,
-              ongoing: true,
-              asForegroundService: false,
-              pressAction: { id: 'default' },
-            },
-          });
-        } catch (err) {
-          try {
-            await Notifications.scheduleNotificationAsync({
-              identifier: 'rest-timer-active-ongoing',
-              content: {
-                title: 'Rest Timer ⏱️',
-                body: `${formatted} remaining`,
-                sound: false,
-                priority: Notifications.AndroidNotificationPriority.LOW,
-                sticky: true,
-                autoDismiss: false,
-              },
-              trigger: null,
-            });
-          } catch (e) {}
-        }
-      } else {
-        try {
-          await Notifications.scheduleNotificationAsync({
-            identifier: 'rest-timer-active-ongoing',
-            content: {
-              title: 'Rest Timer ⏱️',
-              body: `${formatted} remaining`,
-              sound: false,
-              priority: Notifications.AndroidNotificationPriority.LOW,
-              sticky: true,
-              autoDismiss: false,
-            },
-            trigger: null,
-          });
-        } catch (err) {}
-      }
-    } catch (err) {}
+    // Disabled ongoing live notification per user preference so status bar stays clean while timer is running
   };
 
   const dismissOngoingNotification = async () => {
@@ -734,8 +690,25 @@ export default function SinglePageLandingScreen() {
     } catch (err) {}
   };
 
-  const scheduleRestTimerNotification = async (seconds: number, targetEndMs?: number | null) => {
-    if (seconds <= 0) return;
+  const cancelRestTimerNotification = async () => {
+    try {
+      await notifee.cancelNotification('workout-alarm-trigger');
+    } catch (e) {}
+    try {
+      await notifee.cancelTriggerNotification('workout-alarm-trigger');
+    } catch (e) {}
+    try {
+      const storedId = notificationIdRef.current || (await AsyncStorage.getItem('@workout_scheduled_notification_id'));
+      if (storedId) {
+        await Notifications.cancelScheduledNotificationAsync(storedId).catch(() => {});
+        notificationIdRef.current = null;
+        await AsyncStorage.removeItem('@workout_scheduled_notification_id').catch(() => {});
+      }
+    } catch (e) {}
+  };
+
+  const scheduleRestTimerNotification = async (seconds: number, targetEndMs?: number | null): Promise<boolean> => {
+    if (seconds <= 0) return false;
     await cancelRestTimerNotification();
     const triggerTime = targetEndMs || (Date.now() + seconds * 1000);
 
@@ -748,60 +721,38 @@ export default function SinglePageLandingScreen() {
         },
       };
 
-      notificationIdRef.current = await notifee.createTriggerNotification(
+      const scheduledId = await notifee.createTriggerNotification(
         {
-          id: 'rest-timer-alarm-trigger',
+          id: 'workout-alarm-trigger',
           title: "Time's up! ⏱️",
           body: "Rest period over. Time to start your next set!",
           android: {
-            channelId: 'rest-timer-alarm-v4',
+            channelId: 'workout-alarm-v11',
             smallIcon: 'notification_icon',
             color: '#10B981',
             importance: AndroidImportance.HIGH,
             sound: 'default',
-            vibrationPattern: [0, 500, 250, 500],
+            vibrationPattern: [100, 500, 250, 500],
+            ongoing: true,
+            autoCancel: false,
             pressAction: { id: 'default' },
+            actions: [
+              {
+                title: 'STOP',
+                pressAction: { id: 'stop-alarm' },
+              },
+            ],
           },
         },
         trigger
       );
+      notificationIdRef.current = scheduledId;
+      await AsyncStorage.setItem('@workout_scheduled_notification_id', scheduledId);
+      return true;
     } catch (err) {
-      console.warn('Notifee schedule warning:', err);
+      console.warn('Notifee alarm registration error:', err);
+      return false;
     }
-
-    try {
-      await Notifications.scheduleNotificationAsync({
-        identifier: 'rest-timer-alarm-expo',
-        content: {
-          title: "Time's up! ⏱️",
-          body: "Rest period over. Time to start your next set!",
-          sound: 'default',
-          priority: Notifications.AndroidNotificationPriority.MAX,
-          vibrate: [0, 500, 250, 500],
-          channelId: 'rest-timer-alarm-v3',
-        } as any,
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: Math.max(1, Math.floor(seconds)),
-          channelId: 'rest-timer-alarm-v3',
-        },
-      });
-    } catch (err) {
-      console.warn('Expo notification schedule warning:', err);
-    }
-  };
-
-  const cancelRestTimerNotification = async () => {
-    try {
-      await notifee.cancelNotification('rest-timer-alarm-trigger');
-      if (notificationIdRef.current) {
-        await notifee.cancelTriggerNotification(notificationIdRef.current);
-        notificationIdRef.current = null;
-      }
-    } catch (e) {}
-    try {
-      await Notifications.cancelScheduledNotificationAsync('rest-timer-alarm-expo');
-    } catch (e) {}
   };
 
   React.useEffect(() => {
@@ -812,8 +763,6 @@ export default function SinglePageLandingScreen() {
         setRestTimerSeconds(remainingSec);
         if (remainingSec <= 0) {
           handleTimerFinished();
-        } else {
-          updateOngoingNotification(remainingSec);
         }
       }
     });
@@ -842,12 +791,14 @@ export default function SinglePageLandingScreen() {
     };
   }, []);
 
-
-
   const playTimerSound = async () => {
     try {
       const { Audio } = require('expo-av');
-      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: false,
+      });
       const soundFile = require('@/assets/sounds/alarm.wav');
       const { sound } = await Audio.Sound.createAsync(soundFile, {
         shouldPlay: true,
@@ -874,29 +825,34 @@ export default function SinglePageLandingScreen() {
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const handleTimerFinished = () => {
+  const handleTimerFinished = async () => {
     if (restTimerRef.current) clearInterval(restTimerRef.current);
     restTimerRef.current = null;
     restTimerTargetEndRef.current = null;
     setRestTimerRunning(false);
     dismissOngoingNotification();
-    cancelRestTimerNotification();
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    if (restTimerSound !== 'none') {
-      playTimerSound();
+
+    const isMinimized = AppState.currentState !== 'active';
+
+    if (!isMinimized) {
+      cancelRestTimerNotification();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (restTimerSound !== 'none') {
+        playTimerSound();
+      }
+      showCustomAlert(
+        'Rest Timer Done',
+        'Time to start your next set!',
+        [{ text: 'OK', onPress: () => stopTimerSound() }],
+        <Timer size={28} color="#10B981" />
+      );
     }
-    showCustomAlert(
-      'Rest Timer Done',
-      'Time to start your next set!',
-      [{ text: 'OK', onPress: () => stopTimerSound() }],
-      <Timer size={28} color="#10B981" />
-    );
   };
 
-  const startRestTimer = (seconds: number) => {
+  const startRestTimer = async (seconds: number) => {
     stopTimerSound();
     dismissOngoingNotification();
-    cancelRestTimerNotification();
+    await cancelRestTimerNotification();
     if (restTimerRef.current) clearInterval(restTimerRef.current);
     
     const targetEnd = Date.now() + seconds * 1000;
@@ -906,15 +862,16 @@ export default function SinglePageLandingScreen() {
     setRestTimerRunning(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    scheduleRestTimerNotification(seconds, targetEnd);
-    updateOngoingNotification(seconds, targetEnd);
+    const isScheduled = await scheduleRestTimerNotification(seconds, targetEnd);
+    if (!isScheduled) {
+      console.warn('Failed to schedule native background alarm');
+    }
 
     restTimerRef.current = setInterval(() => {
       if (!restTimerTargetEndRef.current) return;
       const remainingMs = restTimerTargetEndRef.current - Date.now();
       const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
       setRestTimerSeconds(remainingSec);
-      updateOngoingNotification(remainingSec);
       if (remainingSec <= 0) {
         handleTimerFinished();
       }

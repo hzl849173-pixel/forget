@@ -11,10 +11,20 @@ LogBox.ignoreLogs([
 
 import notifee, { EventType } from '@notifee/react-native';
 
-notifee.onBackgroundEvent(async ({ type }) => {
-  if (type === EventType.DISMISSED) {
+notifee.onBackgroundEvent(async ({ type, detail }) => {
+  if (type === EventType.ACTION_PRESS && detail.pressAction?.id === 'stop-alarm') {
+    try {
+      await notifee.cancelNotification('workout-alarm-trigger');
+    } catch (e) {}
     try {
       await notifee.cancelNotification('rest-timer-active-ongoing');
+    } catch (e) {}
+  } else if (type === EventType.DISMISSED) {
+    try {
+      await notifee.cancelNotification('rest-timer-active-ongoing');
+    } catch (e) {}
+    try {
+      await notifee.cancelNotification('workout-alarm-trigger');
     } catch (e) {}
   }
 });
