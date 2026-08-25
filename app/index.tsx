@@ -48,7 +48,8 @@ Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
     const isOngoing = notification.request.identifier === 'rest-timer-active-ongoing';
     return {
-      shouldShowBanner: !isOngoing,
+      shouldShowAlert: true,
+      shouldShowBanner: true,
       shouldShowList: true,
       shouldPlaySound: !isOngoing,
       shouldSetBadge: false,
@@ -603,97 +604,123 @@ export default function SinglePageLandingScreen() {
   const soundObjectRef = React.useRef<any>(null);
 
   React.useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
     async function configureNotifications() {
       try {
+        try {
+          const { status: existingStatus } = await Notifications.getPermissionsAsync();
+          if (existingStatus !== 'granted') {
+            await Notifications.requestPermissionsAsync();
+          }
+        } catch (err) {
+          console.warn('Expo Notifications permission request error:', err);
+        }
+
         try {
           await notifee.requestPermission();
         } catch (e) {}
 
         if (Platform.OS === 'android') {
-          await notifee.createChannel({
-            id: 'rest-timer-alarm-v4',
-            name: 'Rest Timer Alarm',
-            importance: AndroidImportance.HIGH,
-            sound: 'default',
-            vibration: true,
-            vibrationPattern: [0, 500, 250, 500],
-            bypassDnd: true,
-            visibility: AndroidVisibility.PUBLIC,
-          });
-
-          await notifee.createChannel({
-            id: 'rest-timer-ongoing-v4',
-            name: 'Rest Timer Live Countdown',
-            importance: AndroidImportance.LOW,
-            sound: undefined,
-            vibration: false,
-            visibility: AndroidVisibility.PUBLIC,
-          });
-
-          await Notifications.setNotificationChannelAsync('rest-timer-alarm-v3', {
-            name: 'Rest Timer Alarm',
-            importance: Notifications.AndroidImportance.MAX,
-            vibrationPattern: [0, 500, 250, 500],
-            lightColor: '#10B981',
-            sound: 'default',
-            bypassDnd: true,
-          });
-        }
-        timer = setTimeout(async () => {
           try {
-            const { status } = await Notifications.getPermissionsAsync();
-            if (status !== 'granted') {
-              await Notifications.requestPermissionsAsync();
-            }
-          } catch (err) {}
-        }, 500);
+            await notifee.createChannel({
+              id: 'rest-timer-alarm-v4',
+              name: 'Rest Timer Alarm',
+              importance: AndroidImportance.HIGH,
+              sound: 'default',
+              vibration: true,
+              vibrationPattern: [0, 500, 250, 500],
+              bypassDnd: true,
+              visibility: AndroidVisibility.PUBLIC,
+            });
+
+            await notifee.createChannel({
+              id: 'rest-timer-ongoing-v4',
+              name: 'Rest Timer Live Countdown',
+              importance: AndroidImportance.LOW,
+              sound: undefined,
+              vibration: false,
+              visibility: AndroidVisibility.PUBLIC,
+            });
+          } catch (e) {}
+
+          try {
+            await Notifications.setNotificationChannelAsync('rest-timer-alarm-v3', {
+              name: 'Rest Timer Alarm',
+              importance: Notifications.AndroidImportance.MAX,
+              vibrationPattern: [0, 500, 250, 500],
+              lightColor: '#10B981',
+              sound: 'default',
+              bypassDnd: true,
+            });
+
+            await Notifications.setNotificationChannelAsync('rest-timer-ongoing-v3', {
+              name: 'Rest Timer Live Countdown',
+              importance: Notifications.AndroidImportance.LOW,
+              sound: undefined,
+              vibrationPattern: undefined,
+            });
+          } catch (e) {}
+        }
       } catch (e) {
         console.warn('Notification setup error:', e);
       }
     }
     configureNotifications();
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
   }, []);
 
   const updateOngoingNotification = async (sec: number, targetEndMs?: number | null) => {
     try {
       const endMs = targetEndMs || (restTimerTargetEndRef.current ?? (Date.now() + sec * 1000));
+      const formatted = formatRestTime(sec);
+
       if (Platform.OS === 'android') {
-        await notifee.displayNotification({
-          id: 'rest-timer-active-ongoing',
-          title: 'Rest Timer ⏱️',
-          body: 'Rest period in progress',
-          android: {
-            channelId: 'rest-timer-ongoing-v4',
-            smallIcon: 'notification_icon',
-            color: '#10B981',
-            chronometerDirection: 'down',
-            timestamp: endMs,
-            showTimestamp: true,
-            ongoing: true,
-            asForegroundService: false,
-            pressAction: { id: 'default' },
-          },
-        });
-      } else {
-        const formatted = formatRestTime(sec);
-        await Notifications.scheduleNotificationAsync({
-          identifier: 'rest-timer-active-ongoing',
-          content: {
+        try {
+          await notifee.displayNotification({
+            id: 'rest-timer-active-ongoing',
             title: 'Rest Timer ⏱️',
-            body: `${formatted} remaining`,
-            sound: false,
-            priority: Notifications.AndroidNotificationPriority.LOW,
-            sticky: true,
-            autoDismiss: false,
-          },
-          trigger: {
-            channelId: 'rest-timer-ongoing-v3',
-          } as any,
-        });
+            body: 'Rest period in progress',
+            android: {
+              channelId: 'rest-timer-ongoing-v4',
+              smallIcon: 'notification_icon',
+              color: '#10B981',
+              chronometerDirection: 'down',
+              timestamp: endMs,
+              showTimestamp: true,
+              ongoing: true,
+              asForegroundService: false,
+              pressAction: { id: 'default' },
+            },
+          });
+        } catch (err) {
+          try {
+            await Notifications.scheduleNotificationAsync({
+              identifier: 'rest-timer-active-ongoing',
+              content: {
+                title: 'Rest Timer ⏱️',
+                body: `${formatted} remaining`,
+                sound: false,
+                priority: Notifications.AndroidNotificationPriority.LOW,
+                sticky: true,
+                autoDismiss: false,
+              },
+              trigger: null,
+            });
+          } catch (e) {}
+        }
+      } else {
+        try {
+          await Notifications.scheduleNotificationAsync({
+            identifier: 'rest-timer-active-ongoing',
+            content: {
+              title: 'Rest Timer ⏱️',
+              body: `${formatted} remaining`,
+              sound: false,
+              priority: Notifications.AndroidNotificationPriority.LOW,
+              sticky: true,
+              autoDismiss: false,
+            },
+            trigger: null,
+          });
+        } catch (err) {}
       }
     } catch (err) {}
   };
@@ -701,16 +728,18 @@ export default function SinglePageLandingScreen() {
   const dismissOngoingNotification = async () => {
     try {
       await notifee.cancelNotification('rest-timer-active-ongoing');
+    } catch (err) {}
+    try {
       await Notifications.dismissNotificationAsync('rest-timer-active-ongoing');
     } catch (err) {}
   };
 
   const scheduleRestTimerNotification = async (seconds: number, targetEndMs?: number | null) => {
-    try {
-      await cancelRestTimerNotification();
-      if (seconds <= 0) return;
-      const triggerTime = targetEndMs || (Date.now() + seconds * 1000);
+    if (seconds <= 0) return;
+    await cancelRestTimerNotification();
+    const triggerTime = targetEndMs || (Date.now() + seconds * 1000);
 
+    try {
       const trigger: TimestampTrigger = {
         type: TriggerType.TIMESTAMP,
         timestamp: triggerTime,
@@ -736,7 +765,11 @@ export default function SinglePageLandingScreen() {
         },
         trigger
       );
+    } catch (err) {
+      console.warn('Notifee schedule warning:', err);
+    }
 
+    try {
       await Notifications.scheduleNotificationAsync({
         identifier: 'rest-timer-alarm-expo',
         content: {
@@ -745,7 +778,8 @@ export default function SinglePageLandingScreen() {
           sound: 'default',
           priority: Notifications.AndroidNotificationPriority.MAX,
           vibrate: [0, 500, 250, 500],
-        },
+          channelId: 'rest-timer-alarm-v3',
+        } as any,
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
           seconds: Math.max(1, Math.floor(seconds)),
@@ -753,7 +787,7 @@ export default function SinglePageLandingScreen() {
         },
       });
     } catch (err) {
-      console.warn('Failed to schedule rest timer notification:', err);
+      console.warn('Expo notification schedule warning:', err);
     }
   };
 
@@ -764,6 +798,8 @@ export default function SinglePageLandingScreen() {
         await notifee.cancelTriggerNotification(notificationIdRef.current);
         notificationIdRef.current = null;
       }
+    } catch (e) {}
+    try {
       await Notifications.cancelScheduledNotificationAsync('rest-timer-alarm-expo');
     } catch (e) {}
   };

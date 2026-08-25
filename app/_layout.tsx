@@ -9,6 +9,16 @@ LogBox.ignoreLogs([
   'Unable to activate keep awake',
 ]);
 
+import notifee, { EventType } from '@notifee/react-native';
+
+notifee.onBackgroundEvent(async ({ type }) => {
+  if (type === EventType.DISMISSED) {
+    try {
+      await notifee.cancelNotification('rest-timer-active-ongoing');
+    } catch (e) {}
+  }
+});
+
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { WorkoutProvider } from '@/hooks/use-workout-storage';
 import { isOnboardingCompleted } from '@/lib/profile/profileStorage';
