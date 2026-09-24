@@ -4095,21 +4095,26 @@ export default function SinglePageLandingScreen() {
                   setSameForAll(true);
                 };
 
+                const getCompactNavName = (name: string) => {
+                  return name
+                    .replace(/dumbbell/gi, 'DB')
+                    .replace(/barbell/gi, 'BB')
+                    .replace(/machine/gi, 'Mach')
+                    .replace(/bench press/gi, 'Press')
+                    .replace(/overhead/gi, 'OH')
+                    .trim();
+                };
+
                 return (
                   <View style={{ flexShrink: 1, maxHeight: '100%', width: '100%' }}>
                     {/* Top Workout Navigation Pill Strip */}
                     {exerciseList.length > 1 && (
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.loggerNavPillScroll}
-                        style={styles.loggerNavPillContainer}
-                        keyboardShouldPersistTaps="handled"
-                      >
+                      <View style={styles.loggerNavPillWrap}>
                         {exerciseList.map((item, index) => {
                           const isSelected = item.exerciseId === expandedExerciseId;
                           const exDetails = exercises.find((e) => e.id === item.exerciseId);
-                          const exName = exDetails?.name || 'Exercise';
+                          const rawName = exDetails?.name || 'Exercise';
+                          const exName = getCompactNavName(rawName);
                           const mColor = exDetails ? categoryColors[exDetails.muscleGroup] || '#10B981' : '#10B981';
                           const hasCompletedSets = item.sets.some((s) => s.isCompleted || (s.weight > 0 && s.reps > 0));
 
@@ -4129,7 +4134,7 @@ export default function SinglePageLandingScreen() {
                                 }
                               ]}
                             >
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                                 {hasCompletedSets ? (
                                   <Check size={11} color={isSelected ? mColor : '#10B981'} strokeWidth={3} />
                                 ) : (
@@ -4154,7 +4159,7 @@ export default function SinglePageLandingScreen() {
                             </TouchableOpacity>
                           );
                         })}
-                      </ScrollView>
+                      </View>
                     )}
 
                     <SwipeableLoggerCard
@@ -7040,21 +7045,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     width: '100%',
   },
-  loggerNavPillContainer: {
-    maxHeight: 38,
+  loggerNavPillWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
     marginBottom: 10,
     width: '100%',
   },
-  loggerNavPillScroll: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 2,
-  },
   loggerNavPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -7063,8 +7064,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   loggerNavPillText: {
-    fontSize: 12,
-    maxWidth: 120,
+    fontSize: 11,
+    maxWidth: 90,
     letterSpacing: -0.2,
   },
   exerciseLoggerTitleCol: {
