@@ -212,14 +212,14 @@ const SwipeableActiveExerciseRow: React.FC<{
         <Text style={[styles.activeSwipeActionText, { color: '#EF4444' }]}>DELETE</Text>
       </Animated.View>
 
-      {/* Right side action backdrop (Swiping LEFT -> VARIATION) */}
+      {/* Right side action backdrop (Swiping LEFT -> REPLACE) */}
       <Animated.View
         style={[
           styles.activeSwipeActionBackground,
           { backgroundColor: '#10B98118', opacity: variationOpacity, justifyContent: 'flex-end', paddingRight: 18 }
         ]}
       >
-        <Text style={[styles.activeSwipeActionText, { color: '#10B981' }]}>VARIATION</Text>
+        <Text style={[styles.activeSwipeActionText, { color: '#10B981' }]}>REPLACE</Text>
         <RefreshCw size={15} color="#10B981" strokeWidth={2.5} />
       </Animated.View>
 
@@ -583,6 +583,7 @@ export default function SinglePageLandingScreen() {
   const [cameFromActiveSessionPlus, setCameFromActiveSessionPlus] = useState(false);
   const [sessionStartedFromTemplate, setSessionStartedFromTemplate] = useState(false);
   const [sessionTemplateId, setSessionTemplateId] = useState<string | null>(null);
+  const [replacingActiveId, setReplacingActiveId] = useState<string | null>(null);
 
   // Consistency Modal state
   const [consistencyModalVisible, setConsistencyModalVisible] = useState(false);
@@ -1213,34 +1214,36 @@ export default function SinglePageLandingScreen() {
     setSortedExerciseList(sortExercisesForMuscle(targetMuscle));
   };
 
-  const handleSwapExerciseVariation = (activeId: string, currentExerciseId: string) => {
-    const currentEx = exercises.find((e) => e.id === currentExerciseId);
-    if (!currentEx) return;
-
-    const group = getMovementPatternGroup(currentExerciseId, currentEx.muscleGroup, exercises);
-    if (group.length <= 1) return;
-
-    // Filter out variations already present in activeSessionExercises (except current item being swapped)
-    const existingIds = new Set(
+  const getReplacementOptionsForExercise = (currentExerciseId: string, muscleGroup: MuscleGroup) => {
+    const activeExIds = new Set(
       activeSessionExercises
-        .filter((le) => (le.id ? le.id !== activeId : le.exerciseId !== currentExerciseId))
+        .filter((le) => (le.id ? le.id !== replacingActiveId : le.exerciseId !== currentExerciseId))
         .map((le) => le.exerciseId)
     );
 
-    const availableGroup = group.filter((ex) => !existingIds.has(ex.id));
-    if (availableGroup.length <= 1) return;
+    const patternGroup = getMovementPatternGroup(currentExerciseId, muscleGroup, exercises)
+      .filter((ex) => ex.id !== currentExerciseId && !activeExIds.has(ex.id));
 
-    const currentIndex = availableGroup.findIndex((ex) => ex.id === currentExerciseId);
-    const nextIndex = currentIndex !== -1 ? (currentIndex + 1) % availableGroup.length : 0;
-    const nextExercise = availableGroup[nextIndex];
+    const patternIds = new Set(patternGroup.map((ex) => ex.id));
 
+    const sameMuscle = exercises.filter((ex) =>
+      ex.muscleGroup === muscleGroup &&
+      ex.id !== currentExerciseId &&
+      !patternIds.has(ex.id) &&
+      !activeExIds.has(ex.id)
+    );
+
+    return [...patternGroup, ...sameMuscle];
+  };
+
+  const handleReplaceExercise = (activeId: string, currentExerciseId: string, newExerciseId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
     const updated = activeSessionExercises.map((le) => {
-      if (le.id === activeId || (le.id ? le.id === activeId : le.exerciseId === currentExerciseId)) {
+      const isTarget = activeId ? (le.id ? le.id === activeId : le.exerciseId === currentExerciseId) : le.exerciseId === currentExerciseId;
+      if (isTarget) {
         return {
           ...le,
-          exerciseId: nextExercise.id,
+          exerciseId: newExerciseId,
         };
       }
       return le;
@@ -1248,6 +1251,7 @@ export default function SinglePageLandingScreen() {
 
     setActiveSessionExercises(updated);
     AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+    setReplacingActiveId(null);
   };
 
   const getMostFrequentMuscleGroup = (loggedExercises: LoggedExercise[]): MuscleGroup => {
@@ -2209,113 +2213,211 @@ export default function SinglePageLandingScreen() {
               {/* Active Session Status Card */}
               {activeSessionExercises.length > 0 && (
                 <Card style={[styles.activeSessionCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                  <View style={styles.activeSessionHeader}>
-                    <View>
-                      <Text style={[styles.activeSessionTitle, { color: theme.textPrimary }]}>Active Session</Text>
-                      <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary }]}>
-                        {activeSessionExercises.length} exercise{activeSessionExercises.length > 1 ? 's' : ''} logged today
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setCameFromActiveSessionPlus(true);
-                          handleSelectMuscleCard(getMostFrequentMuscleGroup(activeSessionExercises));
-                        }}
-                        activeOpacity={0.6}
-                        style={{ padding: 6 }}
-                      >
-                        <Plus size={20} color="#10B981" strokeWidth={2.5} />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.cancelSessionBtn}
-                        onPress={handleCancelSession}
-                        activeOpacity={0.6}
-                      >
-                        <Trash2 size={18} color="#EF4444" strokeWidth={2} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
+                  {replacingActiveId !== null ? (
+                    (() => {
+                      const targetLoggedEx = activeSessionExercises.find(
+                        (le) => (le.id ? le.id === replacingActiveId : le.exerciseId === replacingActiveId)
+                      );
+                      const targetEx = targetLoggedEx ? exercises.find((e) => e.id === targetLoggedEx.exerciseId) : null;
+                      if (!targetLoggedEx || !targetEx) {
+                        return null;
+                      }
+                      const muscleColor = categoryColors[targetEx.muscleGroup] || '#10B981';
+                      const options = getReplacementOptionsForExercise(targetEx.id, targetEx.muscleGroup);
 
-                  <DragList
-                    scrollEnabled={false}
-                    data={activeSessionExercises}
-                    keyExtractor={(item, index) => item.id || `${item.exerciseId}-${index}`}
-                    onReordered={(fromIdx, toIdx) => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      const updated = [...activeSessionExercises];
-                      const [moved] = updated.splice(fromIdx, 1);
-                      updated.splice(toIdx, 0, moved);
-                      setActiveSessionExercises(updated);
-                      AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
-                    }}
-                    style={styles.activeSessionList}
-                    renderItem={({ item, index, onDragStart, isActive }) => {
-                      const details = exercises.find((e) => e.id === item.exerciseId);
-                      if (!details) return null;
-                      const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
                       return (
-                        <SwipeableActiveExerciseRow
-                          key={item.id || `${item.exerciseId}-${index}`}
-                          cardBgColor={theme.cardBg}
-                          disabled={isActive}
-                          onSwipeLeft={() => {
-                            // Swipe LEFT = VARIATION SWAP
-                            handleSwapExerciseVariation(item.id || item.exerciseId, item.exerciseId);
-                          }}
-                          onSwipeRight={() => {
-                            // Swipe RIGHT = DELETE
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            const updated = activeSessionExercises.filter((le) => (item.id ? le.id !== item.id : le.exerciseId !== item.exerciseId));
-                            setActiveSessionExercises(updated);
-                            AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
-                          }}
-                        >
-                          <TouchableOpacity
-                            style={[
-                              styles.activeSessionItem,
-                              { borderBottomColor: theme.borderColor, opacity: isActive ? 0.6 : 1, backgroundColor: theme.cardBg }
-                            ]}
-                            activeOpacity={0.6}
-                            onPress={() => handleToggleExpand(item.exerciseId)}
-                            onLongPress={onDragStart}
-                            delayLongPress={100}
-                          >
-                            <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor }]} />
-                            <View style={styles.activeSessionItemContent}>
-                              <Text style={[styles.activeSessionItemName, { color: theme.textPrimary }]} numberOfLines={1}>
-                                {details.name}
-                              </Text>
-                              <View style={styles.activeSessionItemMeta}>
-                                <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${muscleColor}15` }]}>
-                                  <Text style={[styles.activeSessionMuscleBadgeText, { color: muscleColor }]}>
-                                    {details.muscleGroup.toUpperCase()}
-                                  </Text>
-                                </View>
-                                <Text style={[styles.activeSessionItemSets, { color: theme.textSecondary }]}>
-                                  {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
+                        <View>
+                          <View style={styles.activeSessionHeader}>
+                            <View style={{ flex: 1, paddingRight: 8 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                                <RefreshCw size={14} color={muscleColor} strokeWidth={2.5} />
+                                <Text style={[styles.activeSessionTitle, { color: theme.textPrimary }]} numberOfLines={1}>
+                                  Replace {targetEx.name}
                                 </Text>
                               </View>
+                              <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary }]}>
+                                {options.length} alternative{options.length !== 1 ? 's' : ''} in {targetEx.muscleGroup}
+                              </Text>
                             </View>
-                            <ChevronRight size={16} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
+                            <TouchableOpacity
+                              onPress={() => setReplacingActiveId(null)}
+                              activeOpacity={0.6}
+                              style={{ padding: 6 }}
+                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                              <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
+                            </TouchableOpacity>
+                          </View>
+
+                          <ScrollView
+                            style={{ maxHeight: 260, marginVertical: 6 }}
+                            showsVerticalScrollIndicator={true}
+                            nestedScrollEnabled={true}
+                          >
+                            {options.length === 0 ? (
+                              <Text style={{ fontSize: 13, color: theme.textSecondary, fontStyle: 'italic', paddingVertical: 16, textAlign: 'center' }}>
+                                No alternative exercises found
+                              </Text>
+                            ) : (
+                              options.map((alt, optIdx) => {
+                                const altMuscleColor = categoryColors[alt.muscleGroup] || '#10B981';
+                                return (
+                                  <TouchableOpacity
+                                    key={alt.id}
+                                    activeOpacity={0.6}
+                                    onPress={() => handleReplaceExercise(targetLoggedEx.id || targetLoggedEx.exerciseId, targetLoggedEx.exerciseId, alt.id)}
+                                    style={[
+                                      styles.replaceOptionItem,
+                                      { borderBottomColor: theme.borderColor, backgroundColor: theme.cardBg },
+                                      optIdx === options.length - 1 && { borderBottomWidth: 0 }
+                                    ]}
+                                  >
+                                    <View style={[styles.activeSessionItemAccent, { backgroundColor: altMuscleColor }]} />
+                                    <View style={{ flex: 1, marginRight: 8 }}>
+                                      <Text style={[styles.replaceOptionItemName, { color: theme.textPrimary }]} numberOfLines={1}>
+                                        {alt.name}
+                                      </Text>
+                                    </View>
+                                    <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${altMuscleColor}15` }]}>
+                                      <Text style={[styles.activeSessionMuscleBadgeText, { color: altMuscleColor }]}>
+                                        {alt.muscleGroup.toUpperCase()}
+                                      </Text>
+                                    </View>
+                                  </TouchableOpacity>
+                                );
+                              })
+                            )}
+                          </ScrollView>
+
+                          <TouchableOpacity
+                            onPress={() => setReplacingActiveId(null)}
+                            style={[styles.cancelReplaceBtn, { borderColor: theme.borderColor, backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6' }]}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[styles.cancelReplaceBtnText, { color: theme.textSecondary }]}>CANCEL</Text>
                           </TouchableOpacity>
-                        </SwipeableActiveExerciseRow>
+                        </View>
                       );
-                    }}
-                  />
+                    })()
+                  ) : (
+                    <>
+                      <View style={styles.activeSessionHeader}>
+                        <View>
+                          <Text style={[styles.activeSessionTitle, { color: theme.textPrimary }]}>Active Session</Text>
+                          <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary }]}>
+                            {activeSessionExercises.length} exercise{activeSessionExercises.length > 1 ? 's' : ''} logged today
+                          </Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <TouchableOpacity
+                            onPress={() => {
+                              setCameFromActiveSessionPlus(true);
+                              handleSelectMuscleCard(getMostFrequentMuscleGroup(activeSessionExercises));
+                            }}
+                            activeOpacity={0.6}
+                            style={{ padding: 6 }}
+                          >
+                            <Plus size={20} color="#10B981" strokeWidth={2.5} />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.cancelSessionBtn}
+                            onPress={handleCancelSession}
+                            activeOpacity={0.6}
+                          >
+                            <Trash2 size={18} color="#EF4444" strokeWidth={2} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
 
+                      <DragList
+                        scrollEnabled={false}
+                        data={activeSessionExercises}
+                        keyExtractor={(item, index) => item.id || `${item.exerciseId}-${index}`}
+                        onReordered={(fromIdx, toIdx) => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          const updated = [...activeSessionExercises];
+                          const [moved] = updated.splice(fromIdx, 1);
+                          updated.splice(toIdx, 0, moved);
+                          setActiveSessionExercises(updated);
+                          AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                        }}
+                        style={styles.activeSessionList}
+                        renderItem={({ item, index, onDragStart, isActive }) => {
+                          const details = exercises.find((e) => e.id === item.exerciseId);
+                          if (!details) return null;
+                          const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
+                          const rowKey = item.id || `${item.exerciseId}-${index}`;
 
+                          return (
+                            <SwipeableActiveExerciseRow
+                              key={rowKey}
+                              cardBgColor={theme.cardBg}
+                              disabled={isActive}
+                              onSwipeLeft={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setReplacingActiveId(item.id || item.exerciseId);
+                              }}
+                              onSwipeRight={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                const updated = activeSessionExercises.filter((le) => (item.id ? le.id !== item.id : le.exerciseId !== item.exerciseId));
+                                setActiveSessionExercises(updated);
+                                AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                              }}
+                            >
+                              <TouchableOpacity
+                                style={[
+                                  styles.activeSessionItem,
+                                  { borderBottomColor: theme.borderColor, opacity: isActive ? 0.6 : 1, backgroundColor: theme.cardBg }
+                                ]}
+                                activeOpacity={0.6}
+                                onPress={() => handleToggleExpand(item.exerciseId)}
+                                onLongPress={onDragStart}
+                                delayLongPress={100}
+                              >
+                                <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor }]} />
+                                <View style={styles.activeSessionItemContent}>
+                                  <Text style={[styles.activeSessionItemName, { color: theme.textPrimary }]} numberOfLines={1}>
+                                    {details.name}
+                                  </Text>
+                                  <View style={styles.activeSessionItemMeta}>
+                                    <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${muscleColor}15` }]}>
+                                      <Text style={[styles.activeSessionMuscleBadgeText, { color: muscleColor }]}>
+                                        {details.muscleGroup.toUpperCase()}
+                                      </Text>
+                                    </View>
+                                    <Text style={[styles.activeSessionItemSets, { color: theme.textSecondary }]}>
+                                      {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
+                                    </Text>
+                                  </View>
+                                </View>
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setReplacingActiveId(item.id || item.exerciseId);
+                                  }}
+                                  style={{ padding: 4, marginRight: 2 }}
+                                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                  activeOpacity={0.6}
+                                >
+                                  <RefreshCw size={13} color={theme.textSecondary} opacity={0.45} strokeWidth={2} />
+                                </TouchableOpacity>
+                                <ChevronRight size={16} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
+                              </TouchableOpacity>
+                            </SwipeableActiveExerciseRow>
+                          );
+                        }}
+                      />
 
-                  <Text style={[styles.activeSessionHint, { color: theme.textSecondary }]}>Tap to edit • Long press to reorder</Text>
+                      <Text style={[styles.activeSessionHint, { color: theme.textSecondary }]}>Tap to edit • Swipe left to replace • Long press to reorder</Text>
 
-                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-                    <TouchableOpacity
-                      style={[styles.finishSessionBtn, { flex: 1, backgroundColor: '#10B981', paddingVertical: 10, borderRadius: 10 }]}
-                      onPress={handleFinishWorkoutDay}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[styles.finishSessionBtnText, { fontSize: 11, letterSpacing: 0.3 }]}>SAVE WORKOUT</Text>
-                    </TouchableOpacity>
+                      <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                        <TouchableOpacity
+                          style={[styles.finishSessionBtn, { flex: 1, backgroundColor: '#10B981', paddingVertical: 10, borderRadius: 10 }]}
+                          onPress={handleFinishWorkoutDay}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={[styles.finishSessionBtnText, { fontSize: 11, letterSpacing: 0.3 }]}>SAVE WORKOUT</Text>
+                        </TouchableOpacity>
 
                     {!sessionTemplateId && !sessionStartedFromTemplate && (
                       <TouchableOpacity
@@ -2351,6 +2453,8 @@ export default function SinglePageLandingScreen() {
                       </TouchableOpacity>
                     )}
                   </View>
+                    </>
+                  )}
                 </Card>
               )}
 
@@ -3922,21 +4026,7 @@ export default function SinglePageLandingScreen() {
                 const canGoPrev = exerciseList.length > 1;
                 const canGoNext = exerciseList.length > 1;
 
-                const navigateToExercise = (direction: 'prev' | 'next') => {
-                  const list = fromTemplateList ? templateListExercises : activeSessionExercises;
-                  if (list.length <= 1) return;
-
-                  const curIdx = list.findIndex((le) => le.exerciseId === expandedExerciseId);
-                  if (curIdx === -1) return;
-
-                  const nextIndex = direction === 'next'
-                    ? (curIdx + 1) % list.length
-                    : (curIdx - 1 + list.length) % list.length;
-                  const nextEx = list[nextIndex];
-                  if (!nextEx) return;
-
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
+                const saveCurrentSetsToState = () => {
                   if (expandedExerciseId && activeSets.length > 0) {
                     const save = (prev: LoggedExercise[]) =>
                       prev.map((ex) =>
@@ -3952,6 +4042,23 @@ export default function SinglePageLandingScreen() {
                       AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
                     }
                   }
+                };
+
+                const navigateToExercise = (direction: 'prev' | 'next') => {
+                  const list = fromTemplateList ? templateListExercises : activeSessionExercises;
+                  if (list.length <= 1) return;
+
+                  const curIdx = list.findIndex((le) => le.exerciseId === expandedExerciseId);
+                  if (curIdx === -1) return;
+
+                  const nextIndex = direction === 'next'
+                    ? (curIdx + 1) % list.length
+                    : (curIdx - 1 + list.length) % list.length;
+                  const nextEx = list[nextIndex];
+                  if (!nextEx) return;
+
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  saveCurrentSetsToState();
 
                   setExpandedExerciseId(nextEx.exerciseId);
                   const nextSets: WorkoutSet[] = nextEx.sets.map((s) => ({
@@ -6739,6 +6846,30 @@ const styles = StyleSheet.create({
   activeSessionItemSets: {
     fontSize: 11,
     fontWeight: '600',
+  },
+  replaceOptionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  replaceOptionItemName: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  cancelReplaceBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 9,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  cancelReplaceBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   activeSessionHint: {
     fontSize: 11,
