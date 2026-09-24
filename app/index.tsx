@@ -4044,6 +4044,28 @@ export default function SinglePageLandingScreen() {
                   }
                 };
 
+                const switchToExercise = (targetExerciseId: string) => {
+                  if (targetExerciseId === expandedExerciseId) return;
+                  const list = fromTemplateList ? templateListExercises : activeSessionExercises;
+                  const targetEx = list.find((le) => le.exerciseId === targetExerciseId);
+                  if (!targetEx) return;
+
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  saveCurrentSetsToState();
+
+                  setExpandedExerciseId(targetEx.exerciseId);
+                  const nextSets: WorkoutSet[] = targetEx.sets.map((s) => ({
+                    id: s.id,
+                    weight: s.weight,
+                    reps: s.reps,
+                    isCompleted: fromTemplateList ? true : s.isCompleted,
+                  }));
+
+                  setActiveSets(nextSets);
+                  setExerciseNote(targetEx.notes || '');
+                  setSameForAll(true);
+                };
+
                 const navigateToExercise = (direction: 'prev' | 'next') => {
                   const list = fromTemplateList ? templateListExercises : activeSessionExercises;
                   if (list.length <= 1) return;
@@ -4074,91 +4096,99 @@ export default function SinglePageLandingScreen() {
                 };
 
                 return (
-                  <SwipeableLoggerCard
-                    onGoNext={() => navigateToExercise('next')}
-                    onGoPrev={() => navigateToExercise('prev')}
-                    canGoNext={canGoNext}
-                    canGoPrev={canGoPrev}
-                  >
-                    <View style={{ flexShrink: 1, maxHeight: '100%' }}>
-                      <View style={styles.exerciseLoggerHeader}>
-                        {fromTemplateList ? (
-                          <TouchableOpacity
-                            style={[
-                              styles.exerciseNavBtn,
-                              {
-                                backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
-                                borderColor: theme.borderColor,
-                              }
-                            ]}
-                            onPress={() => handleTemplateListBackFromLogger()}
-                            activeOpacity={0.7}
-                          >
-                            <ChevronLeft size={16} color={theme.textPrimary} strokeWidth={2.5} />
-                          </TouchableOpacity>
-                        ) : (
-                          <TouchableOpacity
-                            style={[
-                              styles.exerciseNavBtn,
-                              {
-                                backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
-                                borderColor: theme.borderColor,
-                                opacity: canGoPrev ? 1 : 0.25,
-                              }
-                            ]}
-                            onPress={() => navigateToExercise('prev')}
-                            disabled={!canGoPrev}
-                            activeOpacity={0.7}
-                          >
-                            <ChevronLeft size={16} color={theme.textPrimary} strokeWidth={2.5} />
-                          </TouchableOpacity>
-                        )}
-                        <View style={styles.exerciseLoggerTitleCol}>
-                          <Text
-                            style={[styles.exerciseLoggerName, { color: theme.textPrimary }]}
-                            numberOfLines={1}
-                            ellipsizeMode="tail"
-                          >
-                            {exItem.name}
-                          </Text>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                            <Text style={[styles.exerciseLoggerMuscle, { color: categoryColor }]}>
+                  <View style={{ flexShrink: 1, maxHeight: '100%', width: '100%' }}>
+                    {/* Top Workout Navigation Pill Strip */}
+                    {exerciseList.length > 1 && (
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.loggerNavPillScroll}
+                        style={styles.loggerNavPillContainer}
+                        keyboardShouldPersistTaps="handled"
+                      >
+                        {exerciseList.map((item, index) => {
+                          const isSelected = item.exerciseId === expandedExerciseId;
+                          const exDetails = exercises.find((e) => e.id === item.exerciseId);
+                          const exName = exDetails?.name || 'Exercise';
+                          const mColor = exDetails ? categoryColors[exDetails.muscleGroup] || '#10B981' : '#10B981';
+                          const hasCompletedSets = item.sets.some((s) => s.isCompleted || (s.weight > 0 && s.reps > 0));
+
+                          return (
+                            <TouchableOpacity
+                              key={item.id || `${item.exerciseId}-${index}`}
+                              activeOpacity={0.7}
+                              onPress={() => switchToExercise(item.exerciseId)}
+                              style={[
+                                styles.loggerNavPill,
+                                {
+                                  backgroundColor: isSelected
+                                    ? (isDarkMode ? `${mColor}25` : `${mColor}18`)
+                                    : (isDarkMode ? '#1E1E28' : '#F3F4F6'),
+                                  borderColor: isSelected ? mColor : theme.borderColor,
+                                  borderWidth: isSelected ? 1.5 : 1,
+                                }
+                              ]}
+                            >
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                                {hasCompletedSets ? (
+                                  <Check size={11} color={isSelected ? mColor : '#10B981'} strokeWidth={3} />
+                                ) : (
+                                  <Text style={[styles.loggerNavPillIndex, { color: isSelected ? mColor : theme.textSecondary }]}>
+                                    {index + 1}
+                                  </Text>
+                                )}
+                                <Text
+                                  numberOfLines={1}
+                                  ellipsizeMode="tail"
+                                  style={[
+                                    styles.loggerNavPillText,
+                                    {
+                                      color: isSelected ? (isDarkMode ? '#FFFFFF' : theme.textPrimary) : theme.textSecondary,
+                                      fontWeight: isSelected ? '700' : '500',
+                                    }
+                                  ]}
+                                >
+                                  {exName}
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+                    )}
+
+                    <SwipeableLoggerCard
+                      onGoNext={() => navigateToExercise('next')}
+                      onGoPrev={() => navigateToExercise('prev')}
+                      canGoNext={canGoNext}
+                      canGoPrev={canGoPrev}
+                    >
+                      <View style={{ flexShrink: 1, maxHeight: '100%' }}>
+                        <View style={styles.exerciseLoggerHeader}>
+                          <View style={styles.exerciseLoggerTitleCol}>
+                            <Text
+                              style={[styles.exerciseLoggerName, { color: theme.textPrimary }]}
+                              numberOfLines={1}
+                              ellipsizeMode="tail"
+                            >
+                              {exItem.name}
+                            </Text>
+                            <Text style={[styles.exerciseLoggerMuscle, { color: categoryColor, marginTop: 2 }]}>
                               {exItem.muscleGroup.toUpperCase()}
                             </Text>
-                            {exerciseList.length > 1 && (
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary, letterSpacing: 0.3 }}>
-                                  · {currentExIndex + 1} of {exerciseList.length}
-                                </Text>
-                                <View style={[styles.loggerSwipeHintTag, { backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6', borderColor: theme.borderColor }]}>
-                                  <ChevronLeft size={8} color={theme.textSecondary} strokeWidth={2.5} />
-                                  <Text style={[styles.loggerSwipeHintText, { color: theme.textSecondary }]}>SWIPE</Text>
-                                  <ChevronRight size={8} color={theme.textSecondary} strokeWidth={2.5} />
-                                </View>
-                              </View>
-                            )}
                           </View>
+                          <TouchableOpacity
+                            onPress={() => {
+                              if (fromTemplateList) handleTemplateListBackFromLogger();
+                              else handleCloseActiveExerciseLogger();
+                            }}
+                            activeOpacity={0.6}
+                            style={styles.exerciseLoggerCloseBtn}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <X size={18} color={theme.textSecondary} strokeWidth={2} />
+                          </TouchableOpacity>
                         </View>
-                      {fromTemplateList ? (
-                        <View style={{ width: 32 }} />
-                      ) : (
-                        <TouchableOpacity
-                          style={[
-                            styles.exerciseNavBtn,
-                            {
-                              backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
-                              borderColor: theme.borderColor,
-                              opacity: canGoNext ? 1 : 0.25,
-                            }
-                          ]}
-                          onPress={() => navigateToExercise('next')}
-                          disabled={!canGoNext}
-                          activeOpacity={0.7}
-                        >
-                          <ChevronRight size={16} color={theme.textPrimary} strokeWidth={2.5} />
-                        </TouchableOpacity>
-                      )}
-                    </View>
 
                     <ScrollView
                       ref={loggerScrollViewRef}
@@ -4364,7 +4394,8 @@ export default function SinglePageLandingScreen() {
                     </View>
                     </View>
                   </SwipeableLoggerCard>
-                );
+                </View>
+              );
               })()}
             </View>
           </View>
@@ -7009,9 +7040,36 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     width: '100%',
   },
+  loggerNavPillContainer: {
+    maxHeight: 38,
+    marginBottom: 10,
+    width: '100%',
+  },
+  loggerNavPillScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  loggerNavPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loggerNavPillIndex: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  loggerNavPillText: {
+    fontSize: 12,
+    maxWidth: 120,
+    letterSpacing: -0.2,
+  },
   exerciseLoggerTitleCol: {
     flex: 1,
-    paddingHorizontal: 12,
+    paddingRight: 12,
     justifyContent: 'center',
   },
   exerciseLoggerName: {
