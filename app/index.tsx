@@ -2147,6 +2147,34 @@ export default function SinglePageLandingScreen() {
     }
   });
 
+  // Dynamic section color mapping: first list on top gets muscle group's own color, then green -> purple -> blue -> teal
+  const sectionColorMap: Record<string, string> = {};
+  const currentMuscleColor = categoryColors[selectedModalMuscle || 'Chest'] || '#10B981';
+
+  // Base rotation: green -> purple -> blue -> teal, followed by orange, pink, gold
+  const CYCLE_PALETTE = [
+    '#10B981', // Green
+    '#8B5CF6', // Purple
+    '#3B82F6', // Blue
+    '#14B8A6', // Teal
+    '#F97316', // Orange
+    '#EC4899', // Pink
+    '#EAB308', // Gold
+  ];
+
+  // Exclude current muscle color so it is not repeated in subsequent lists
+  const remainingPalette = CYCLE_PALETTE.filter(
+    (c) => c.toLowerCase() !== currentMuscleColor.toLowerCase()
+  );
+
+  exerciseSections.forEach((s, idx) => {
+    if (idx === 0) {
+      sectionColorMap[s.title] = currentMuscleColor;
+    } else {
+      sectionColorMap[s.title] = remainingPalette[(idx - 1) % remainingPalette.length];
+    }
+  });
+
   const filteredHistory = historySearch.trim()
     ? history.filter((item) => {
       const q = historySearch.toLowerCase();
@@ -3350,15 +3378,11 @@ export default function SinglePageLandingScreen() {
                       <View style={[styles.modalSectionHeaderLine, { backgroundColor: theme.borderColor }]} />
                     </View>
                   )}
-                  renderItem={({ item }) => {
+                  renderItem={({ item, section }) => {
                     const liveEx = exercises.find((e) => e.id === item.id);
                     const isFav = liveEx?.isFavorite ?? false;
                     const itemInstrument = item.instrument || 'Other';
-                    const itemColor =
-                      (INSTRUMENT_COLORS as Record<string, string>)[itemInstrument] ||
-                      (INSTRUMENT_COLORS as Record<string, string>)[itemInstrument.charAt(0).toUpperCase() + itemInstrument.slice(1).toLowerCase()] ||
-                      categoryColors[item.muscleGroup] ||
-                      '#10B981';
+                    const itemColor = sectionColorMap[section?.title || ''] || '#6B7280';
 
                     return (
                       <View
