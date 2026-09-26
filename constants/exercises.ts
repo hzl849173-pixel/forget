@@ -680,3 +680,11 @@ export const getMovementPatternGroup = (exerciseId: string, muscleGroup: MuscleG
 
   return [];
 };
+
+export const getMovementFamilyIds = (exerciseId: string): string[] => {
+  const explicitGroup = MOVEMENT_PATTERN_GROUPS.find((group) => group.includes(exerciseId));
+  if (explicitGroup) {
+    return explicitGroup;
+  }
+  return [exerciseId];
+};
