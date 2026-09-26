@@ -112,7 +112,7 @@ import { Card } from '@/components/ui/card';
 import { IncrementInput } from '@/components/ui/input';
 import { MuscleBadge } from '@/components/ui/muscle-badge';
 import { ProgressGrid } from '@/components/ui/progress-grid';
-import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, MUSCLE_GROUPS, ALL_MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS, getMovementPatternGroup } from '@/constants/exercises';
+import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, INSTRUMENT_COLORS, MUSCLE_GROUPS, ALL_MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS, getMovementPatternGroup } from '@/constants/exercises';
 import { getExerciseImage } from '@/constants/equipmentImages';
 import { useWorkoutAnalytics } from '@/hooks/use-workout-analytics';
 import { Exercise, LoggedExercise, PersonalRecord, useWorkout, WorkoutSession, WorkoutSet, WorkoutTemplate } from '@/hooks/use-workout-storage';
@@ -584,6 +584,13 @@ export default function SinglePageLandingScreen() {
   const [sessionStartedFromTemplate, setSessionStartedFromTemplate] = useState(false);
   const [sessionTemplateId, setSessionTemplateId] = useState<string | null>(null);
   const [replacingActiveId, setReplacingActiveId] = useState<string | null>(null);
+  const [mainScrollEnabled, setMainScrollEnabled] = useState(true);
+
+  React.useEffect(() => {
+    if (!replacingActiveId) {
+      setMainScrollEnabled(true);
+    }
+  }, [replacingActiveId]);
 
   // Consistency Modal state
   const [consistencyModalVisible, setConsistencyModalVisible] = useState(false);
@@ -1224,16 +1231,17 @@ export default function SinglePageLandingScreen() {
     const patternGroup = getMovementPatternGroup(currentExerciseId, muscleGroup, exercises)
       .filter((ex) => ex.id !== currentExerciseId && !activeExIds.has(ex.id));
 
-    const patternIds = new Set(patternGroup.map((ex) => ex.id));
+    if (patternGroup.length > 0) {
+      return patternGroup.slice(0, 5);
+    }
 
     const sameMuscle = exercises.filter((ex) =>
       ex.muscleGroup === muscleGroup &&
       ex.id !== currentExerciseId &&
-      !patternIds.has(ex.id) &&
       !activeExIds.has(ex.id)
     );
 
-    return [...patternGroup, ...sameMuscle];
+    return sameMuscle.slice(0, 5);
   };
 
   const handleReplaceExercise = (activeId: string, currentExerciseId: string, newExerciseId: string) => {
@@ -1252,6 +1260,7 @@ export default function SinglePageLandingScreen() {
     setActiveSessionExercises(updated);
     AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
     setReplacingActiveId(null);
+    setMainScrollEnabled(true);
   };
 
   const getMostFrequentMuscleGroup = (loggedExercises: LoggedExercise[]): MuscleGroup => {
@@ -1694,6 +1703,8 @@ export default function SinglePageLandingScreen() {
             setSessionStartTime(0);
             setSessionStartedFromTemplate(false);
             setSessionTemplateId(null);
+            setReplacingActiveId(null);
+            setMainScrollEnabled(true);
             await Promise.all([
               AsyncStorage.removeItem('@active_session_exercises'),
               AsyncStorage.removeItem('@session_start_time'),
@@ -2105,7 +2116,14 @@ export default function SinglePageLandingScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.inner}
       >
-        <ScrollView ref={mainScrollRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          ref={mainScrollRef}
+          nestedScrollEnabled={true}
+          scrollEnabled={mainScrollEnabled}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Landing Header */}
           <View style={styles.header}>
             <View style={styles.headerRow}>
@@ -2194,6 +2212,8 @@ export default function SinglePageLandingScreen() {
                   ]}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (replacingActiveId) setReplacingActiveId(null);
+                    setMainScrollEnabled(true);
                     setActiveSegment(seg.key as any);
                   }}
                   activeOpacity={0.8}
@@ -2236,11 +2256,14 @@ export default function SinglePageLandingScreen() {
                                 </Text>
                               </View>
                               <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary }]}>
-                                {options.length} alternative{options.length !== 1 ? 's' : ''} in {targetEx.muscleGroup}
+                                {options.length} top alternative{options.length !== 1 ? 's' : ''} • Tap to swap
                               </Text>
                             </View>
                             <TouchableOpacity
-                              onPress={() => setReplacingActiveId(null)}
+                              onPress={() => {
+                                setReplacingActiveId(null);
+                                setMainScrollEnabled(true);
+                              }}
                               activeOpacity={0.6}
                               style={{ padding: 6 }}
                               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -2251,8 +2274,16 @@ export default function SinglePageLandingScreen() {
 
                           <ScrollView
                             style={{ maxHeight: 260, marginVertical: 6 }}
+                            contentContainerStyle={{ paddingBottom: 4 }}
                             showsVerticalScrollIndicator={true}
                             nestedScrollEnabled={true}
+                            overScrollMode="never"
+                            bounces={false}
+                            keyboardShouldPersistTaps="handled"
+                            onTouchStart={() => setMainScrollEnabled(false)}
+                            onTouchEnd={() => setMainScrollEnabled(true)}
+                            onTouchCancel={() => setMainScrollEnabled(true)}
+                            onMomentumScrollEnd={() => setMainScrollEnabled(true)}
                           >
                             {options.length === 0 ? (
                               <Text style={{ fontSize: 13, color: theme.textSecondary, fontStyle: 'italic', paddingVertical: 16, textAlign: 'center' }}>
@@ -2260,7 +2291,7 @@ export default function SinglePageLandingScreen() {
                               </Text>
                             ) : (
                               options.map((alt, optIdx) => {
-                                const altMuscleColor = categoryColors[alt.muscleGroup] || '#10B981';
+                                const groupColor = INSTRUMENT_COLORS[alt.instrument] || categoryColors[alt.muscleGroup] || '#10B981';
                                 return (
                                   <TouchableOpacity
                                     key={alt.id}
@@ -2272,15 +2303,15 @@ export default function SinglePageLandingScreen() {
                                       optIdx === options.length - 1 && { borderBottomWidth: 0 }
                                     ]}
                                   >
-                                    <View style={[styles.activeSessionItemAccent, { backgroundColor: altMuscleColor }]} />
+                                    <View style={[styles.activeSessionItemAccent, { backgroundColor: groupColor }]} />
                                     <View style={{ flex: 1, marginRight: 8 }}>
                                       <Text style={[styles.replaceOptionItemName, { color: theme.textPrimary }]} numberOfLines={1}>
                                         {alt.name}
                                       </Text>
                                     </View>
-                                    <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${altMuscleColor}15` }]}>
-                                      <Text style={[styles.activeSessionMuscleBadgeText, { color: altMuscleColor }]}>
-                                        {alt.muscleGroup.toUpperCase()}
+                                    <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${groupColor}18` }]}>
+                                      <Text style={[styles.activeSessionMuscleBadgeText, { color: groupColor }]}>
+                                        {alt.instrument.toUpperCase()}
                                       </Text>
                                     </View>
                                   </TouchableOpacity>
@@ -2290,7 +2321,10 @@ export default function SinglePageLandingScreen() {
                           </ScrollView>
 
                           <TouchableOpacity
-                            onPress={() => setReplacingActiveId(null)}
+                            onPress={() => {
+                              setReplacingActiveId(null);
+                              setMainScrollEnabled(true);
+                            }}
                             style={[styles.cancelReplaceBtn, { borderColor: theme.borderColor, backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6' }]}
                             activeOpacity={0.7}
                           >
@@ -5010,7 +5044,7 @@ export default function SinglePageLandingScreen() {
                     paddingHorizontal: 8,
                   }}
                 >
-                  "{currentQuote}"
+                  {`"${currentQuote}"`}
                 </Text>
               </View>
             </View>

@@ -355,12 +355,19 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         if (storedExercises) {
           const parsed: Exercise[] = JSON.parse(storedExercises);
-          const storedIds = new Set(parsed.map((e) => e.id));
           const defaultMap = new Map(DEFAULT_EXERCISES.map((e) => [e.id, e]));
+          const defaultIds = new Set(DEFAULT_EXERCISES.map((e) => e.id));
+          const storedIds = new Set(parsed.map((e) => e.id));
           const missingDefaults = DEFAULT_EXERCISES.filter((e) => !storedIds.has(e.id));
           
           let changed = false;
-          const updated = parsed.map((e) => {
+          // Filter out deprecated default exercises while preserving all user-created custom exercises
+          const validExercises = parsed.filter((e) => e.isCustom || defaultIds.has(e.id));
+          if (validExercises.length !== parsed.length) {
+            changed = true;
+          }
+
+          const updated = validExercises.map((e) => {
             const def = defaultMap.get(e.id);
             if (def && !e.isCustom) {
               if (e.name !== def.name || e.instrument !== def.instrument || e.muscleGroup !== def.muscleGroup) {
