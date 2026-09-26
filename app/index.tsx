@@ -586,6 +586,25 @@ export default function SinglePageLandingScreen() {
   const [replacingActiveId, setReplacingActiveId] = useState<string | null>(null);
   const [mainScrollEnabled, setMainScrollEnabled] = useState(true);
 
+  const [cameFromReplaceTarget, setCameFromReplaceTarget] = useState<{
+    activeId: string;
+    currentExerciseId: string;
+    name: string;
+  } | null>(null);
+  const [customReplacements, setCustomReplacements] = useState<Record<string, string[]>>({});
+
+  React.useEffect(() => {
+    AsyncStorage.getItem('@custom_replacement_map').then((data) => {
+      if (data) {
+        try {
+          setCustomReplacements(JSON.parse(data));
+        } catch (e) {
+          // ignore parse error
+        }
+      }
+    });
+  }, []);
+
   React.useEffect(() => {
     if (!replacingActiveId) {
       setMainScrollEnabled(true);
@@ -1228,20 +1247,27 @@ export default function SinglePageLandingScreen() {
         .map((le) => le.exerciseId)
     );
 
-    const patternGroup = getMovementPatternGroup(currentExerciseId, muscleGroup, exercises)
-      .filter((ex) => ex.id !== currentExerciseId && !activeExIds.has(ex.id));
+    const userCustomIds = customReplacements[currentExerciseId] || [];
+    const customExs = userCustomIds
+      .map((id) => exercises.find((e) => e.id === id))
+      .filter((e): e is Exercise => e !== undefined && !activeExIds.has(e.id));
 
-    if (patternGroup.length > 0) {
-      return patternGroup.slice(0, 5);
+    const patternGroup = getMovementPatternGroup(currentExerciseId, muscleGroup, exercises)
+      .filter((ex) => ex.id !== currentExerciseId && !activeExIds.has(ex.id) && !userCustomIds.includes(ex.id));
+
+    const combined = [...customExs, ...patternGroup];
+    if (combined.length > 0) {
+      return combined.slice(0, 5);
     }
 
     const sameMuscle = exercises.filter((ex) =>
       ex.muscleGroup === muscleGroup &&
       ex.id !== currentExerciseId &&
-      !activeExIds.has(ex.id)
+      !activeExIds.has(ex.id) &&
+      !userCustomIds.includes(ex.id)
     );
 
-    return sameMuscle.slice(0, 5);
+    return [...customExs, ...sameMuscle].slice(0, 5);
   };
 
   const handleReplaceExercise = (activeId: string, currentExerciseId: string, newExerciseId: string) => {
@@ -1261,6 +1287,38 @@ export default function SinglePageLandingScreen() {
     AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
     setReplacingActiveId(null);
     setMainScrollEnabled(true);
+  };
+
+  const handleOpenReplaceLibrary = (activeId: string, currentExercise: { id: string; name: string; muscleGroup: MuscleGroup }) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setCameFromReplaceTarget({
+      activeId,
+      currentExerciseId: currentExercise.id,
+      name: currentExercise.name,
+    });
+    handleSelectMuscleCard(currentExercise.muscleGroup);
+  };
+
+  const handleReplaceFromPicker = (newExerciseId: string) => {
+    if (!cameFromReplaceTarget) return;
+    const { activeId, currentExerciseId } = cameFromReplaceTarget;
+
+    handleReplaceExercise(activeId, currentExerciseId, newExerciseId);
+
+    setCustomReplacements((prev) => {
+      const existing = prev[currentExerciseId] || [];
+      if (!existing.includes(newExerciseId)) {
+        const updatedList = [newExerciseId, ...existing];
+        const updatedMap = { ...prev, [currentExerciseId]: updatedList };
+        AsyncStorage.setItem('@custom_replacement_map', JSON.stringify(updatedMap));
+        return updatedMap;
+      }
+      return prev;
+    });
+
+    setCameFromReplaceTarget(null);
+    setSelectedModalMuscle(null);
+    setSelectedSubGroup(null);
   };
 
   const getMostFrequentMuscleGroup = (loggedExercises: LoggedExercise[]): MuscleGroup => {
@@ -2259,17 +2317,42 @@ export default function SinglePageLandingScreen() {
                                 {options.length} top alternative{options.length !== 1 ? 's' : ''} • Tap to swap
                               </Text>
                             </View>
-                            <TouchableOpacity
-                              onPress={() => {
-                                setReplacingActiveId(null);
-                                setMainScrollEnabled(true);
-                              }}
-                              activeOpacity={0.6}
-                              style={{ padding: 6 }}
-                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            >
-                              <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
-                            </TouchableOpacity>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <TouchableOpacity
+                                onPress={() => handleOpenReplaceLibrary(targetLoggedEx.id || targetLoggedEx.exerciseId, targetEx)}
+                                activeOpacity={0.6}
+                                style={{
+                                  width: 30,
+                                  height: 30,
+                                  borderRadius: 8,
+                                  backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
+                                  borderWidth: 1,
+                                  borderColor: theme.borderColor,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                              >
+                                <Plus size={16} color={muscleColor} strokeWidth={2.5} />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                onPress={() => {
+                                  setReplacingActiveId(null);
+                                  setMainScrollEnabled(true);
+                                }}
+                                activeOpacity={0.6}
+                                style={{
+                                  width: 30,
+                                  height: 30,
+                                  borderRadius: 8,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                              >
+                                <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
+                              </TouchableOpacity>
+                            </View>
                           </View>
 
                           <ScrollView
@@ -2300,7 +2383,6 @@ export default function SinglePageLandingScreen() {
                                     style={[
                                       styles.replaceOptionItem,
                                       { borderBottomColor: theme.borderColor, backgroundColor: theme.cardBg },
-                                      optIdx === options.length - 1 && { borderBottomWidth: 0 }
                                     ]}
                                   >
                                     <View style={[styles.activeSessionItemAccent, { backgroundColor: groupColor }]} />
@@ -2318,6 +2400,22 @@ export default function SinglePageLandingScreen() {
                                 );
                               })
                             )}
+                            <TouchableOpacity
+                              activeOpacity={0.6}
+                              onPress={() => handleOpenReplaceLibrary(targetLoggedEx.id || targetLoggedEx.exerciseId, targetEx)}
+                              style={[
+                                styles.replaceOptionItem,
+                                { borderBottomWidth: 0, paddingTop: 10, paddingBottom: 6 }
+                              ]}
+                            >
+                              <View style={[styles.activeSessionItemAccent, { backgroundColor: theme.borderColor }]} />
+                              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                                <Plus size={14} color={muscleColor} strokeWidth={2.5} />
+                                <Text style={[styles.replaceOptionItemName, { color: theme.textSecondary, fontSize: 13, fontWeight: '600' }]} numberOfLines={1}>
+                                  Add from library...
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
                           </ScrollView>
 
                           <TouchableOpacity
@@ -3081,6 +3179,7 @@ export default function SinglePageLandingScreen() {
               setTemplateListVisible(true);
             }
             setCameFromActiveSessionPlus(false);
+            setCameFromReplaceTarget(null);
           }}
         >
           <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
@@ -3097,9 +3196,15 @@ export default function SinglePageLandingScreen() {
                       numberOfLines={1}
                       adjustsFontSizeToFit
                     >
-                      {(selectedSubGroup || selectedModalMuscle || '').toUpperCase()} WORKOUTS
+                      {cameFromReplaceTarget
+                        ? `REPLACE ${cameFromReplaceTarget.name.toUpperCase()}`
+                        : `${(selectedSubGroup || selectedModalMuscle || '').toUpperCase()} WORKOUTS`}
                     </Text>
-                    <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>Select a workout to log completed sets</Text>
+                    <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>
+                      {cameFromReplaceTarget
+                        ? 'Tap any workout to swap & add to your replacement list'
+                        : 'Select a workout to log completed sets'}
+                    </Text>
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     <TouchableOpacity
@@ -3135,6 +3240,7 @@ export default function SinglePageLandingScreen() {
                           setTemplateListVisible(true);
                         }
                         setCameFromActiveSessionPlus(false);
+                        setCameFromReplaceTarget(null);
                       }}
                       activeOpacity={0.7}
                       style={{ padding: 6 }}
@@ -3269,6 +3375,11 @@ export default function SinglePageLandingScreen() {
                           <TouchableOpacity
                             style={styles.exerciseInfoClick}
                             onPress={() => {
+                              if (cameFromReplaceTarget) {
+                                handleReplaceFromPicker(item.id);
+                                return;
+                              }
+
                               if (fromTemplateList) {
                                 setSelectedPickerExerciseIds((prev) => {
                                   const next = new Set(prev);
