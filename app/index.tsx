@@ -112,7 +112,7 @@ import { Card } from '@/components/ui/card';
 import { IncrementInput } from '@/components/ui/input';
 import { MuscleBadge } from '@/components/ui/muscle-badge';
 import { ProgressGrid } from '@/components/ui/progress-grid';
-import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, INSTRUMENT_COLORS, MUSCLE_GROUPS, ALL_MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS, getMovementPatternGroup } from '@/constants/exercises';
+import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, INSTRUMENT_COLORS, MUSCLE_GROUPS, ALL_MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS, getMovementPatternGroup, getMovementFamilyIds } from '@/constants/exercises';
 import { getExerciseImage } from '@/constants/equipmentImages';
 import { useWorkoutAnalytics } from '@/hooks/use-workout-analytics';
 import { Exercise, LoggedExercise, PersonalRecord, useWorkout, WorkoutSession, WorkoutSet, WorkoutTemplate } from '@/hooks/use-workout-storage';
@@ -1250,14 +1250,16 @@ export default function SinglePageLandingScreen() {
     const userCustomIds = customReplacements[currentExerciseId] || [];
     const customExs = userCustomIds
       .map((id) => exercises.find((e) => e.id === id))
-      .filter((e): e is Exercise => e !== undefined && !activeExIds.has(e.id));
+      .filter((e): e is Exercise => e !== undefined && !activeExIds.has(e.id) && e.id !== currentExerciseId)
+      .map((e) => ({ ...e, isUserAdded: true }));
 
     const patternGroup = getMovementPatternGroup(currentExerciseId, muscleGroup, exercises)
-      .filter((ex) => ex.id !== currentExerciseId && !activeExIds.has(ex.id) && !userCustomIds.includes(ex.id));
+      .filter((ex) => ex.id !== currentExerciseId && !activeExIds.has(ex.id) && !userCustomIds.includes(ex.id))
+      .map((e) => ({ ...e, isUserAdded: false }));
 
     const combined = [...customExs, ...patternGroup];
     if (combined.length > 0) {
-      return combined.slice(0, 5);
+      return combined.slice(0, 6);
     }
 
     const sameMuscle = exercises.filter((ex) =>
@@ -1265,9 +1267,9 @@ export default function SinglePageLandingScreen() {
       ex.id !== currentExerciseId &&
       !activeExIds.has(ex.id) &&
       !userCustomIds.includes(ex.id)
-    );
+    ).map((e) => ({ ...e, isUserAdded: false }));
 
-    return [...customExs, ...sameMuscle].slice(0, 5);
+    return [...customExs, ...sameMuscle].slice(0, 6);
   };
 
   const handleReplaceExercise = (activeId: string, currentExerciseId: string, newExerciseId: string) => {
@@ -1299,23 +1301,30 @@ export default function SinglePageLandingScreen() {
     handleSelectMuscleCard(currentExercise.muscleGroup);
   };
 
-  const handleReplaceFromPicker = (newExerciseId: string) => {
+  const handleAddReplacementFromPicker = (newExerciseId: string) => {
     if (!cameFromReplaceTarget) return;
-    const { activeId, currentExerciseId } = cameFromReplaceTarget;
+    const { currentExerciseId } = cameFromReplaceTarget;
 
-    handleReplaceExercise(activeId, currentExerciseId, newExerciseId);
+    // Do NOT alter the active session / template list.
+    // Only add to the movement group's replacement options:
+    const familyIds = getMovementFamilyIds(currentExerciseId);
 
     setCustomReplacements((prev) => {
-      const existing = prev[currentExerciseId] || [];
-      if (!existing.includes(newExerciseId)) {
-        const updatedList = [newExerciseId, ...existing];
-        const updatedMap = { ...prev, [currentExerciseId]: updatedList };
-        AsyncStorage.setItem('@custom_replacement_map', JSON.stringify(updatedMap));
-        return updatedMap;
+      const updatedMap = { ...prev };
+      familyIds.forEach((famId) => {
+        const existing = updatedMap[famId] || [];
+        if (!existing.includes(newExerciseId) && famId !== newExerciseId) {
+          updatedMap[famId] = [newExerciseId, ...existing];
+        }
+      });
+      if (!updatedMap[currentExerciseId]?.includes(newExerciseId)) {
+        updatedMap[currentExerciseId] = [newExerciseId, ...(updatedMap[currentExerciseId] || [])];
       }
-      return prev;
+      AsyncStorage.setItem('@custom_replacement_map', JSON.stringify(updatedMap));
+      return updatedMap;
     });
 
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setCameFromReplaceTarget(null);
     setSelectedModalMuscle(null);
     setSelectedSubGroup(null);
@@ -2317,42 +2326,17 @@ export default function SinglePageLandingScreen() {
                                 {options.length} top alternative{options.length !== 1 ? 's' : ''} • Tap to swap
                               </Text>
                             </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <TouchableOpacity
-                                onPress={() => handleOpenReplaceLibrary(targetLoggedEx.id || targetLoggedEx.exerciseId, targetEx)}
-                                activeOpacity={0.6}
-                                style={{
-                                  width: 30,
-                                  height: 30,
-                                  borderRadius: 8,
-                                  backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
-                                  borderWidth: 1,
-                                  borderColor: theme.borderColor,
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                }}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                              >
-                                <Plus size={16} color={muscleColor} strokeWidth={2.5} />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                onPress={() => {
-                                  setReplacingActiveId(null);
-                                  setMainScrollEnabled(true);
-                                }}
-                                activeOpacity={0.6}
-                                style={{
-                                  width: 30,
-                                  height: 30,
-                                  borderRadius: 8,
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                }}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                              >
-                                <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
-                              </TouchableOpacity>
-                            </View>
+                            <TouchableOpacity
+                              onPress={() => {
+                                setReplacingActiveId(null);
+                                setMainScrollEnabled(true);
+                              }}
+                              activeOpacity={0.6}
+                              style={{ padding: 6 }}
+                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                              <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
+                            </TouchableOpacity>
                           </View>
 
                           <ScrollView
@@ -2374,7 +2358,10 @@ export default function SinglePageLandingScreen() {
                               </Text>
                             ) : (
                               options.map((alt, optIdx) => {
-                                const groupColor = INSTRUMENT_COLORS[alt.instrument] || categoryColors[alt.muscleGroup] || '#10B981';
+                                const isUserAdded = !!(alt as any).isUserAdded;
+                                const groupColor = isUserAdded
+                                  ? '#06B6D4'
+                                  : (INSTRUMENT_COLORS[alt.instrument] || categoryColors[alt.muscleGroup] || '#10B981');
                                 return (
                                   <TouchableOpacity
                                     key={alt.id}
@@ -2383,6 +2370,7 @@ export default function SinglePageLandingScreen() {
                                     style={[
                                       styles.replaceOptionItem,
                                       { borderBottomColor: theme.borderColor, backgroundColor: theme.cardBg },
+                                      isUserAdded && { backgroundColor: isDarkMode ? '#06B6D40C' : '#06B6D408' },
                                     ]}
                                   >
                                     <View style={[styles.activeSessionItemAccent, { backgroundColor: groupColor }]} />
@@ -2393,7 +2381,7 @@ export default function SinglePageLandingScreen() {
                                     </View>
                                     <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${groupColor}18` }]}>
                                       <Text style={[styles.activeSessionMuscleBadgeText, { color: groupColor }]}>
-                                        {alt.instrument.toUpperCase()}
+                                        {isUserAdded ? `SAVED • ${alt.instrument.toUpperCase()}` : alt.instrument.toUpperCase()}
                                       </Text>
                                     </View>
                                   </TouchableOpacity>
@@ -3197,12 +3185,12 @@ export default function SinglePageLandingScreen() {
                       adjustsFontSizeToFit
                     >
                       {cameFromReplaceTarget
-                        ? `REPLACE ${cameFromReplaceTarget.name.toUpperCase()}`
+                        ? `ADD REPLACEMENT FOR ${cameFromReplaceTarget.name.toUpperCase()}`
                         : `${(selectedSubGroup || selectedModalMuscle || '').toUpperCase()} WORKOUTS`}
                     </Text>
                     <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>
                       {cameFromReplaceTarget
-                        ? 'Tap any workout to swap & add to your replacement list'
+                        ? 'Tap any workout to add it to this group\'s replacement list'
                         : 'Select a workout to log completed sets'}
                     </Text>
                   </View>
@@ -3376,7 +3364,7 @@ export default function SinglePageLandingScreen() {
                             style={styles.exerciseInfoClick}
                             onPress={() => {
                               if (cameFromReplaceTarget) {
-                                handleReplaceFromPicker(item.id);
+                                handleAddReplacementFromPicker(item.id);
                                 return;
                               }
 
