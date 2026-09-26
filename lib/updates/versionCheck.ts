@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
 import * as Linking from 'expo-linking';
@@ -137,7 +138,7 @@ export async function checkEASUpdate(): Promise<void> {
  * Hook to manage app updates and version gating on startup.
  */
 export function useAppVersionCheck() {
-  const currentVersion = Constants.expoConfig?.version || '1.0.0';
+  const currentVersion = Application.nativeApplicationVersion || Constants.expoConfig?.version || '1.0.0';
 
   const [state, setState] = useState<AppUpdateState>({
     status: 'checking',
@@ -223,10 +224,7 @@ export function useAppVersionCheck() {
   const openUpdateUrl = async () => {
     if (!state.updateUrl) return;
     try {
-      const canOpen = await Linking.canOpenURL(state.updateUrl);
-      if (canOpen) {
-        await Linking.openURL(state.updateUrl);
-      }
+      await Linking.openURL(state.updateUrl);
     } catch (e) {
       console.warn('Failed to open update URL:', e);
     }

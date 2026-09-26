@@ -32,41 +32,51 @@ export function AppUpdateModal({
     }
   }, [status]);
 
-  // 1. Mandatory Update (Blocks the entire screen permanently)
+  // 1. Mandatory Update (Blocks the entire screen permanently via native top-level Modal)
   if (status === 'mandatory_update') {
     return (
-      <View style={styles.mandatoryContainer}>
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
-        <View style={styles.mandatoryCard}>
-          <View style={styles.mandatoryIconCircle}>
-            <AlertCircle size={40} color="#EF4444" />
+      <Modal
+        visible={true}
+        transparent={false}
+        animationType="none"
+        statusBarTranslucent={true}
+        onRequestClose={() => {
+          // Permanently block Android hardware back button
+        }}
+      >
+        <View style={styles.mandatoryContainer}>
+          <StatusBar barStyle="light-content" backgroundColor="#000000" />
+          <View style={styles.mandatoryCard}>
+            <View style={styles.mandatoryIconCircle}>
+              <AlertCircle size={40} color="#EF4444" />
+            </View>
+
+            <View style={styles.badgeCritical}>
+              <Text style={styles.badgeCriticalText}>ACTION REQUIRED</Text>
+            </View>
+
+            <Text style={styles.mandatoryTitle}>Update Required</Text>
+            <Text style={styles.mandatorySubtitle}>
+              This version of FORGET Gym (v{currentVersion}) is no longer supported. Please install version {minimumVersion} or higher to continue.
+            </Text>
+
+            <View style={styles.versionPillContainer}>
+              <Text style={styles.versionPillLabel}>Installed: <Text style={styles.versionHighlightOld}>v{currentVersion}</Text></Text>
+              <Text style={styles.versionPillArrow}>→</Text>
+              <Text style={styles.versionPillLabel}>Required: <Text style={styles.versionHighlightNew}>v{minimumVersion}</Text></Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.primaryButtonCritical}
+              activeOpacity={0.85}
+              onPress={onOpenUpdate}
+            >
+              <Download size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+              <Text style={styles.primaryButtonText}>Download Update</Text>
+            </TouchableOpacity>
           </View>
-
-          <View style={styles.badgeCritical}>
-            <Text style={styles.badgeCriticalText}>ACTION REQUIRED</Text>
-          </View>
-
-          <Text style={styles.mandatoryTitle}>Update Required</Text>
-          <Text style={styles.mandatorySubtitle}>
-            This version of FORGET Gym (v{currentVersion}) is no longer supported. Please install version {minimumVersion} or higher to continue.
-          </Text>
-
-          <View style={styles.versionPillContainer}>
-            <Text style={styles.versionPillLabel}>Installed: <Text style={styles.versionHighlightOld}>v{currentVersion}</Text></Text>
-            <Text style={styles.versionPillArrow}>→</Text>
-            <Text style={styles.versionPillLabel}>Required: <Text style={styles.versionHighlightNew}>v{minimumVersion}</Text></Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.primaryButtonCritical}
-            activeOpacity={0.85}
-            onPress={onOpenUpdate}
-          >
-            <Download size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-            <Text style={styles.primaryButtonText}>Download Update</Text>
-          </TouchableOpacity>
         </View>
-      </View>
+      </Modal>
     );
   }
 
