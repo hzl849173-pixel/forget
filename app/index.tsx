@@ -113,7 +113,6 @@ import { IncrementInput } from '@/components/ui/input';
 import { MuscleBadge } from '@/components/ui/muscle-badge';
 import { ProgressGrid } from '@/components/ui/progress-grid';
 import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, INSTRUMENT_COLORS, MUSCLE_GROUPS, ALL_MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS, getMovementPatternGroup, getMovementFamilyIds } from '@/constants/exercises';
-import { getExerciseImage } from '@/constants/equipmentImages';
 import { useWorkoutAnalytics } from '@/hooks/use-workout-analytics';
 import { Exercise, LoggedExercise, PersonalRecord, useWorkout, WorkoutSession, WorkoutSet, WorkoutTemplate } from '@/hooks/use-workout-storage';
 import DragList from 'react-native-draglist';
@@ -3344,156 +3343,164 @@ export default function SinglePageLandingScreen() {
                   keyboardShouldPersistTaps="handled"
                   stickySectionHeadersEnabled={false}
                   renderSectionHeader={({ section }) => (
-                    <View style={[styles.instrumentHeader, { borderBottomColor: theme.borderColor }]}>
-                      <Text style={[styles.instrumentHeaderText, { color: theme.textSecondary }]}>
+                    <View style={styles.modalSectionHeader}>
+                      <Text style={[styles.modalSectionHeaderText, { color: theme.textSecondary }]}>
                         {section.title.toUpperCase()}
                       </Text>
+                      <View style={[styles.modalSectionHeaderLine, { backgroundColor: theme.borderColor }]} />
                     </View>
                   )}
-                  renderItem={({ item, section }) => {
+                  renderItem={({ item }) => {
                     const liveEx = exercises.find((e) => e.id === item.id);
                     const isFav = liveEx?.isFavorite ?? false;
-                    const sectionStartIndex = exerciseSections
-                      .slice(0, exerciseSections.indexOf(section))
-                      .reduce((acc, s) => acc + s.data.length, 0);
-                    const index = sectionStartIndex + section.data.indexOf(item);
+                    const itemInstrument = item.instrument || 'Other';
+                    const itemColor =
+                      (INSTRUMENT_COLORS as Record<string, string>)[itemInstrument] ||
+                      (INSTRUMENT_COLORS as Record<string, string>)[itemInstrument.charAt(0).toUpperCase() + itemInstrument.slice(1).toLowerCase()] ||
+                      categoryColors[item.muscleGroup] ||
+                      '#10B981';
+
                     return (
-                      <Card style={[styles.exerciseCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                        <View style={styles.exerciseHeaderRow}>
-                          <TouchableOpacity
-                            style={styles.exerciseInfoClick}
-                            onPress={() => {
-                              if (cameFromReplaceTarget) {
-                                handleAddReplacementFromPicker(item.id);
-                                return;
-                              }
+                      <View
+                        style={[
+                          styles.modalExerciseItem,
+                          { backgroundColor: theme.cardBg, borderColor: theme.borderColor },
+                        ]}
+                      >
+                        <TouchableOpacity
+                          style={styles.modalExerciseMainClick}
+                          onPress={() => {
+                            if (cameFromReplaceTarget) {
+                              handleAddReplacementFromPicker(item.id);
+                              return;
+                            }
 
-                              if (fromTemplateList) {
-                                setSelectedPickerExerciseIds((prev) => {
-                                  const next = new Set(prev);
-                                  if (next.has(item.id)) {
-                                    next.delete(item.id);
-                                  } else {
-                                    next.add(item.id);
-                                  }
-                                  return next;
-                                });
-                                return;
-                              }
-
-                              const targetList = fromTemplateList ? templateListExercises : activeSessionExercises;
-                              const existingInActive = targetList.find((le) => le.exerciseId === item.id);
-                              const initialSets: WorkoutSet[] = [];
-                              if (existingInActive && existingInActive.sets.length > 0) {
-                                existingInActive.sets.forEach((set) => {
-                                  initialSets.push({
-                                    id: set.id,
-                                    weight: set.weight,
-                                    reps: set.reps,
-                                    isCompleted: fromTemplateList ? true : set.isCompleted,
-                                  });
-                                });
-                              } else {
-                                const previousLog = getPreviousWorkoutForExercise(item.id);
-                                if (previousLog && previousLog.sets.length > 0) {
-                                  previousLog.sets.forEach((set) => {
-                                    initialSets.push({
-                                      id: generateId(),
-                                      weight: set.weight,
-                                      reps: set.reps,
-                                      isCompleted: false,
-                                    });
-                                  });
+                            if (fromTemplateList) {
+                              setSelectedPickerExerciseIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(item.id)) {
+                                  next.delete(item.id);
+                                } else {
+                                  next.add(item.id);
                                 }
+                                return next;
+                              });
+                              return;
+                            }
 
-                                while (initialSets.length < 3) {
-                                  const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
+                            const targetList = fromTemplateList ? templateListExercises : activeSessionExercises;
+                            const existingInActive = targetList.find((le) => le.exerciseId === item.id);
+                            const initialSets: WorkoutSet[] = [];
+                            if (existingInActive && existingInActive.sets.length > 0) {
+                              existingInActive.sets.forEach((set) => {
+                                initialSets.push({
+                                  id: set.id,
+                                  weight: set.weight,
+                                  reps: set.reps,
+                                  isCompleted: fromTemplateList ? true : set.isCompleted,
+                                });
+                              });
+                            } else {
+                              const previousLog = getPreviousWorkoutForExercise(item.id);
+                              if (previousLog && previousLog.sets.length > 0) {
+                                previousLog.sets.forEach((set) => {
                                   initialSets.push({
                                     id: generateId(),
-                                    weight: lastSet ? lastSet.weight : 0,
-                                    reps: lastSet ? lastSet.reps : 0,
+                                    weight: set.weight,
+                                    reps: set.reps,
                                     isCompleted: false,
                                   });
-                                }
+                                });
                               }
-                              setActiveSets(initialSets);
-                              setSameForAll(true);
-                              setExerciseNote(existingInActive?.notes || '');
-                              setExpandedExerciseId(item.id);
-                              if (fromTemplateList) {
-                                setSelectedModalMuscle(null);
-                                setSelectedSubGroup(null);
+
+                              while (initialSets.length < 3) {
+                                const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
+                                initialSets.push({
+                                  id: generateId(),
+                                  weight: lastSet ? lastSet.weight : 0,
+                                  reps: lastSet ? lastSet.reps : 0,
+                                  isCompleted: false,
+                                });
                               }
-                            }}
-                            activeOpacity={0.85}
-                          >
-                            {fromTemplateList && (
-                              <View style={{
-                                width: 20,
-                                height: 20,
-                                borderRadius: 6,
-                                borderWidth: 2,
-                                borderColor: selectedPickerExerciseIds.has(item.id) ? '#10B981' : theme.borderColor,
-                                backgroundColor: selectedPickerExerciseIds.has(item.id) ? '#10B981' : 'transparent',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginRight: 12,
-                              }}>
-                                {selectedPickerExerciseIds.has(item.id) && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
-                              </View>
-                            )}
-                            {(() => {
-                               const sectionIndex = section.data.indexOf(item);
-                               const imgSource = getExerciseImage(item.instrument, sectionIndex);
-                               return (
-                                 <View style={styles.exerciseBadgeCircle}>
-                                   <Image
-                                     source={imgSource}
-                                     style={{ width: 26, height: 26 }}
-                                     contentFit="contain"
-                                   />
-                                 </View>
-                               );
-                             })()}
+                            }
+                            setActiveSets(initialSets);
+                            setSameForAll(true);
+                            setExerciseNote(existingInActive?.notes || '');
+                            setExpandedExerciseId(item.id);
+                            if (fromTemplateList) {
+                              setSelectedModalMuscle(null);
+                              setSelectedSubGroup(null);
+                            }
+                          }}
+                          activeOpacity={0.65}
+                        >
+                          {fromTemplateList && (
+                            <View
+                              style={[
+                                styles.modalExerciseCheckbox,
+                                {
+                                  borderColor: selectedPickerExerciseIds.has(item.id) ? '#10B981' : theme.borderColor,
+                                  backgroundColor: selectedPickerExerciseIds.has(item.id) ? '#10B981' : 'transparent',
+                                },
+                              ]}
+                            >
+                              {selectedPickerExerciseIds.has(item.id) && <Check size={11} color="#FFFFFF" strokeWidth={3} />}
+                            </View>
+                          )}
+
+                          <View style={[styles.activeSessionItemAccent, { backgroundColor: itemColor }]} />
+
+                          <View style={{ flex: 1, marginRight: 8 }}>
                             <Text
-                              style={[styles.exerciseName, { color: theme.textPrimary }]}
-                              numberOfLines={2}
+                              style={[styles.modalExerciseName, { color: theme.textPrimary }]}
+                              numberOfLines={1}
                             >
                               {item.name}
                             </Text>
-                          </TouchableOpacity>
+                          </View>
 
+                          <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${itemColor}18` }]}>
+                            <Text style={[styles.activeSessionMuscleBadgeText, { color: itemColor }]}>
+                              {itemInstrument.toUpperCase()}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+
+                        <View style={styles.modalExerciseActions}>
                           <TouchableOpacity
-                            style={styles.favBtn}
+                            style={styles.modalExerciseActionBtn}
                             onPress={() => {
                               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                               toggleFavoriteExercise(item.id);
                             }}
+                            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                             activeOpacity={0.7}
                           >
                             <Star
-                              size={18}
+                              size={17}
                               color={isFav ? '#FF8A00' : (POPULAR_EXERCISE_IDS.includes(item.id) ? '#9CA3AF' : theme.textSecondary)}
                               fill={isFav ? '#FF8A00' : (POPULAR_EXERCISE_IDS.includes(item.id) ? '#9CA3AF' : 'transparent')}
-                              strokeWidth={2}
+                              strokeWidth={isFav ? 2.2 : 1.8}
                             />
                           </TouchableOpacity>
+
                           {item.isCustom && (
                             <TouchableOpacity
-                              style={styles.deleteCustomBtn}
+                              style={styles.modalExerciseActionBtn}
                               onPress={async () => {
                                 await deleteCustomExercise(item.id);
                                 if (selectedModalMuscle) {
                                   setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle, undefined, new Set([item.id])));
                                 }
                               }}
+                              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                               activeOpacity={0.7}
                             >
-                              <Trash2 size={14} color="#EF4444" strokeWidth={2} />
+                              <Trash2 size={15} color="#EF4444" strokeWidth={2} />
                             </TouchableOpacity>
                           )}
                         </View>
-                      </Card>
+                      </View>
                     );
                   }}
                 />
@@ -7297,6 +7304,64 @@ const styles = StyleSheet.create({
   alertBtnText: {
     fontSize: 13,
     letterSpacing: 0.3,
+  },
+  modalSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 16,
+    paddingBottom: 8,
+    gap: 10,
+  },
+  modalSectionHeaderText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  modalSectionHeaderLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    opacity: 0.5,
+  },
+  modalExerciseItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  modalExerciseMainClick: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  modalExerciseName: {
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+  modalExerciseActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginLeft: 6,
+  },
+  modalExerciseActionBtn: {
+    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalExerciseCheckbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
   instrumentHeader: {
     paddingTop: 12,
