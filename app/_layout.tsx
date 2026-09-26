@@ -32,6 +32,8 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { WorkoutProvider } from '@/hooks/use-workout-storage';
 import { isOnboardingCompleted } from '@/lib/profile/profileStorage';
+import { useAppVersionCheck } from '@/lib/updates/versionCheck';
+import { AppUpdateModal } from '@/components/updates/AppUpdateModal';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useState } from 'react';
 
@@ -46,6 +48,7 @@ export default function RootLayout() {
   const router = useRouter();
   const [decided, setDecided] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(false);
+  const appUpdateState = useAppVersionCheck();
 
   useEffect(() => {
     let mounted = true;
@@ -91,6 +94,11 @@ export default function RootLayout() {
             <Stack.Screen name="index" options={{ headerShown: false }} />
           </Stack>
           <StatusBar style="auto" />
+          <AppUpdateModal
+            updateState={appUpdateState}
+            onDismissOptional={appUpdateState.dismissOptionalUpdate}
+            onOpenUpdate={appUpdateState.openUpdateUrl}
+          />
         </WorkoutProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
