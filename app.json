@@ -67,7 +67,21 @@
           "color": "#10B981"
         }
       ],
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "buildArchs": [
+              "arm64-v8a"
+            ],
+            "useLegacyPackaging": true,
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep class app.notifee.** { *; }\n-dontwarn app.notifee.**\n-keep class com.google.android.gms.auth.api.signin.** { *; }\n-keep class com.google.android.gms.common.** { *; }"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,
