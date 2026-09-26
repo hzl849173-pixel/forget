@@ -3204,45 +3204,34 @@ export default function SinglePageLandingScreen() {
                 style={styles.modalKeyboardContainer}
               >
                 {/* Modal Header */}
-                <View style={[styles.modalHeader, { borderBottomColor: theme.borderColor }]}>
-                  <View style={{ flex: 1, marginRight: 12 }}>
+                <View style={styles.modalHeaderMinimal}>
+                  <View style={styles.modalHeaderTitleCol}>
                     <Text
-                      style={[styles.modalTitle, { color: theme.textPrimary }]}
+                      style={[styles.modalHeaderTitle, { color: theme.textPrimary }]}
                       numberOfLines={1}
-                      adjustsFontSizeToFit
                     >
                       {cameFromReplaceTarget
-                        ? `ADD REPLACEMENT FOR ${cameFromReplaceTarget.name.toUpperCase()}`
-                        : `${(selectedSubGroup || selectedModalMuscle || '').toUpperCase()} WORKOUTS`}
+                        ? `Replace: ${cameFromReplaceTarget.name}`
+                        : (selectedSubGroup || selectedModalMuscle || '')}
                     </Text>
-                    <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]} numberOfLines={1}>
-                      {cameFromReplaceTarget
-                        ? 'Tap any workout to add it to this group\'s replacement list'
-                        : 'Select a workout to log completed sets'}
+                    <Text
+                      style={[styles.modalHeaderSubtitle, { color: theme.textSecondary }]}
+                      numberOfLines={1}
+                    >
+                      {cameFromReplaceTarget ? 'Select replacement workout' : 'Select a workout to start logging'}
                     </Text>
                   </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <TouchableOpacity
                       onPress={() => {
                         setNewExerciseName('');
                         setAddExerciseVisible(true);
                       }}
                       activeOpacity={0.7}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 4,
-                        paddingVertical: 5,
-                        paddingHorizontal: 10,
-                        borderRadius: 12,
-                        borderWidth: 1,
-                        borderColor: '#10B98140',
-                        backgroundColor: '#10B98108',
-                        marginRight: 4,
-                      }}
+                      style={styles.modalAddExercisePill}
                     >
                       <Plus size={12} color="#10B981" strokeWidth={2.5} />
-                      <Text style={{ color: '#10B981', fontSize: 10, fontWeight: '800', letterSpacing: 0.5 }}>
+                      <Text style={styles.modalAddExercisePillText}>
                         ADD
                       </Text>
                     </TouchableOpacity>
@@ -3258,9 +3247,9 @@ export default function SinglePageLandingScreen() {
                         setCameFromReplaceTarget(null);
                       }}
                       activeOpacity={0.7}
-                      style={{ padding: 6 }}
+                      style={styles.modalCloseIconButton}
                     >
-                      <X size={22} color={theme.textSecondary} strokeWidth={2.5} />
+                      <X size={20} color={theme.textSecondary} strokeWidth={2.2} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -6465,6 +6454,53 @@ const styles = StyleSheet.create({
   },
   modalKeyboardContainer: {
     flex: 1,
+  },
+  modalHeaderMinimal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  modalHeaderTitleCol: {
+    flex: 1,
+    marginRight: 12,
+  },
+  modalHeaderTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  },
+  modalHeaderSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
+    letterSpacing: 0.1,
+  },
+  modalAddExercisePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 99,
+    borderWidth: 1,
+    borderColor: '#10B98140',
+    backgroundColor: '#10B98110',
+  },
+  modalAddExercisePillText: {
+    color: '#10B981',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  modalCloseIconButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalHeader: {
     flexDirection: 'row',
