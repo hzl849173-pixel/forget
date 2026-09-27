@@ -1066,6 +1066,10 @@ export default function SinglePageLandingScreen() {
         setEditingTemplateExerciseId(null);
         return true;
       }
+      if (editingModalExerciseId !== null) {
+        setEditingModalExerciseId(null);
+        return true;
+      }
       if (editingActiveExerciseId !== null) {
         handleCancelInPlaceLogger();
         return true;
@@ -1089,7 +1093,7 @@ export default function SinglePageLandingScreen() {
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', handleBackButton);
     return () => subscription.remove();
-  }, [templateListVisible, editingActiveExerciseId, editingTemplateExerciseId, replacingActiveId]);
+  }, [templateListVisible, editingActiveExerciseId, editingTemplateExerciseId, editingModalExerciseId, replacingActiveId]);
 
   React.useEffect(() => {
     return () => {
@@ -1508,29 +1512,17 @@ export default function SinglePageLandingScreen() {
     handleOpenInPlaceEdit(nextItem.id || nextItem.exerciseId, nextItem.exerciseId);
   };
 
-  const handleCancelInPlaceLogger = async () => {
+  const handleCancelInPlaceLogger = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setMainScrollEnabled(true);
     setShowNoteInput(false);
-    setEditingActiveExerciseId(null);
 
     const context = inPlaceLoggingContext;
     setInPlaceLoggingContext(null);
+    setEditingActiveExerciseId(null);
 
     if (!context || context.source === 'active_session') {
       return;
-    }
-
-    if (context.temporaryActiveId && !context.wasAlreadyInActiveSession) {
-      const updated = activeSessionExercises.filter(
-        (le) => le.id !== context.temporaryActiveId && le.exerciseId !== context.temporaryActiveId
-      );
-      setActiveSessionExercises(updated);
-      await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
-      if (updated.length === 0) {
-        setSessionStartTime(0);
-        await AsyncStorage.removeItem('@session_start_time');
-      }
     }
 
     if (context.source === 'workout_list') {
@@ -1540,6 +1532,18 @@ export default function SinglePageLandingScreen() {
       }
     } else if (context.source === 'template_list') {
       setTemplateListVisible(true);
+    }
+
+    if (context.temporaryActiveId && !context.wasAlreadyInActiveSession) {
+      const updated = activeSessionExercises.filter(
+        (le) => le.id !== context.temporaryActiveId && le.exerciseId !== context.temporaryActiveId
+      );
+      setActiveSessionExercises(updated);
+      AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+      if (updated.length === 0) {
+        setSessionStartTime(0);
+        AsyncStorage.removeItem('@session_start_time');
+      }
     }
   };
 
@@ -1580,15 +1584,8 @@ export default function SinglePageLandingScreen() {
                 { id: generateId(), weight: 0, reps: 0, isCompleted: false },
               ];
 
-        const updated = activeSessionExercises.map((le) =>
-          le.id === inPlaceLoggingContext.temporaryActiveId
-            ? { ...le, exerciseId: targetExId, sets: initialSets, notes: targetTmplEx.notes }
-            : le
-        );
-        setActiveSessionExercises(updated);
-
         setInPlaceLoggingContext({
-          ...inPlaceLoggingContext,
+          source: 'template_list',
           templateExerciseId: targetExId,
         });
 
@@ -1596,7 +1593,7 @@ export default function SinglePageLandingScreen() {
         setExerciseNote(targetTmplEx.notes || '');
         setShowNoteInput(!!targetTmplEx.notes);
         setSameForAll(true);
-        setEditingActiveExerciseId(inPlaceLoggingContext.temporaryActiveId || targetExId);
+        setEditingActiveExerciseId(targetExId);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
       return;
@@ -1634,10 +1631,6 @@ export default function SinglePageLandingScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     const context = inPlaceLoggingContext;
-    setInPlaceLoggingContext(null);
-    setEditingActiveExerciseId(null);
-    setShowNoteInput(false);
-    setMainScrollEnabled(true);
 
     if (context?.source === 'workout_list') {
       const setsToSave: WorkoutSet[] = validSets.map((s) => ({
@@ -1658,12 +1651,16 @@ export default function SinglePageLandingScreen() {
       });
 
       setActiveSessionExercises(updatedExercises);
-      await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updatedExercises));
+      AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updatedExercises));
 
       if (context.returnModalMuscle) {
         setSelectedModalMuscle(context.returnModalMuscle);
         setSelectedSubGroup(context.returnSubGroup || null);
       }
+      setEditingActiveExerciseId(null);
+      setInPlaceLoggingContext(null);
+      setShowNoteInput(false);
+      setMainScrollEnabled(true);
       return;
     }
 
@@ -1682,15 +1679,22 @@ export default function SinglePageLandingScreen() {
         )
       );
 
-      if (sessionTemplateId) {
-        const currentTmpl = templates.find((t) => t.id === sessionTemplateId);
+      setTemplateListVisible(true);
+      setEditingActiveExerciseId(null);
+      setInPlaceLoggingContext(null);
+      setShowNoteInput(false);
+      setMainScrollEnabled(true);
+
+      const tmplId = sessionTemplateId || activeTemplateId;
+      if (tmplId) {
+        const currentTmpl = templates.find((t) => t.id === tmplId);
         if (currentTmpl) {
           const updatedTmpl = currentTmpl.exercises.map((te) =>
             te.exerciseId === targetTemplateExId
               ? { ...te, sets: setsToSave, notes: exerciseNote.trim() || undefined }
               : te
           );
-          await updateTemplate(sessionTemplateId, updatedTmpl);
+          updateTemplate(tmplId, updatedTmpl);
         }
       }
 
@@ -1699,16 +1703,19 @@ export default function SinglePageLandingScreen() {
           (le) => le.id !== context.temporaryActiveId && le.exerciseId !== targetExId
         );
         setActiveSessionExercises(updated);
-        await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+        AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
         if (updated.length === 0) {
           setSessionStartTime(0);
-          await AsyncStorage.removeItem('@session_start_time');
+          AsyncStorage.removeItem('@session_start_time');
         }
       }
-
-      setTemplateListVisible(true);
       return;
     }
+
+    setEditingActiveExerciseId(null);
+    setInPlaceLoggingContext(null);
+    setShowNoteInput(false);
+    setMainScrollEnabled(true);
 
     const updatedExercises = activeSessionExercises.map((le) => {
       const isTarget = le.id ? le.id === editingActiveExerciseId : le.exerciseId === targetExId;
@@ -2333,119 +2340,56 @@ export default function SinglePageLandingScreen() {
   };
 
 
-  const handleOpenTemplateInPlaceEdit = (exerciseId: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const targetEx = templateListExercises.find((le) => le.exerciseId === exerciseId);
-    if (!targetEx) return;
-
-    const initialSets: WorkoutSet[] = targetEx.sets.map((s) => ({
-      id: s.id,
-      weight: s.weight,
-      reps: s.reps,
-      isCompleted: s.isCompleted ?? true,
-    }));
-
-    setActiveSets(initialSets);
-    setExerciseNote(targetEx.notes || '');
-    setSameForAll(true);
-    setEditingTemplateExerciseId(exerciseId);
-  };
-
-  const handleSwitchTemplateInPlaceExercise = (targetExId: string) => {
-    if (targetExId === editingTemplateExerciseId) return;
-
-    if (editingTemplateExerciseId && activeSets.length > 0) {
-      setTemplateListExercises((prev) =>
-        prev.map((ex) =>
-          ex.exerciseId === editingTemplateExerciseId
-            ? { ...ex, sets: activeSets.map((s) => ({ ...s, isCompleted: true })), notes: exerciseNote.trim() || undefined }
-            : ex
-        )
-      );
-    }
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    handleOpenTemplateInPlaceEdit(targetExId);
-  };
-
-  const handleSaveTemplateInPlace = (targetExId: string) => {
-    if (activeSets.length === 0) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showCustomAlert(
-        'Add Sets',
-        'Please add at least one set with weight and repetitions before saving.',
-        [{ text: 'OK' }],
-        <Flame size={28} color="#EF4444" />
-      );
-      return;
-    }
-
-    if (activeSets.some((s) => s.reps <= 0)) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showCustomAlert(
-        'Invalid Reps',
-        'Please ensure all sets have at least 1 repetition before saving.',
-        [{ text: 'OK' }],
-        <Flame size={28} color="#EF4444" />
-      );
-      return;
-    }
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-    setTemplateListExercises((prev) =>
-      prev.map((ex) =>
-        ex.exerciseId === targetExId
-          ? { ...ex, sets: activeSets.map((s) => ({ ...s, isCompleted: true })), notes: exerciseNote.trim() || undefined }
-          : ex
-      )
-    );
-    setEditingTemplateExerciseId(null);
-  };
-
   const handleTemplateExercisePress = (logEx: LoggedExercise) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const existingInActive = activeSessionExercises.find((le) => le.exerciseId === logEx.exerciseId);
-    let targetLoggedId = existingInActive?.id;
-    const wasAlready = !!existingInActive;
 
-    if (!existingInActive) {
-      targetLoggedId = generateId();
-      const initialSets: WorkoutSet[] =
-        logEx.sets.length > 0
-          ? logEx.sets.map((s) => ({
-              id: s.id || generateId(),
-              weight: s.weight,
-              reps: s.reps,
-              isCompleted: s.isCompleted ?? false,
-            }))
-          : [
-              { id: generateId(), weight: 0, reps: 0, isCompleted: false },
-              { id: generateId(), weight: 0, reps: 0, isCompleted: false },
-              { id: generateId(), weight: 0, reps: 0, isCompleted: false },
-            ];
+    const initialSets: WorkoutSet[] =
+      logEx.sets && logEx.sets.length > 0
+        ? logEx.sets.map((s) => ({
+            id: s.id || generateId(),
+            weight: s.weight,
+            reps: s.reps,
+            isCompleted: s.isCompleted ?? false,
+          }))
+        : [];
 
-      const newLog: LoggedExercise = {
-        id: targetLoggedId,
-        exerciseId: logEx.exerciseId,
-        sets: initialSets,
-        notes: logEx.notes,
-      };
-      const updated = [...activeSessionExercises, newLog];
-      setActiveSessionExercises(updated);
-      AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+    if (initialSets.length === 0) {
+      const previousLog = getPreviousWorkoutForExercise(logEx.exerciseId);
+      if (previousLog && previousLog.sets.length > 0) {
+        previousLog.sets.forEach((set) => {
+          initialSets.push({
+            id: generateId(),
+            weight: set.weight,
+            reps: set.reps,
+            isCompleted: false,
+          });
+        });
+      }
     }
+
+    while (initialSets.length < 3) {
+      const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
+      initialSets.push({
+        id: generateId(),
+        weight: lastSet ? lastSet.weight : 0,
+        reps: lastSet ? lastSet.reps : 0,
+        isCompleted: false,
+      });
+    }
+
+    setActiveSets(initialSets);
+    setExerciseNote(logEx.notes || '');
+    setShowNoteInput(!!logEx.notes);
+    setSameForAll(true);
 
     setInPlaceLoggingContext({
       source: 'template_list',
       templateExerciseId: logEx.exerciseId,
-      temporaryActiveId: targetLoggedId || logEx.exerciseId,
-      wasAlreadyInActiveSession: wasAlready,
     });
 
     setTemplateListVisible(false);
     setActiveSegment('log');
-    handleOpenInPlaceEdit(targetLoggedId || logEx.exerciseId, logEx.exerciseId);
+    setEditingActiveExerciseId(logEx.exerciseId);
   };
 
   const handleTemplateListBackFromLogger = (skipSave = false) => {
@@ -3697,7 +3641,14 @@ export default function SinglePageLandingScreen() {
               }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, marginTop: 4 }}>
-                <Text style={[styles.sectionHeader, { color: theme.textSecondary, marginBottom: 0, marginTop: 0 }]}>TEMPLATES</Text>
+                <View>
+                  <Text style={[styles.sectionHeader, { color: theme.textSecondary, marginBottom: 0, marginTop: 0 }]}>TEMPLATES</Text>
+                  {templates.length > 0 && (
+                    <Text style={{ color: theme.textSecondary, fontSize: 9, fontWeight: '600', marginTop: 5, opacity: 0.75, letterSpacing: 0.2 }}>
+                      Tap to edit
+                    </Text>
+                  )}
+                </View>
                 <TouchableOpacity
                   onPress={async () => {
                     await ensureGoogleSignedIn(async () => {
@@ -5708,317 +5659,6 @@ export default function SinglePageLandingScreen() {
         >
           <View style={[styles.timerOverlay, { padding: 12 }]}>
             <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '92%', width: '98%', padding: 20 }]}>
-              {editingTemplateExerciseId !== null ? (
-                (() => {
-                  const targetLoggedEx = templateListExercises.find((le) => le.exerciseId === editingTemplateExerciseId);
-                  const targetEx = targetLoggedEx ? exercises.find((e) => e.id === targetLoggedEx.exerciseId) : null;
-                  if (!targetLoggedEx || !targetEx) return null;
-                  const muscleColor = categoryColors[targetEx.muscleGroup] || '#10B981';
-
-                  // Retrieve best PR for header display if available
-                  const prFromState = getExercisePR(targetEx.id);
-                  let pr = prFromState;
-                  if (!pr) {
-                    let max1RM = 0;
-                    let bestWeight = 0;
-                    let bestReps = 0;
-                    let bestDate = '';
-                    for (const session of history) {
-                      const logEx = session.exercises.find((e) => e.exerciseId === targetEx.id);
-                      if (logEx) {
-                        for (const set of logEx.sets) {
-                          if (set.weight > 0 && set.reps > 0) {
-                            const e1RM = set.weight * (1 + set.reps / 30);
-                            if (e1RM > max1RM) {
-                              max1RM = e1RM;
-                              bestWeight = set.weight;
-                              bestReps = set.reps;
-                              bestDate = session.date;
-                            }
-                          }
-                        }
-                      }
-                    }
-                    if (bestWeight > 0) {
-                      pr = { exerciseId: targetEx.id, weight: bestWeight, reps: bestReps, date: bestDate, estimatedOneRM: max1RM };
-                    }
-                  }
-
-                  const formattedDate = pr ? new Date(pr.date).toLocaleDateString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  }) : '';
-
-                  return (
-                    <View style={{ flex: 1 }}>
-                      {/* Top Workout Switcher Strip */}
-                      {templateListExercises.length > 1 && (
-                        <ScrollView
-                          horizontal
-                          showsHorizontalScrollIndicator={false}
-                          contentContainerStyle={{ gap: 6, paddingBottom: 6 }}
-                          style={{ marginBottom: 8 }}
-                        >
-                          {templateListExercises.map((item, index) => {
-                            const isSelected = item.exerciseId === editingTemplateExerciseId;
-                            const exDetails = exercises.find((e) => e.id === item.exerciseId);
-                            const rawName = exDetails?.name || 'Exercise';
-                            const exName = getCompactNavName(rawName);
-                            const mColor = exDetails ? categoryColors[exDetails.muscleGroup] || '#10B981' : '#10B981';
-                            const hasCompletedSets = item.sets.some((s) => s.isCompleted || (s.weight > 0 && s.reps > 0));
-
-                            return (
-                              <TouchableOpacity
-                                key={item.id || `${item.exerciseId}-${index}`}
-                                activeOpacity={0.7}
-                                onPress={() => handleSwitchTemplateInPlaceExercise(item.exerciseId)}
-                                style={[
-                                  styles.loggerNavPill,
-                                  {
-                                    backgroundColor: isSelected
-                                      ? (isDarkMode ? `${mColor}25` : `${mColor}18`)
-                                      : (isDarkMode ? '#1E1E28' : '#F3F4F6'),
-                                    borderColor: isSelected ? mColor : theme.borderColor,
-                                    borderWidth: isSelected ? 1.5 : 1,
-                                  }
-                                ]}
-                              >
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                  {hasCompletedSets ? (
-                                    <Check size={11} color={isSelected ? mColor : '#10B981'} strokeWidth={3} />
-                                  ) : (
-                                    <Text style={[styles.loggerNavPillIndex, { color: isSelected ? mColor : theme.textSecondary }]}>
-                                      {index + 1}
-                                    </Text>
-                                  )}
-                                  <Text
-                                    numberOfLines={1}
-                                    ellipsizeMode="tail"
-                                    style={[
-                                      styles.loggerNavPillText,
-                                      {
-                                        color: isSelected ? (isDarkMode ? '#FFFFFF' : theme.textPrimary) : theme.textSecondary,
-                                        fontWeight: isSelected ? '700' : '500',
-                                      }
-                                    ]}
-                                  >
-                                    {exName}
-                                  </Text>
-                                </View>
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </ScrollView>
-                      )}
-
-                      {/* Header */}
-                      <View style={styles.activeSessionHeader}>
-                        <View style={{ flex: 1, paddingRight: 8 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                            <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor, height: 14, width: 3, borderRadius: 2 }]} />
-                            <Text style={[styles.activeSessionTitle, { color: theme.textPrimary, flexShrink: 1 }]} numberOfLines={1}>
-                              {targetEx.name}
-                            </Text>
-                          </View>
-                          <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary }]}>
-                            {targetEx.muscleGroup.toUpperCase()} • {activeSets.length} set{activeSets.length !== 1 ? 's' : ''}
-                          </Text>
-                        </View>
-                        <TouchableOpacity
-                          onPress={() => setEditingTemplateExerciseId(null)}
-                          activeOpacity={0.6}
-                          style={{ padding: 6 }}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        >
-                          <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
-                        </TouchableOpacity>
-                      </View>
-
-                      <ScrollView
-                        style={{ flexShrink: 1, maxHeight: 520, marginVertical: 6 }}
-                        contentContainerStyle={{ paddingBottom: 8 }}
-                        showsVerticalScrollIndicator={true}
-                        nestedScrollEnabled={true}
-                        keyboardShouldPersistTaps="handled"
-                      >
-                        {/* Best PR banner if available */}
-                        {pr && (
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : '#F9FAFB',
-                              borderWidth: 1,
-                              borderColor: theme.borderColor,
-                              borderRadius: 8,
-                              paddingHorizontal: 10,
-                              paddingVertical: 7,
-                              marginBottom: 10,
-                            }}
-                          >
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <Trophy size={13} color="#10B981" strokeWidth={2} />
-                              <Text style={{ fontSize: 9, fontWeight: '800', color: '#10B981', letterSpacing: 0.8 }}>
-                                BEST
-                              </Text>
-                              <Text style={{ fontSize: 13, fontWeight: '800', color: theme.textPrimary, marginLeft: 2 }}>
-                                {pr.weight} <Text style={{ fontSize: 10, fontWeight: '600', color: theme.textSecondary }}>kg</Text> × {pr.reps} <Text style={{ fontSize: 10, fontWeight: '600', color: theme.textSecondary }}>reps</Text>
-                              </Text>
-                            </View>
-                            {formattedDate ? (
-                              <Text style={{ fontSize: 11, fontWeight: '500', color: theme.textSecondary }}>
-                                {formattedDate}
-                              </Text>
-                            ) : null}
-                          </View>
-                        )}
-
-                        {/* Same for all sets toggle */}
-                        <TouchableOpacity
-                          style={[styles.exerciseLoggerOptionRow, { paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.borderColor, marginBottom: 8 }]}
-                          onPress={toggleSameForAll}
-                          activeOpacity={0.8}
-                        >
-                          <View style={{ flex: 1, paddingRight: 8 }}>
-                            <Text style={[styles.optionsTitle, { color: theme.textPrimary, fontSize: 13 }]}>Same for all sets</Text>
-                            <Text style={[styles.optionsSubtitle, { color: theme.textSecondary, fontSize: 11 }]}>
-                              Sync weight and reps automatically
-                            </Text>
-                          </View>
-                          <View
-                            style={[
-                              styles.switchTrack,
-                              sameForAll
-                                ? { backgroundColor: muscleColor, alignItems: 'flex-end' }
-                                : { backgroundColor: '#D1D5DB', alignItems: 'flex-start' }
-                            ]}
-                          >
-                            <View style={styles.switchThumb} />
-                          </View>
-                        </TouchableOpacity>
-
-                        {/* Set row labels */}
-                        <View style={styles.setRowLabels}>
-                          <Text style={[styles.labelCol, styles.widthSet, { color: theme.textPrimary }]}>SET</Text>
-                          <Text style={[styles.labelCol, styles.widthWeight, { color: theme.textSecondary }]}>WEIGHT</Text>
-                          <Text style={[styles.labelCol, styles.widthReps, { color: theme.textSecondary }]}>REPS</Text>
-                          <View style={styles.widthActions} />
-                        </View>
-
-                        {/* Sets */}
-                        {activeSets.map((set, index) => (
-                          <View key={set.id} style={[styles.setRow, { borderBottomColor: theme.borderColor, paddingVertical: 8 }]}>
-                            <View style={styles.widthSet}>
-                              <Text style={[styles.setText, { color: theme.textPrimary }]}>{index + 1}</Text>
-                            </View>
-                            <View style={styles.widthWeight}>
-                              <IncrementInput
-                                value={set.weight}
-                                step={2.5}
-                                allowDecimals={true}
-                                onChange={(val) => handleUpdateSet(set.id, { weight: val })}
-                                placeholder="kg"
-                                accentColor={muscleColor}
-                                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
-                                textColor={theme.textPrimary}
-                              />
-                            </View>
-                            <View style={styles.widthReps}>
-                              <IncrementInput
-                                value={set.reps}
-                                step={1}
-                                allowDecimals={false}
-                                onChange={(val) => handleUpdateSet(set.id, { reps: val })}
-                                placeholder="reps"
-                                accentColor={muscleColor}
-                                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
-                                textColor={theme.textPrimary}
-                              />
-                            </View>
-                            <View style={styles.widthActions}>
-                              {index === activeSets.length - 1 && activeSets.length > 1 && (
-                                <TouchableOpacity
-                                  style={styles.setDeleteBtn}
-                                  onPress={() => handleRemoveSet(set.id)}
-                                  activeOpacity={0.6}
-                                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                >
-                                  <Trash2 size={12} color="#EF4444" strokeWidth={2} />
-                                </TouchableOpacity>
-                              )}
-                            </View>
-                          </View>
-                        ))}
-
-                        {/* Add Set button */}
-                        <TouchableOpacity
-                          style={[
-                            styles.addSetBtn,
-                            { backgroundColor: theme.cardBg, borderColor: theme.borderColor, marginVertical: 10 }
-                          ]}
-                          onPress={() => handleAddSet(targetEx.id)}
-                          activeOpacity={0.75}
-                        >
-                          <Plus size={14} color={theme.textSecondary} strokeWidth={2.5} />
-                          <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>ADD SET</Text>
-                        </TouchableOpacity>
-
-                        {/* Optional Note */}
-                        <View style={{ marginTop: 4, marginBottom: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.borderColor, paddingTop: 10 }}>
-                          <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary, marginBottom: 4, letterSpacing: 0.5 }}>
-                            EXERCISE NOTE
-                          </Text>
-                          <TextInput
-                            style={{
-                              backgroundColor: theme.inputBg,
-                              borderColor: theme.borderColor,
-                              borderWidth: 1,
-                              borderRadius: 8,
-                              paddingHorizontal: 10,
-                              paddingVertical: 8,
-                              color: theme.textPrimary,
-                              fontSize: 13,
-                              minHeight: 44,
-                              textAlignVertical: 'top',
-                            }}
-                            placeholder="Add an optional workout note..."
-                            placeholderTextColor={theme.inputPlaceholder}
-                            value={exerciseNote}
-                            onChangeText={setExerciseNote}
-                            multiline
-                            maxLength={150}
-                          />
-                        </View>
-                      </ScrollView>
-
-                      {/* Footer buttons */}
-                      <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
-                        <TouchableOpacity
-                          onPress={() => setEditingTemplateExerciseId(null)}
-                          style={[
-                            styles.cancelReplaceBtn,
-                            { flex: 1, paddingVertical: 10, borderRadius: 10, borderColor: theme.borderColor, backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6' }
-                          ]}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={[styles.cancelReplaceBtnText, { color: theme.textSecondary, fontSize: 11, letterSpacing: 0.3 }]}>CANCEL</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          style={[styles.finishSessionBtn, { flex: 1, backgroundColor: '#10B981', paddingVertical: 10, borderRadius: 10 }]}
-                          onPress={() => handleSaveTemplateInPlace(targetEx.id)}
-                          activeOpacity={0.8}
-                        >
-                          <Text style={[styles.finishSessionBtnText, { fontSize: 11, letterSpacing: 0.3 }]}>SAVE</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  );
-                })()
-              ) : (
-                <>
               <View style={styles.editWorkoutHeader}>
                 <View>
                   <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>
@@ -6327,8 +5967,6 @@ export default function SinglePageLandingScreen() {
                     <Text style={styles.finishSessionBtnText}>START</Text>
                   </TouchableOpacity>
                 </View>
-              )}
-                </>
               )}
             </View>
           </View>
