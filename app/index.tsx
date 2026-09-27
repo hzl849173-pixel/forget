@@ -2672,7 +2672,7 @@ export default function SinglePageLandingScreen() {
           ref={mainScrollRef}
           nestedScrollEnabled={true}
           scrollEnabled={mainScrollEnabled}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(60, insets.bottom + 70) }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -3012,7 +3012,7 @@ export default function SinglePageLandingScreen() {
                           </View>
 
                           <ScrollView
-                            style={{ maxHeight: 520, marginVertical: 6 }}
+                            style={{ maxHeight: 400, marginVertical: 6 }}
                             contentContainerStyle={{ paddingBottom: 8 }}
                             showsVerticalScrollIndicator={true}
                             nestedScrollEnabled={true}
@@ -3220,20 +3220,25 @@ export default function SinglePageLandingScreen() {
                                 handleCancelInPlaceLogger();
                               }}
                               style={[
-                                styles.cancelReplaceBtn,
-                                { flex: 1, paddingVertical: 10, borderRadius: 10, borderColor: theme.borderColor, backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6' }
+                                styles.finishSessionBtn,
+                                {
+                                  flex: 1,
+                                  backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
+                                  borderWidth: 1,
+                                  borderColor: theme.borderColor,
+                                }
                               ]}
                               activeOpacity={0.7}
                             >
-                              <Text style={[styles.cancelReplaceBtnText, { color: theme.textSecondary, fontSize: 11, letterSpacing: 0.3 }]}>CANCEL</Text>
+                              <Text style={[styles.finishSessionBtnText, { color: theme.textSecondary }]}>CANCEL</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                              style={[styles.finishSessionBtn, { flex: 1, backgroundColor: '#10B981', paddingVertical: 10, borderRadius: 10 }]}
+                              style={[styles.finishSessionBtn, { flex: 1, backgroundColor: '#10B981' }]}
                               onPress={() => handleSaveInPlace(targetEx.id)}
                               activeOpacity={0.8}
                             >
-                              <Text style={[styles.finishSessionBtnText, { fontSize: 11, letterSpacing: 0.3 }]}>SAVE</Text>
+                              <Text style={styles.finishSessionBtnText}>SAVE</Text>
                             </TouchableOpacity>
                           </View>
                         </View>
@@ -4246,20 +4251,25 @@ export default function SinglePageLandingScreen() {
                                 setEditingModalExerciseId(null);
                               }}
                               style={[
-                                styles.cancelReplaceBtn,
-                                { flex: 1, paddingVertical: 10, borderRadius: 10, borderColor: theme.borderColor, backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6' }
+                                styles.finishSessionBtn,
+                                {
+                                  flex: 1,
+                                  backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
+                                  borderWidth: 1,
+                                  borderColor: theme.borderColor,
+                                }
                               ]}
                               activeOpacity={0.7}
                             >
-                              <Text style={[styles.cancelReplaceBtnText, { color: theme.textSecondary, fontSize: 11, letterSpacing: 0.3 }]}>CANCEL</Text>
+                              <Text style={[styles.finishSessionBtnText, { color: theme.textSecondary }]}>CANCEL</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                              style={[styles.finishSessionBtn, { flex: 1, backgroundColor: '#10B981', paddingVertical: 10, borderRadius: 10 }]}
+                              style={[styles.finishSessionBtn, { flex: 1, backgroundColor: '#10B981' }]}
                               onPress={handleSaveModalExercise}
                               activeOpacity={0.8}
                             >
-                              <Text style={[styles.finishSessionBtnText, { fontSize: 11, letterSpacing: 0.3 }]}>SAVE</Text>
+                              <Text style={styles.finishSessionBtnText}>SAVE</Text>
                             </TouchableOpacity>
                           </View>
                         </Card>
