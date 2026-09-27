@@ -4720,171 +4720,107 @@ export default function SinglePageLandingScreen() {
                     const details = exercises.find((e) => e.id === item.exerciseId);
                     if (!details) return null;
                     const muscleColor = categoryColors[details.muscleGroup] || '#10B981';
-                    const equipImg = getExerciseImage(details.instrument, index);
                     const isSelectedForDelete = selectedTemplateExerciseIds.has(item.exerciseId);
 
                     return (
-                      <View
-                        style={{
-                          marginBottom: 8,
-                          opacity: isActive ? 0.6 : 1,
+                      <TouchableOpacity
+                        activeOpacity={0.65}
+                        onPress={() => {
+                          if (isDeleteMode) {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setSelectedTemplateExerciseIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(item.exerciseId)) {
+                                next.delete(item.exerciseId);
+                              } else {
+                                next.add(item.exerciseId);
+                              }
+                              return next;
+                            });
+                          } else {
+                            handleTemplateExercisePress(item);
+                          }
                         }}
+                        onLongPress={isDeleteMode ? undefined : onDragStart}
+                        delayLongPress={150}
+                        style={[
+                          styles.replaceOptionItem,
+                          {
+                            borderBottomColor: theme.borderColor,
+                            backgroundColor: isDeleteMode && isSelectedForDelete
+                              ? (isDarkMode ? '#EF444415' : '#EF444410')
+                              : 'transparent',
+                            opacity: isActive ? 0.6 : 1,
+                            paddingHorizontal: 4,
+                          },
+                        ]}
                       >
-                        <TouchableOpacity
-                          activeOpacity={0.7}
-                          onPress={() => {
-                            if (isDeleteMode) {
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                              setSelectedTemplateExerciseIds((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(item.exerciseId)) {
-                                  next.delete(item.exerciseId);
-                                } else {
-                                  next.add(item.exerciseId);
-                                }
-                                return next;
-                              });
-                            } else {
-                              handleTemplateExercisePress(item);
-                            }
-                          }}
-                          onLongPress={isDeleteMode ? undefined : onDragStart}
-                          delayLongPress={150}
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: isDarkMode ? '#13141C' : '#F9FAFB',
-                            borderRadius: 16,
-                            borderWidth: 1,
-                            borderColor: isDeleteMode && isSelectedForDelete ? '#EF4444' : theme.borderColor,
-                            paddingVertical: 12,
-                            paddingHorizontal: 14,
-                          }}
-                        >
-                          {isDeleteMode && (
-                            <View
-                              style={{
-                                width: 20,
-                                height: 20,
-                                borderRadius: 10,
-                                borderWidth: 1.5,
-                                borderColor: isSelectedForDelete ? '#EF4444' : theme.textSecondary,
-                                backgroundColor: isSelectedForDelete ? '#EF4444' : 'transparent',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginRight: 12,
-                              }}
-                            >
-                              {isSelectedForDelete && (
-                                <Check size={11} color="#FFFFFF" strokeWidth={3.5} />
-                              )}
-                            </View>
-                          )}
-
-                          {/* Exercise Equipment Thumbnail */}
+                        {isDeleteMode && (
                           <View
                             style={{
-                              width: 38,
-                              height: 38,
-                              borderRadius: 12,
-                              backgroundColor: `${muscleColor}15`,
-                              borderWidth: 1,
-                              borderColor: `${muscleColor}30`,
+                              width: 20,
+                              height: 20,
+                              borderRadius: 10,
+                              borderWidth: 1.5,
+                              borderColor: isSelectedForDelete ? '#EF4444' : theme.textSecondary,
+                              backgroundColor: isSelectedForDelete ? '#EF4444' : 'transparent',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              marginRight: 12,
-                              overflow: 'hidden',
+                              marginRight: 10,
                             }}
                           >
-                            {equipImg ? (
-                              <Image
-                                source={equipImg}
-                                style={{ width: 24, height: 24 }}
-                                contentFit="contain"
-                              />
-                            ) : (
-                              <Dumbbell size={18} color={muscleColor} strokeWidth={2} />
+                            {isSelectedForDelete && (
+                              <Check size={11} color="#FFFFFF" strokeWidth={3.5} />
                             )}
                           </View>
+                        )}
 
-                          {/* Exercise Information */}
-                          <View style={{ flex: 1, marginRight: 8 }}>
-                            <Text
-                              style={{
-                                color: theme.textPrimary,
-                                fontSize: 15,
-                                fontWeight: '700',
-                                letterSpacing: -0.2,
-                                marginBottom: 4,
-                              }}
-                              numberOfLines={1}
-                            >
-                              {details.name}
-                            </Text>
+                        {/* Colored Vertical Rounded Rectangle Accent */}
+                        <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor }]} />
 
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                              <View
-                                style={{
-                                  paddingHorizontal: 6,
-                                  paddingVertical: 2,
-                                  borderRadius: 5,
-                                  backgroundColor: `${muscleColor}18`,
-                                }}
-                              >
-                                <Text
-                                  style={{
-                                    fontSize: 9,
-                                    fontWeight: '800',
-                                    color: muscleColor,
-                                    letterSpacing: 0.4,
-                                  }}
-                                >
-                                  {details.muscleGroup.toUpperCase()}
-                                </Text>
-                              </View>
+                        {/* Exercise Name */}
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                          <Text
+                            style={[styles.replaceOptionItemName, { color: theme.textPrimary }]}
+                            numberOfLines={1}
+                          >
+                            {details.name}
+                          </Text>
+                        </View>
 
-                              {details.instrument && (
-                                <View
-                                  style={{
-                                    paddingHorizontal: 5,
-                                    paddingVertical: 2,
-                                    borderRadius: 5,
-                                    backgroundColor: isDarkMode ? '#1E1E28' : '#E5E7EB',
-                                  }}
-                                >
-                                  <Text
-                                    style={{
-                                      fontSize: 8.5,
-                                      fontWeight: '700',
-                                      color: theme.textSecondary,
-                                      letterSpacing: 0.3,
-                                    }}
-                                  >
-                                    {details.instrument.toUpperCase()}
-                                  </Text>
-                                </View>
-                              )}
+                        {/* Muscle / Instrument Badge */}
+                        <View
+                          style={[
+                            styles.activeSessionMuscleBadge,
+                            { backgroundColor: `${muscleColor}18` },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.activeSessionMuscleBadgeText,
+                              { color: muscleColor },
+                            ]}
+                          >
+                            {details.instrument ? details.instrument.toUpperCase() : details.muscleGroup.toUpperCase()}
+                          </Text>
+                        </View>
 
-                              <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: '600' }}>
-                                {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
-                              </Text>
-                            </View>
-                          </View>
+                        {/* Sets Count */}
+                        <Text style={[styles.activeSessionItemSets, { color: theme.textSecondary, marginLeft: 8 }]}>
+                          {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
+                        </Text>
 
-                          {/* Action indicator */}
-                          {!isDeleteMode && (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                              <ChevronRight size={16} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
-                            </View>
-                          )}
-                        </TouchableOpacity>
-                      </View>
+                        {/* Chevron */}
+                        {!isDeleteMode && (
+                          <ChevronRight size={16} color={theme.textSecondary} opacity={0.4} strokeWidth={2} style={{ marginLeft: 6 }} />
+                        )}
+                      </TouchableOpacity>
                     );
                   }}
                 />
               )}
               {isDeleteMode ? (
-                <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                   <TouchableOpacity
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -4892,9 +4828,12 @@ export default function SinglePageLandingScreen() {
                       setSelectedTemplateExerciseIds(new Set());
                     }}
                     activeOpacity={0.7}
-                    style={{ flex: 1, paddingVertical: 14, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: theme.borderColor, backgroundColor: 'transparent' }}
+                    style={[
+                      styles.finishSessionBtn,
+                      { flex: 1, borderWidth: 1, borderColor: theme.borderColor, backgroundColor: 'transparent' },
+                    ]}
                   >
-                    <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '800', letterSpacing: 0.3 }}>CANCEL</Text>
+                    <Text style={[styles.finishSessionBtnText, { color: theme.textSecondary }]}>CANCEL</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     disabled={selectedTemplateExerciseIds.size === 0}
@@ -4907,22 +4846,22 @@ export default function SinglePageLandingScreen() {
                       setSelectedTemplateExerciseIds(new Set());
                     }}
                     activeOpacity={0.8}
-                    style={{
-                      flex: 1,
-                      backgroundColor: selectedTemplateExerciseIds.size === 0 ? theme.borderColor : '#EF4444',
-                      paddingVertical: 14,
-                      alignItems: 'center',
-                      borderRadius: 14,
-                      opacity: selectedTemplateExerciseIds.size === 0 ? 0.5 : 1,
-                    }}
+                    style={[
+                      styles.finishSessionBtn,
+                      {
+                        flex: 1,
+                        backgroundColor: selectedTemplateExerciseIds.size === 0 ? theme.borderColor : '#EF4444',
+                        opacity: selectedTemplateExerciseIds.size === 0 ? 0.5 : 1,
+                      },
+                    ]}
                   >
-                    <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800', letterSpacing: 0.3 }}>
+                    <Text style={[styles.finishSessionBtnText, { color: '#FFFFFF' }]}>
                       DELETE ({selectedTemplateExerciseIds.size})
                     </Text>
                   </TouchableOpacity>
                 </View>
               ) : (
-                <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                   <TouchableOpacity
                     onPress={async () => {
                       if (activeTemplateId) {
@@ -4935,9 +4874,17 @@ export default function SinglePageLandingScreen() {
                       setActiveTemplateId(null);
                     }}
                     activeOpacity={0.7}
-                    style={{ flex: 1, paddingVertical: 14, alignItems: 'center', borderRadius: 14, borderWidth: 1.5, borderColor: '#10B981', backgroundColor: 'transparent' }}
+                    style={[
+                      styles.finishSessionBtn,
+                      {
+                        flex: 1,
+                        backgroundColor: 'transparent',
+                        borderWidth: 1.5,
+                        borderColor: '#10B981',
+                      },
+                    ]}
                   >
-                    <Text style={{ color: '#10B981', fontSize: 13, fontWeight: '800', letterSpacing: 0.4 }}>SAVE</Text>
+                    <Text style={[styles.finishSessionBtnText, { color: '#10B981' }]}>SAVE</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={async () => {
@@ -4970,9 +4917,15 @@ export default function SinglePageLandingScreen() {
                       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                     }}
                     activeOpacity={0.8}
-                    style={{ flex: 1, backgroundColor: '#10B981', paddingVertical: 14, alignItems: 'center', borderRadius: 14 }}
+                    style={[
+                      styles.finishSessionBtn,
+                      {
+                        flex: 1,
+                        backgroundColor: '#10B981',
+                      },
+                    ]}
                   >
-                    <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 }}>START WORKOUT</Text>
+                    <Text style={styles.finishSessionBtnText}>START</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -5035,17 +4988,10 @@ export default function SinglePageLandingScreen() {
                           return next;
                         });
                       }}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        paddingVertical: 12,
-                        paddingHorizontal: 14,
-                        marginBottom: 8,
-                        borderRadius: 16,
-                        borderWidth: 1,
-                        borderColor: isSelected ? '#10B981' : theme.borderColor,
-                        backgroundColor: isDarkMode ? '#13141C' : '#F9FAFB',
-                      }}
+                      style={[
+                        styles.replaceOptionItem,
+                        { borderBottomColor: theme.borderColor, backgroundColor: 'transparent', paddingHorizontal: 4 },
+                      ]}
                     >
                       <View style={{
                         width: 20,
@@ -5056,87 +5002,28 @@ export default function SinglePageLandingScreen() {
                         backgroundColor: isSelected ? '#10B981' : 'transparent',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        marginRight: 12,
+                        marginRight: 10,
                       }}>
                         {isSelected && <Check size={11} color="#FFFFFF" strokeWidth={3.5} />}
                       </View>
                       
-                      {/* Equipment thumbnail */}
-                      <View
-                        style={{
-                          width: 38,
-                          height: 38,
-                          borderRadius: 12,
-                          backgroundColor: `${muscleColor}15`,
-                          borderWidth: 1,
-                          borderColor: `${muscleColor}30`,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          marginRight: 12,
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {equipImg ? (
-                          <Image
-                            source={equipImg}
-                            style={{ width: 24, height: 24 }}
-                            contentFit="contain"
-                          />
-                        ) : (
-                          <Dumbbell size={18} color={muscleColor} strokeWidth={2} />
-                        )}
-                      </View>
+                      {/* Colored Vertical Rounded Rectangle Accent */}
+                      <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor }]} />
 
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ color: isSelected ? theme.textPrimary : theme.textSecondary, fontSize: 15, fontWeight: '700', letterSpacing: -0.2, marginBottom: 4 }} numberOfLines={1}>
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={[styles.replaceOptionItemName, { color: isSelected ? theme.textPrimary : theme.textSecondary }]} numberOfLines={1}>
                           {details.name}
                         </Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                          <View
-                            style={{
-                              paddingHorizontal: 6,
-                              paddingVertical: 2,
-                              borderRadius: 5,
-                              backgroundColor: `${muscleColor}18`,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: 9,
-                                fontWeight: '800',
-                                color: muscleColor,
-                                letterSpacing: 0.4,
-                              }}
-                            >
-                              {details.muscleGroup.toUpperCase()}
-                            </Text>
-                          </View>
-                          {details.instrument && (
-                            <View
-                              style={{
-                                paddingHorizontal: 5,
-                                paddingVertical: 2,
-                                borderRadius: 5,
-                                backgroundColor: isDarkMode ? '#1E1E28' : '#E5E7EB',
-                              }}
-                            >
-                              <Text
-                                style={{
-                                  fontSize: 8.5,
-                                  fontWeight: '700',
-                                  color: theme.textSecondary,
-                                  letterSpacing: 0.3,
-                                }}
-                              >
-                                {details.instrument.toUpperCase()}
-                              </Text>
-                            </View>
-                          )}
-                          <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: '600' }}>
-                            {logEx.sets.length} set{logEx.sets.length > 1 ? 's' : ''}
-                          </Text>
-                        </View>
                       </View>
+
+                      <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${muscleColor}18` }]}>
+                        <Text style={[styles.activeSessionMuscleBadgeText, { color: muscleColor }]}>
+                          {details.instrument ? details.instrument.toUpperCase() : details.muscleGroup.toUpperCase()}
+                        </Text>
+                      </View>
+                      <Text style={[styles.activeSessionItemSets, { color: theme.textSecondary, marginLeft: 8 }]}>
+                        {logEx.sets.length} set{logEx.sets.length > 1 ? 's' : ''}
+                      </Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -5183,13 +5070,17 @@ export default function SinglePageLandingScreen() {
                   disabled={templateLogSelectedIds.size === 0}
                   style={{
                     flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
                     backgroundColor: templateLogSelectedIds.size > 0 ? '#10B981' : theme.borderColor,
                     paddingVertical: 16,
-                    alignItems: 'center',
                     borderRadius: 14,
                   }}
                 >
-                  <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>
+                  <Play size={14} color={templateLogSelectedIds.size > 0 ? '#000000' : theme.textSecondary} fill={templateLogSelectedIds.size > 0 ? '#000000' : theme.textSecondary} />
+                  <Text style={{ color: templateLogSelectedIds.size > 0 ? '#000000' : theme.textSecondary, fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>
                     START ({templateLogSelectedIds.size})
                   </Text>
                 </TouchableOpacity>
