@@ -22,7 +22,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = () => {
   const validation = usePostWorkoutValidation(history, exercises);
 
   // 2. Readiness and next milestone data
-  const { muscleReadiness, readinessSummary, milestones } = useProgressCommandCenter(history, exercises);
+  const { muscleReadiness, readinessSummary, milestones, upcomingRoutine } = useProgressCommandCenter(history, exercises);
 
   return (
     <View style={styles.container}>
@@ -35,8 +35,8 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = () => {
         summary={readinessSummary}
       />
 
-      {/* 3. Next Strength Milestone Targets with Progress Bars */}
-      <MilestoneCountdownCard milestones={milestones} />
+      {/* 3. Next Habit-Learned Routine Targets with 12-Rep Double Progression */}
+      <MilestoneCountdownCard routine={upcomingRoutine} milestones={milestones} />
 
       {/* 4. Unified Personal Records Board */}
       <PersonalRecordsView prs={prs} />

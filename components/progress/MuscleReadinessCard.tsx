@@ -40,19 +40,12 @@ export const MuscleReadinessCard: React.FC<MuscleReadinessCardProps> = ({
       {/* Muscle List with Colored Progress Bars & Percentage Badges */}
       <View style={styles.list}>
         {readinessList.map((item) => {
-          let badgeBg = '#10B98115';
-          let badgeText = '#059669';
-          let statusLabel = '100% READY';
-
-          if (item.status === 'Fatigued') {
-            badgeBg = '#EF444415';
-            badgeText = '#DC2626';
-            statusLabel = `${item.percentage}% FATIGUED`;
-          } else if (item.status === 'Recovering') {
-            badgeBg = '#F59E0B15';
-            badgeText = '#D97706';
-            statusLabel = `${item.percentage}% RECOVERING`;
-          }
+          const badgeBg = item.badgeBg || '#10B98115';
+          const badgeText = item.badgeText || '#059669';
+          const statusText =
+            item.percentage >= 100
+              ? '100% RELOADED'
+              : `${item.percentage}% ${(item.statusLabel || item.status).toUpperCase()}`;
 
           return (
             <View key={item.muscle} style={styles.row}>
@@ -66,7 +59,7 @@ export const MuscleReadinessCard: React.FC<MuscleReadinessCardProps> = ({
                 {/* Colored Percentage Status Badge */}
                 <View style={[styles.statusBadge, { backgroundColor: badgeBg }]}>
                   <Text style={[styles.statusBadgeText, { color: badgeText }]}>
-                    {statusLabel}
+                    {statusText}
                   </Text>
                 </View>
               </View>
