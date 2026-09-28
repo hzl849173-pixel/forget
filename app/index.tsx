@@ -2949,7 +2949,7 @@ export default function SinglePageLandingScreen() {
                           )}
 
                           {/* Header */}
-                          <View style={styles.activeSessionHeader}>
+                          <View style={[styles.activeSessionHeader, { alignItems: 'flex-start' }]}>
                             <View style={{ flex: 1, paddingRight: 8 }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                                 <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor, height: 14, width: 3, borderRadius: 2 }]} />
@@ -2957,9 +2957,25 @@ export default function SinglePageLandingScreen() {
                                   {targetEx.name}
                                 </Text>
                               </View>
-                              <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary }]}>
-                                {targetEx.muscleGroup.toUpperCase()} • {activeSets.length} set{activeSets.length !== 1 ? 's' : ''}
-                              </Text>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
+                                <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary, marginTop: 0 }]}>
+                                  {targetEx.muscleGroup.toUpperCase()} • {activeSets.length} set{activeSets.length !== 1 ? 's' : ''}
+                                </Text>
+                                {targetEx.target ? (
+                                  <View style={{
+                                    backgroundColor: `${muscleColor}14`,
+                                    paddingHorizontal: 6,
+                                    paddingVertical: 1.5,
+                                    borderRadius: 4,
+                                    borderWidth: 0.5,
+                                    borderColor: `${muscleColor}28`,
+                                  }}>
+                                    <Text style={{ fontSize: 10, fontWeight: '600', color: muscleColor, letterSpacing: 0.1 }}>
+                                      {targetEx.target}
+                                    </Text>
+                                  </View>
+                                ) : null}
+                              </View>
                             </View>
                             <TouchableOpacity
                               onPress={() => {
@@ -4434,26 +4450,42 @@ export default function SinglePageLandingScreen() {
 
                     return (
                       <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, zIndex: 50 }]}>
-                      <ScrollView
-                        style={{ flex: 1 }}
-                        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 24 }}
-                        keyboardShouldPersistTaps="handled"
-                        showsVerticalScrollIndicator={false}
-                      >
-                        <Card style={[styles.activeSessionCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                          {/* Header */}
-                          <View style={styles.activeSessionHeader}>
-                            <View style={{ flex: 1, paddingRight: 8 }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                                <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor, height: 14, width: 3, borderRadius: 2 }]} />
-                                <Text style={[styles.activeSessionTitle, { color: theme.textPrimary, flexShrink: 1 }]} numberOfLines={1}>
-                                  {targetEx.name}
-                                </Text>
+                        <ScrollView
+                          style={{ flex: 1 }}
+                          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 36, paddingBottom: 32 }}
+                          keyboardShouldPersistTaps="handled"
+                          showsVerticalScrollIndicator={false}
+                        >
+                          <Card style={[styles.activeSessionCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                            {/* Header */}
+                            <View style={[styles.activeSessionHeader, { alignItems: 'flex-start' }]}>
+                              <View style={{ flex: 1, paddingRight: 8 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                                  <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor, height: 14, width: 3, borderRadius: 2 }]} />
+                                  <Text style={[styles.activeSessionTitle, { color: theme.textPrimary, flexShrink: 1 }]} numberOfLines={1}>
+                                    {targetEx.name}
+                                  </Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
+                                  <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary, marginTop: 0 }]}>
+                                    {targetEx.muscleGroup.toUpperCase()} • {activeSets.length} set{activeSets.length !== 1 ? 's' : ''}
+                                  </Text>
+                                  {targetEx.target ? (
+                                    <View style={{
+                                      backgroundColor: `${muscleColor}14`,
+                                      paddingHorizontal: 6,
+                                      paddingVertical: 1.5,
+                                      borderRadius: 4,
+                                      borderWidth: 0.5,
+                                      borderColor: `${muscleColor}28`,
+                                    }}>
+                                      <Text style={{ fontSize: 10, fontWeight: '600', color: muscleColor, letterSpacing: 0.1 }}>
+                                        {targetEx.target}
+                                      </Text>
+                                    </View>
+                                  ) : null}
+                                </View>
                               </View>
-                              <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary }]}>
-                                {targetEx.muscleGroup.toUpperCase()} • {activeSets.length} set{activeSets.length !== 1 ? 's' : ''}
-                              </Text>
-                            </View>
                             <TouchableOpacity
                               onPress={() => {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
