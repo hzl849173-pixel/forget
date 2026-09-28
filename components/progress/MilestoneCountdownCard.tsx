@@ -1,18 +1,88 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Target, Sparkles, TrendingUp, Zap } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Target, Sparkles, TrendingUp, Zap, ChevronRight } from 'lucide-react-native';
 import { MilestoneTarget, UpcomingSessionRoutine } from './useProgressCommandCenter';
 
 interface MilestoneCountdownCardProps {
   routine?: UpcomingSessionRoutine | null;
   milestones?: MilestoneTarget[];
+  onStartWorkout?: () => void;
 }
 
 export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
   routine,
   milestones = [],
+  onStartWorkout,
 }) => {
-  // If we have an intelligent habit-learned routine with targets, render it!
+  // Day 0: Brand new user with 0 workouts logged
+  // Render high-converting action trigger card (No fake exercises!)
+  if (routine?.isDayZero) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <View style={styles.iconCircle}>
+            <Target size={16} color="#3B82F6" strokeWidth={2.5} />
+          </View>
+          <View style={styles.headerTextWrap}>
+            <View style={styles.titleRow}>
+              <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+                PROGRESSIVE OVERLOAD RADAR
+              </Text>
+              <View style={[styles.habitBadge, { backgroundColor: '#3B82F612' }]}>
+                <Zap size={10} color="#2563EB" strokeWidth={2.5} />
+                <Text style={[styles.habitBadgeText, { color: '#2563EB' }]}>AUTOMATIC</Text>
+              </View>
+            </View>
+            <Text style={styles.headerSubtitle} numberOfLines={1} ellipsizeMode="tail">
+              Calibrates automatically after your first workout
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.dayZeroBody}>
+          <Text style={styles.dayZeroDesc}>
+            Log today's workout in under 30 seconds. The moment you finish, your routine habits, upcoming weight targets, and live recovery battery will automatically calibrate to your exact split.
+          </Text>
+
+          <View style={styles.featuresList}>
+            <View style={styles.featureItem}>
+              <View style={styles.featureDot} />
+              <Text style={styles.featureText} numberOfLines={1} ellipsizeMode="tail">
+                Auto Day-of-the-Week Habit Tracking
+              </Text>
+            </View>
+            <View style={styles.featureItem}>
+              <View style={styles.featureDot} />
+              <Text style={styles.featureText} numberOfLines={1} ellipsizeMode="tail">
+                12-Rep Double Progression Recommendations
+              </Text>
+            </View>
+            <View style={styles.featureItem}>
+              <View style={styles.featureDot} />
+              <Text style={styles.featureText} numberOfLines={1} ellipsizeMode="tail">
+                Live Muscle Recovery Battery (0% – 100%)
+              </Text>
+            </View>
+          </View>
+
+          {onStartWorkout && (
+            <TouchableOpacity
+              style={styles.dayZeroBtn}
+              onPress={onStartWorkout}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.dayZeroBtnText}>+ LOG TODAY'S WORKOUT</Text>
+              <ChevronRight size={14} color="#FFFFFF" strokeWidth={2.5} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  }
+
+  // Week 1+ with intelligent habit-learned routine targets
   if (routine && routine.hasRoutines && routine.targets.length > 0) {
     return (
       <View style={styles.card}>
@@ -21,15 +91,12 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
           <View style={styles.iconCircle}>
             <Target size={16} color="#3B82F6" strokeWidth={2.5} />
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={styles.headerTextWrap}>
             <View style={styles.titleRow}>
-              <Text style={styles.headerTitle}>{routine.dayName}</Text>
-              {routine.isDayZero ? (
-                <View style={[styles.habitBadge, { backgroundColor: '#3B82F612' }]}>
-                  <Zap size={10} color="#2563EB" strokeWidth={2.5} />
-                  <Text style={[styles.habitBadgeText, { color: '#2563EB' }]}>STARTER MISSION</Text>
-                </View>
-              ) : routine.isWeekOne ? (
+              <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+                {routine.dayName}
+              </Text>
+              {routine.isWeekOne ? (
                 <View style={[styles.habitBadge, { backgroundColor: '#8B5CF615' }]}>
                   <Sparkles size={10} color="#7C3AED" strokeWidth={2.5} />
                   <Text style={[styles.habitBadgeText, { color: '#7C3AED' }]}>WEEK 1 TARGETS</Text>
@@ -41,7 +108,7 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
                 </View>
               )}
             </View>
-            <Text style={styles.headerSubtitle} numberOfLines={1}>
+            <Text style={styles.headerSubtitle} numberOfLines={1} ellipsizeMode="tail">
               {routine.daySubtitle}
             </Text>
           </View>
@@ -59,7 +126,7 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
                   <View style={styles.indexCircle}>
                     <Text style={styles.indexText}>{index + 1}</Text>
                   </View>
-                  <Text style={styles.name} numberOfLines={1}>
+                  <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
                     {item.exerciseName}
                   </Text>
                 </View>
@@ -81,7 +148,7 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
 
               {/* Data comparison row */}
               <View style={styles.metricRow}>
-                <Text style={styles.prevPerf}>
+                <Text style={styles.prevPerf} numberOfLines={1} ellipsizeMode="tail">
                   Last:{' '}
                   <Text style={styles.prevPerfVal}>
                     {item.lastWeight > 0 ? `${item.lastWeight} kg × ` : ''}
@@ -91,7 +158,7 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
 
                 <View style={styles.targetCol}>
                   <Text style={styles.targetLabel}>TARGET</Text>
-                  <Text style={styles.targetGoalVal}>
+                  <Text style={styles.targetGoalVal} numberOfLines={1} ellipsizeMode="tail">
                     {item.targetWeight > 0 ? `${item.targetWeight} kg` : 'Reps'}
                     <Text style={styles.targetGoalSub}> × {item.targetReps}</Text>
                   </Text>
@@ -101,22 +168,12 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
               {/* Guidance Micro Note */}
               <View style={styles.guidanceRow}>
                 <TrendingUp size={11} color="#6B7280" strokeWidth={2} />
-                <Text style={styles.guidanceText} numberOfLines={1}>
+                <Text style={styles.guidanceText} numberOfLines={1} ellipsizeMode="tail">
                   {item.guidanceText}
                 </Text>
               </View>
             </View>
           ))}
-
-          {/* Day 0 Incentive notice */}
-          {routine.isDayZero && (
-            <View style={styles.starterNoticeBox}>
-              <Zap size={13} color="#2563EB" strokeWidth={2.5} />
-              <Text style={styles.starterNoticeText}>
-                Log your first session in under 30 seconds to unlock automatic progressive overload targets & live recovery battery.
-              </Text>
-            </View>
-          )}
         </View>
       </View>
     );
@@ -131,9 +188,13 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
         <View style={styles.iconCircle}>
           <Target size={16} color="#3B82F6" strokeWidth={2.5} />
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>NEXT LIFT TARGETS</Text>
-          <Text style={styles.headerSubtitle}>Progressive overload milestones</Text>
+        <View style={styles.headerTextWrap}>
+          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+            NEXT LIFT TARGETS
+          </Text>
+          <Text style={styles.headerSubtitle} numberOfLines={1} ellipsizeMode="tail">
+            Progressive overload milestones
+          </Text>
         </View>
       </View>
 
@@ -147,7 +208,7 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
                 <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
                   {item.exerciseName}
                 </Text>
-                <Text style={styles.meta}>
+                <Text style={styles.meta} numberOfLines={1} ellipsizeMode="tail">
                   Best: <Text style={styles.bold}>{item.currentMaxWeight} kg</Text>
                 </Text>
               </View>
@@ -183,7 +244,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 20,
+    padding: 18,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     shadowColor: '#000000',
@@ -192,6 +253,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     marginBottom: 16,
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
@@ -205,18 +267,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#3B82F615',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
+  },
+  headerTextWrap: {
+    flex: 1,
+    flexShrink: 1,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 6,
   },
   headerTitle: {
     fontSize: 12,
     fontWeight: '800',
     color: '#111827',
     letterSpacing: 0.6,
+    flex: 1,
+    flexShrink: 1,
   },
   habitBadge: {
     flexDirection: 'row',
@@ -226,6 +295,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 99,
+    flexShrink: 0,
   },
   habitBadgeText: {
     fontSize: 8.5,
@@ -252,19 +322,20 @@ const styles = StyleSheet.create({
     padding: 11,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    gap: 7,
+    gap: 6,
   },
   itemHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 6,
   },
   exerciseNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     flex: 1,
+    flexShrink: 1,
   },
   indexCircle: {
     width: 17,
@@ -273,6 +344,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   indexText: {
     fontSize: 9.5,
@@ -284,15 +356,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#111827',
     flex: 1,
+    flexShrink: 1,
   },
   overloadBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 5,
     borderWidth: 1,
+    flexShrink: 0,
   },
   overloadBadgeText: {
-    fontSize: 9,
+    fontSize: 8.5,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
@@ -301,10 +375,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 1,
+    gap: 8,
   },
   prevPerf: {
     fontSize: 11,
     color: '#6B7280',
+    flex: 1,
+    flexShrink: 1,
   },
   prevPerfVal: {
     fontWeight: '700',
@@ -312,6 +389,8 @@ const styles = StyleSheet.create({
   },
   targetCol: {
     alignItems: 'flex-end',
+    flexShrink: 0,
+    maxWidth: '52%',
   },
   targetLabel: {
     fontSize: 8,
@@ -320,7 +399,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   targetGoalVal: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '900',
     color: '#111827',
   },
@@ -334,12 +413,68 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     paddingTop: 2,
+    width: '100%',
   },
   guidanceText: {
     fontSize: 10,
     fontWeight: '600',
     color: '#6B7280',
     flex: 1,
+    flexShrink: 1,
+  },
+
+  // Day 0 Action Card styles
+  dayZeroBody: {
+    gap: 10,
+  },
+  dayZeroDesc: {
+    fontSize: 12,
+    color: '#4B5563',
+    lineHeight: 17,
+  },
+  featuresList: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
+    padding: 10,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  featureDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#3B82F6',
+    flexShrink: 0,
+  },
+  featureText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#374151',
+    flex: 1,
+    flexShrink: 1,
+  },
+  dayZeroBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#111827',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 4,
+  },
+  dayZeroBtnText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
 
   // Fallback styles
@@ -359,6 +494,7 @@ const styles = StyleSheet.create({
   },
   infoCol: {
     flex: 1,
+    flexShrink: 1,
     marginRight: 6,
   },
   meta: {
@@ -377,6 +513,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: 'center',
     minWidth: 54,
+    flexShrink: 0,
   },
   targetBadgeLabel: {
     fontSize: 8,
@@ -409,23 +546,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: '#6B7280',
-  },
-  starterNoticeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#3B82F60C',
-    borderRadius: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#3B82F625',
-    marginTop: 4,
-  },
-  starterNoticeText: {
-    fontSize: 11,
-    color: '#1E40AF',
-    fontWeight: '600',
-    flex: 1,
-    lineHeight: 15,
+    flexShrink: 0,
   },
 });

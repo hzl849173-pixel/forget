@@ -48,8 +48,8 @@ export const PostWorkoutValidationCard: React.FC<PostWorkoutValidationCardProps>
       </View>
 
       {/* Main Headline & Session Name */}
-      <Text style={styles.headlineText}>{headline}</Text>
-      <Text style={styles.sessionNameSub}>{latestSessionName}</Text>
+      <Text style={styles.headlineText} numberOfLines={2} ellipsizeMode="tail">{headline}</Text>
+      <Text style={styles.sessionNameSub} numberOfLines={1} ellipsizeMode="tail">{latestSessionName}</Text>
 
       {/* Standout Lift Hero Highlight */}
       {standoutLift && (
@@ -62,21 +62,21 @@ export const PostWorkoutValidationCard: React.FC<PostWorkoutValidationCardProps>
                 <TrendingUp size={15} color="#10B981" strokeWidth={2.5} />
               )}
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.standoutLabel}>
+            <View style={{ flex: 1, flexShrink: 1 }}>
+              <Text style={styles.standoutLabel} numberOfLines={1}>
                 {standoutLift.isNewPr ? 'PR HIGHLIGHT' : 'STANDOUT LIFT'}
               </Text>
-              <Text style={styles.standoutName} numberOfLines={1}>
+              <Text style={styles.standoutName} numberOfLines={1} ellipsizeMode="tail">
                 {standoutLift.exerciseName}
               </Text>
             </View>
           </View>
 
           <View style={styles.standoutRight}>
-            <Text style={styles.standoutWeight}>
+            <Text style={styles.standoutWeight} numberOfLines={1}>
               {standoutLift.weight} kg <Text style={{ fontSize: 11, fontWeight: '600', color: '#6B7280' }}>× {standoutLift.reps}</Text>
             </Text>
-            <Text style={[styles.standoutDiff, { color: standoutLift.isNewPr ? '#F59E0B' : '#10B981' }]}>
+            <Text style={[styles.standoutDiff, { color: standoutLift.isNewPr ? '#F59E0B' : '#10B981' }]} numberOfLines={1} ellipsizeMode="tail">
               {standoutLift.overloadText}
             </Text>
           </View>
@@ -87,12 +87,12 @@ export const PostWorkoutValidationCard: React.FC<PostWorkoutValidationCardProps>
       <View style={styles.scoreRow}>
         <View style={styles.scoreCol}>
           <Text style={styles.scoreNum}>{overloadCount}</Text>
-          <Text style={styles.scoreLbl}>PROGRESSIONS</Text>
+          <Text style={styles.scoreLbl} numberOfLines={1} ellipsizeMode="tail">PROGRESSIONS</Text>
         </View>
         <View style={styles.scoreDivider} />
         <View style={styles.scoreCol}>
           <Text style={styles.scoreNum}>{totalSetsInSession}</Text>
-          <Text style={styles.scoreLbl}>HARD SETS</Text>
+          <Text style={styles.scoreLbl} numberOfLines={1} ellipsizeMode="tail">HARD SETS</Text>
         </View>
         <View style={styles.scoreDivider} />
         <View style={styles.scoreCol}>
@@ -101,7 +101,7 @@ export const PostWorkoutValidationCard: React.FC<PostWorkoutValidationCardProps>
               ? `${(totalVolumeInSession / 1000).toFixed(1)}k`
               : totalVolumeInSession}
           </Text>
-          <Text style={styles.scoreLbl}>KG LIFTED</Text>
+          <Text style={styles.scoreLbl} numberOfLines={1} ellipsizeMode="tail">KG LIFTED</Text>
         </View>
       </View>
     </View>

@@ -52,13 +52,17 @@ export const MuscleReadinessCard: React.FC<MuscleReadinessCardProps> = ({
               <View style={styles.rowTop}>
                 <View style={styles.nameCol}>
                   <View style={[styles.dot, { backgroundColor: item.color }]} />
-                  <Text style={styles.muscleName}>{item.muscle}</Text>
-                  <Text style={styles.timeText}>· {item.lastTrainedLabel}</Text>
+                  <Text style={styles.muscleName} numberOfLines={1} ellipsizeMode="tail">
+                    {item.muscle}
+                  </Text>
+                  <Text style={styles.timeText} numberOfLines={1} ellipsizeMode="tail">
+                    · {item.lastTrainedLabel}
+                  </Text>
                 </View>
 
                 {/* Colored Percentage Status Badge */}
                 <View style={[styles.statusBadge, { backgroundColor: badgeBg }]}>
-                  <Text style={[styles.statusBadgeText, { color: badgeText }]}>
+                  <Text style={[styles.statusBadgeText, { color: badgeText }]} numberOfLines={1}>
                     {statusText}
                   </Text>
                 </View>
@@ -88,7 +92,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 20,
+    padding: 18,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     shadowColor: '#000000',
@@ -97,6 +101,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     marginBottom: 16,
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
@@ -109,6 +114,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   headerTitle: {
     fontSize: 12,
@@ -137,37 +143,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 6,
   },
   nameCol: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     flex: 1,
-    marginRight: 8,
+    flexShrink: 1,
+    marginRight: 6,
   },
   dot: {
     width: 7,
     height: 7,
     borderRadius: 4,
+    flexShrink: 0,
   },
   muscleName: {
     fontSize: 13,
     fontWeight: '700',
     color: '#111827',
+    flexShrink: 1,
   },
   timeText: {
     fontSize: 10.5,
     color: '#9CA3AF',
     fontWeight: '500',
+    flexShrink: 0,
   },
   statusBadge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 6,
     alignItems: 'center',
+    flexShrink: 0,
   },
   statusBadgeText: {
-    fontSize: 9.5,
+    fontSize: 8.5,
     fontWeight: '800',
     letterSpacing: 0.4,
   },

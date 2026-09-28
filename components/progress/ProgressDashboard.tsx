@@ -12,9 +12,12 @@ import { PersonalRecordsView } from './PersonalRecordsView';
 interface ProgressDashboardProps {
   initialModalTab?: 'overview' | 'analytics' | 'milestones' | null;
   onClearInitialTab?: () => void;
+  onStartWorkout?: () => void;
 }
 
-export const ProgressDashboard: React.FC<ProgressDashboardProps> = () => {
+export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
+  onStartWorkout,
+}) => {
   const { prs, exercises } = useWorkoutAnalytics();
   const { history } = useWorkout();
 
@@ -36,7 +39,11 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = () => {
       />
 
       {/* 3. Next Habit-Learned Routine Targets with 12-Rep Double Progression */}
-      <MilestoneCountdownCard routine={upcomingRoutine} milestones={milestones} />
+      <MilestoneCountdownCard
+        routine={upcomingRoutine}
+        milestones={milestones}
+        onStartWorkout={onStartWorkout}
+      />
 
       {/* 4. Unified Personal Records Board */}
       <PersonalRecordsView prs={prs} />

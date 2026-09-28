@@ -191,6 +191,7 @@ const styles = StyleSheet.create({
   },
   leftCol: {
     flex: 1,
+    flexShrink: 1,
     marginRight: 10,
   },
   titleRow: {
@@ -202,12 +203,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#111827',
+    flexShrink: 1,
   },
   newBadge: {
     backgroundColor: '#10B98115',
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
+    flexShrink: 0,
   },
   newBadgeText: {
     fontSize: 8.5,
@@ -223,6 +226,7 @@ const styles = StyleSheet.create({
   },
   rightCol: {
     alignItems: 'flex-end',
+    flexShrink: 0,
   },
   weightText: {
     fontSize: 13,

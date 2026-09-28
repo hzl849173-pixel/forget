@@ -309,42 +309,17 @@ export const useProgressCommandCenter = (
   // 2b. Intelligent Habit-Learned Upcoming Routine Targets (Double Progression with 12 Reps)
   const upcomingRoutine = useMemo<UpcomingSessionRoutine>(() => {
     if (!history || history.length === 0) {
-      // DAY 0: Brand new user with 0 workouts logged
-      // Provide starter calibration targets with 3 fundamental benchmark compound lifts
-      const starterBenchmarks = [
-        { name: 'Barbell Bench Press', muscle: 'Chest' },
-        { name: 'Lat Pulldown', muscle: 'Back' },
-        { name: 'Barbell Squat', muscle: 'Legs' },
-      ];
-
-      const dayZeroTargets: RoutineExerciseTarget[] = starterBenchmarks.map((b, i) => {
-        const match = exercises.find(
-          (e) => e.name.toLowerCase().includes(b.name.toLowerCase()) || e.muscleGroup === b.muscle
-        );
-        return {
-          exerciseId: match ? match.id : `starter-${i}`,
-          exerciseName: match ? match.name : b.name,
-          muscleGroup: b.muscle,
-          lastWeight: 0,
-          lastReps: 0,
-          targetWeight: 0,
-          targetReps: '8–12 reps',
-          overloadType: 'reps',
-          badgeLabel: 'DAY 1 BASELINE',
-          badgeColor: '#3B82F6',
-          guidanceText: 'Aim for 8–12 controlled reps to establish starting baseline',
-        };
-      });
-
+      // Day 0: Brand new user with 0 workouts logged
+      // No fake prescribed exercises - prompts the user to log their real workout
       return {
         hasRoutines: true,
         isDayZero: true,
         isWeekOne: false,
-        dayName: 'DAY 1 CALIBRATION TARGETS',
-        daySubtitle: 'Establish starting baseline · 30-sec logging unlocks overload radar',
+        dayName: 'PROGRESSIVE OVERLOAD RADAR',
+        daySubtitle: 'Calibrates automatically after your first workout',
         isToday: true,
-        targets: dayZeroTargets,
-        splitName: 'Starter Calibration',
+        targets: [],
+        splitName: 'Your Routine',
       };
     }
 

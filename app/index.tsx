@@ -3961,6 +3961,10 @@ export default function SinglePageLandingScreen() {
             <ProgressDashboard
               initialModalTab={progressInitialTab}
               onClearInitialTab={() => setProgressInitialTab(null)}
+              onStartWorkout={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setActiveSegment('log');
+              }}
             />
           )}
           </Animated.View>
