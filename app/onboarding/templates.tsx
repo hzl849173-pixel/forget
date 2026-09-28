@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, ScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,6 +22,17 @@ const categoryColors: Record<string, string> = {
 
 export default function TemplatesScreen() {
     const router = useRouter();
+    const [canScrollMore, setCanScrollMore] = useState(true);
+
+    const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+        const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 30;
+        if (isCloseToBottom && canScrollMore) {
+            setCanScrollMore(false);
+        } else if (!isCloseToBottom && !canScrollMore) {
+            setCanScrollMore(true);
+        }
+    };
 
     const getExerciseDetails = (id: string) => {
         return DEFAULT_EXERCISES.find((e) => e.id === id);
@@ -81,14 +92,16 @@ export default function TemplatesScreen() {
                     <Text style={styles.kicker}>QUICK START</Text>
                     <Text style={styles.title}>Pick a starter template</Text>
                     <Text style={styles.subtitle}>
-                        Select a template to start an active workout session immediately, or skip to back up your profile.
+                        Choose from 5 starter routines below, or skip to start with a blank journal.
                     </Text>
                 </View>
 
                 <ScrollView 
                     style={styles.scroll}
                     contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
+                    showsVerticalScrollIndicator={true}
+                    onScroll={handleScroll}
+                    scrollEventThrottle={16}
                 >
                     {DEFAULT_TEMPLATES.map((tmpl) => {
                         // Gather unique muscles involved in this template
@@ -141,6 +154,12 @@ export default function TemplatesScreen() {
                     })}
                 </ScrollView>
 
+                {canScrollMore && (
+                    <View style={styles.moreHintRow} pointerEvents="none">
+                        <Text style={styles.moreHintText}>Scroll down for more ↓</Text>
+                    </View>
+                )}
+
                 <View style={styles.actions}>
                     <TouchableOpacity
                         style={styles.skipBtn}
@@ -153,6 +172,7 @@ export default function TemplatesScreen() {
 
                 <View style={styles.footer}>
                     <View style={styles.progressDots}>
+                        <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={[styles.dot, styles.activeDot]} />
@@ -168,22 +188,23 @@ const styles = StyleSheet.create({
     screen: { flex: 1, backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingTop: 10 },
     backBtn: { paddingVertical: 6 },
     backText: { color: '#111827', fontWeight: '700' },
-    header: { marginTop: 20 },
+    header: { marginTop: 14 },
     kicker: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2, color: '#6B7280' },
-    title: { fontSize: 28, fontWeight: '900', letterSpacing: -0.6, marginTop: 10, color: '#111827' },
-    subtitle: { marginTop: 8, color: '#6B7280', fontWeight: '600', lineHeight: 18, fontSize: 13 },
-    scroll: { flex: 1, marginTop: 20 },
-    scrollContent: { gap: 12, paddingBottom: 16 },
+    title: { fontSize: 28, fontWeight: '900', letterSpacing: -0.6, marginTop: 8, color: '#111827' },
+    subtitle: { marginTop: 6, color: '#6B7280', fontWeight: '600', lineHeight: 18, fontSize: 13 },
+    scroll: { flex: 1, marginTop: 14 },
+    scrollContent: { gap: 10, paddingBottom: 16 },
     templateCard: {
-        borderRadius: 18,
+        borderRadius: 16,
         borderWidth: 1,
         borderColor: '#E5E7EB',
         backgroundColor: '#F9FAFB',
-        padding: 16,
-        gap: 8,
+        paddingVertical: 13,
+        paddingHorizontal: 15,
+        gap: 6,
     },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    cardTitle: { fontSize: 16, fontWeight: '900', color: '#111827' },
+    cardTitle: { fontSize: 15, fontWeight: '900', color: '#111827' },
     badge: {
         backgroundColor: '#ECFDF5',
         borderColor: '#A7F3D0',
@@ -194,17 +215,29 @@ const styles = StyleSheet.create({
     },
     badgeText: { fontSize: 11, fontWeight: '800', color: '#047857' },
     exercisesPreview: { fontSize: 12, fontWeight: '600', color: '#6B7280', lineHeight: 16 },
-    muscleRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+    muscleRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2 },
     muscleTag: {
         backgroundColor: '#F3F4F6',
         borderRadius: 6,
         paddingHorizontal: 8,
-        paddingVertical: 3,
+        paddingVertical: 2,
     },
     muscleTagText: { fontSize: 10, fontWeight: '700', color: '#4B5563' },
-    actions: { paddingVertical: 12 },
+    moreHintRow: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingTop: 6,
+        paddingBottom: 2,
+    },
+    moreHintText: {
+        fontSize: 11,
+        fontWeight: '700',
+        letterSpacing: 0.3,
+        color: '#6B7280',
+    },
+    actions: { paddingVertical: 10 },
     skipBtn: {
-        height: 52,
+        height: 50,
         borderRadius: 16,
         borderWidth: 1,
         borderColor: '#E5E7EB',

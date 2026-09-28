@@ -21,18 +21,12 @@ export default function SignInScreen() {
     const [loading, setLoading] = useState(false);
     const { signIn: signInWithGoogle } = useGoogleSignIn();
 
-    const hasAttemptedRef = React.useRef(false);
-
     useEffect(() => {
         let mounted = true;
         (async () => {
             try {
                 await isOnboardingCompleted();
                 await isSignedInFlag();
-                if (mounted && !hasAttemptedRef.current) {
-                    hasAttemptedRef.current = true;
-                    await handleContinueWithGoogle();
-                }
             } catch (e) {
                 if (!mounted) return;
             }
@@ -85,8 +79,7 @@ export default function SignInScreen() {
                 }
             }
 
-            await setOnboardingCompleted();
-            router.replace('/');
+            router.replace('/onboarding/templates');
         } catch (e: any) {
             Alert.alert(
                 'Google Sign-In',
@@ -100,7 +93,7 @@ export default function SignInScreen() {
     return (
         <SafeAreaView style={styles.safe}>
             <View style={styles.screen}>
-                <TouchableOpacity onPress={() => router.replace('/onboarding/name')} activeOpacity={0.7} style={styles.backBtn}>
+                <TouchableOpacity onPress={() => router.replace('/onboarding/weight')} activeOpacity={0.7} style={styles.backBtn}>
                     <Text style={styles.backText}>{'< Back'}</Text>
                 </TouchableOpacity>
 
@@ -140,6 +133,7 @@ export default function SignInScreen() {
 
                 <View style={styles.footer}>
                     <View style={styles.progressDots}>
+                        <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={[styles.dot, styles.activeDot]} />
                         <View style={styles.dot} />

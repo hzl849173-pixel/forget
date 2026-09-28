@@ -39,10 +39,6 @@ import React, { useEffect, useState } from 'react';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-export const unstable_settings = {
-  anchor: 'index',
-};
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
@@ -60,7 +56,6 @@ export default function RootLayout() {
       } finally {
         if (mounted) {
           setDecided(true);
-          SplashScreen.hideAsync().catch(() => {});
         }
       }
     })();
@@ -72,23 +67,28 @@ export default function RootLayout() {
   useEffect(() => {
     if (!decided) return;
 
-    if (onboardingCompleted) {
-      router.replace('/');
-    } else {
+    SplashScreen.hideAsync().catch(() => {});
+
+    if (!onboardingCompleted) {
       router.replace('/onboarding/brand');
     }
   }, [decided, onboardingCompleted, router]);
+
+  if (!decided) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <WorkoutProvider>
-          <Stack>
+          <Stack initialRouteName={onboardingCompleted ? 'index' : 'onboarding/brand'}>
             {/* onboarding routes */}
             <Stack.Screen name="onboarding/brand" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/name" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding/templates" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding/weight" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/signin" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding/templates" options={{ headerShown: false }} />
 
             {/* home */}
             <Stack.Screen name="index" options={{ headerShown: false }} />

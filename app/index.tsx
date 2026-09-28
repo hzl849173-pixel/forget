@@ -108,7 +108,7 @@ const Haptics = {
 };
 
 import { auth } from '@/lib/firebase/firebaseConfig';
-import { loadLocalProfile, OnboardingProfile, setSignedOut, setSignedIn, saveLocalProfile, FitnessGoal } from '@/lib/profile/profileStorage';
+import { loadLocalProfile, OnboardingProfile, setSignedOut, setSignedIn, saveLocalProfile, FitnessGoal, isOnboardingCompleted } from '@/lib/profile/profileStorage';
 import { getProfileFromFirestore, saveProfileToFirestore } from '@/lib/firestore/profileFirestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -588,6 +588,7 @@ export default function SinglePageLandingScreen() {
 
   const [activeSessionExercises, setActiveSessionExercises] = useState<LoggedExercise[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<number>(0);
+  const [sessionInitialLoaded, setSessionInitialLoaded] = useState(false);
   const [editSessionExerciseModalVisible, setEditSessionExerciseModalVisible] = useState(false);
   const [cameFromEditModal, setCameFromEditModal] = useState(false);
   const [cameFromActiveSessionPlus, setCameFromActiveSessionPlus] = useState(false);
@@ -652,22 +653,24 @@ export default function SinglePageLandingScreen() {
   const notificationIdRef = React.useRef<string | null>(null);
   const soundObjectRef = React.useRef<any>(null);
 
+  const ensureNotificationPermission = async () => {
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      if (existingStatus !== 'granted') {
+        await Notifications.requestPermissionsAsync();
+      }
+    } catch (err) {
+      console.warn('Expo Notifications permission request error:', err);
+    }
+
+    try {
+      await notifee.requestPermission();
+    } catch (e) {}
+  };
+
   React.useEffect(() => {
     async function configureNotifications() {
       try {
-        try {
-          const { status: existingStatus } = await Notifications.getPermissionsAsync();
-          if (existingStatus !== 'granted') {
-            await Notifications.requestPermissionsAsync();
-          }
-        } catch (err) {
-          console.warn('Expo Notifications permission request error:', err);
-        }
-
-        try {
-          await notifee.requestPermission();
-        } catch (e) {}
-
         if (Platform.OS === 'android') {
           try {
             await notifee.createChannel({
@@ -899,6 +902,7 @@ export default function SinglePageLandingScreen() {
   };
 
   const startRestTimer = async (seconds: number) => {
+    ensureNotificationPermission().catch(() => {});
     stopTimerSound();
     dismissOngoingNotification();
     await cancelRestTimerNotification();
@@ -1103,35 +1107,43 @@ export default function SinglePageLandingScreen() {
   }, []);
 
   React.useEffect(() => {
-    AsyncStorage.getItem('@active_session_exercises').then((val) => {
-      if (val !== null) {
-        setActiveSessionExercises(JSON.parse(val));
-      }
-    });
+    let mounted = true;
+    (async () => {
+      try {
+        const [activeVal, startVal, templateStartedVal, templateIdVal, shoulderVal] = await Promise.all([
+          AsyncStorage.getItem('@active_session_exercises'),
+          AsyncStorage.getItem('@session_start_time'),
+          AsyncStorage.getItem('@session_started_from_template'),
+          AsyncStorage.getItem('@session_template_id'),
+          AsyncStorage.getItem('@custom_shoulder_ids'),
+        ]);
 
-    AsyncStorage.getItem('@session_start_time').then((val) => {
-      if (val !== null) {
-        setSessionStartTime(Number(val));
-      }
-    });
+        if (!mounted) return;
 
-    AsyncStorage.getItem('@session_started_from_template').then((val) => {
-      if (val === 'true') {
-        setSessionStartedFromTemplate(true);
+        if (activeVal !== null) {
+          setActiveSessionExercises(JSON.parse(activeVal));
+        }
+        if (startVal !== null) {
+          setSessionStartTime(Number(startVal));
+        }
+        if (templateStartedVal === 'true') {
+          setSessionStartedFromTemplate(true);
+        }
+        if (templateIdVal !== null) {
+          setSessionTemplateId(templateIdVal);
+        }
+        if (shoulderVal !== null) {
+          setCustomShoulderIds(new Set(JSON.parse(shoulderVal)));
+        }
+      } finally {
+        if (mounted) {
+          setSessionInitialLoaded(true);
+        }
       }
-    });
-
-    AsyncStorage.getItem('@session_template_id').then((val) => {
-      if (val !== null) {
-        setSessionTemplateId(val);
-      }
-    });
-
-    AsyncStorage.getItem('@custom_shoulder_ids').then((val) => {
-      if (val !== null) {
-        setCustomShoulderIds(new Set(JSON.parse(val)));
-      }
-    });
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   React.useEffect(() => {
@@ -2604,6 +2616,12 @@ export default function SinglePageLandingScreen() {
     return groups;
   }, []);
   groupedHistory.sort((a, b) => GROUP_ORDER.indexOf(a.title) - GROUP_ORDER.indexOf(b.title));
+
+  if (!sessionInitialLoaded) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']} />
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
