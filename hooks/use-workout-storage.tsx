@@ -370,13 +370,14 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
           const updated = validExercises.map((e) => {
             const def = defaultMap.get(e.id);
             if (def && !e.isCustom) {
-              if (e.name !== def.name || e.instrument !== def.instrument || e.muscleGroup !== def.muscleGroup) {
+              if (e.name !== def.name || e.instrument !== def.instrument || e.muscleGroup !== def.muscleGroup || e.target !== def.target) {
                 changed = true;
                 return {
                   ...e,
                   name: def.name,
                   instrument: def.instrument,
                   muscleGroup: def.muscleGroup,
+                  target: def.target,
                 };
               }
             }

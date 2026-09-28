@@ -3987,266 +3987,8 @@ export default function SinglePageLandingScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={styles.modalKeyboardContainer}
               >
-                {editingModalExerciseId !== null ? (
-                  (() => {
-                    const targetEx = exercises.find((e) => e.id === editingModalExerciseId);
-                    if (!targetEx) return null;
-                    const muscleColor = categoryColors[targetEx.muscleGroup] || '#10B981';
-
-                    const prFromState = getExercisePR(targetEx.id);
-                    let pr = prFromState;
-                    if (!pr) {
-                      let max1RM = 0;
-                      let bestWeight = 0;
-                      let bestReps = 0;
-                      let bestDate = '';
-                      for (const session of history) {
-                        const logEx = session.exercises.find((e) => e.exerciseId === targetEx.id);
-                        if (logEx) {
-                          for (const set of logEx.sets) {
-                            if (set.weight > 0 && set.reps > 0) {
-                              const e1RM = set.weight * (1 + set.reps / 30);
-                              if (e1RM > max1RM) {
-                                max1RM = e1RM;
-                                bestWeight = set.weight;
-                                bestReps = set.reps;
-                                bestDate = session.date;
-                              }
-                            }
-                          }
-                        }
-                      }
-                      if (bestWeight > 0) {
-                        pr = { exerciseId: targetEx.id, weight: bestWeight, reps: bestReps, date: bestDate, estimatedOneRM: max1RM };
-                      }
-                    }
-                    const formattedDate = pr ? new Date(pr.date).toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    }) : '';
-
-                    return (
-                      <ScrollView
-                        style={{ flex: 1 }}
-                        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 24 }}
-                        keyboardShouldPersistTaps="handled"
-                        showsVerticalScrollIndicator={false}
-                      >
-                        <Card style={[styles.activeSessionCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-                          {/* Header */}
-                          <View style={styles.activeSessionHeader}>
-                            <View style={{ flex: 1, paddingRight: 8 }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                                <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor, height: 14, width: 3, borderRadius: 2 }]} />
-                                <Text style={[styles.activeSessionTitle, { color: theme.textPrimary, flexShrink: 1 }]} numberOfLines={1}>
-                                  {targetEx.name}
-                                </Text>
-                              </View>
-                              <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary }]}>
-                                {targetEx.muscleGroup.toUpperCase()} • {activeSets.length} set{activeSets.length !== 1 ? 's' : ''}
-                              </Text>
-                            </View>
-                            <TouchableOpacity
-                              onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                setEditingModalExerciseId(null);
-                              }}
-                              activeOpacity={0.6}
-                              style={{ padding: 6 }}
-                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            >
-                              <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
-                            </TouchableOpacity>
-                          </View>
-
-                          <View style={{ marginVertical: 6 }}>
-                            {/* Best PR banner if available */}
-                            {pr && (
-                              <View
-                                style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                  backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : '#F9FAFB',
-                                  borderWidth: 1,
-                                  borderColor: theme.borderColor,
-                                  borderRadius: 8,
-                                  paddingHorizontal: 10,
-                                  paddingVertical: 7,
-                                  marginBottom: 10,
-                                }}
-                              >
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                  <Trophy size={13} color="#10B981" strokeWidth={2} />
-                                  <Text style={{ fontSize: 9, fontWeight: '800', color: '#10B981', letterSpacing: 0.8 }}>
-                                    BEST
-                                  </Text>
-                                  <Text style={{ fontSize: 13, fontWeight: '800', color: theme.textPrimary, marginLeft: 2 }}>
-                                    {pr.weight} <Text style={{ fontSize: 10, fontWeight: '600', color: theme.textSecondary }}>kg</Text> × {pr.reps} <Text style={{ fontSize: 10, fontWeight: '600', color: theme.textSecondary }}>reps</Text>
-                                  </Text>
-                                </View>
-                                {formattedDate ? (
-                                  <Text style={{ fontSize: 11, fontWeight: '500', color: theme.textSecondary }}>
-                                    {formattedDate}
-                                  </Text>
-                                ) : null}
-                              </View>
-                            )}
-
-                            {/* Same for all sets toggle */}
-                            <TouchableOpacity
-                              style={[styles.exerciseLoggerOptionRow, { paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.borderColor, marginBottom: 8 }]}
-                              onPress={toggleSameForAll}
-                              activeOpacity={0.8}
-                            >
-                              <View style={{ flex: 1, paddingRight: 8 }}>
-                                <Text style={[styles.optionsTitle, { color: theme.textPrimary, fontSize: 13 }]}>Same for all sets</Text>
-                                <Text style={[styles.optionsSubtitle, { color: theme.textSecondary, fontSize: 11 }]}>
-                                  Sync weight and reps automatically
-                                </Text>
-                              </View>
-                              <View
-                                style={[
-                                  styles.switchTrack,
-                                  sameForAll
-                                    ? { backgroundColor: muscleColor, alignItems: 'flex-end' }
-                                    : { backgroundColor: '#D1D5DB', alignItems: 'flex-start' }
-                                ]}
-                              >
-                                <View style={styles.switchThumb} />
-                              </View>
-                            </TouchableOpacity>
-
-                            {/* Set row labels */}
-                            <View style={styles.setRowLabels}>
-                              <Text style={[styles.labelCol, styles.widthSet, { color: theme.textPrimary }]}>SET</Text>
-                              <Text style={[styles.labelCol, styles.widthWeight, { color: theme.textSecondary }]}>WEIGHT</Text>
-                              <Text style={[styles.labelCol, styles.widthReps, { color: theme.textSecondary }]}>REPS</Text>
-                              <View style={styles.widthActions} />
-                            </View>
-
-                            {/* Sets */}
-                            {activeSets.map((set, index) => (
-                              <View key={set.id} style={[styles.setRow, { borderBottomColor: theme.borderColor, paddingVertical: 8 }]}>
-                                <View style={styles.widthSet}>
-                                  <Text style={[styles.setText, { color: theme.textPrimary }]}>{index + 1}</Text>
-                                </View>
-                                <View style={styles.widthWeight}>
-                                  <IncrementInput
-                                    value={set.weight}
-                                    step={2.5}
-                                    allowDecimals={true}
-                                    onChange={(val) => handleUpdateSet(set.id, { weight: val })}
-                                    placeholder="kg"
-                                    accentColor={muscleColor}
-                                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
-                                    textColor={theme.textPrimary}
-                                  />
-                                </View>
-                                <View style={styles.widthReps}>
-                                  <IncrementInput
-                                    value={set.reps}
-                                    step={1}
-                                    allowDecimals={false}
-                                    onChange={(val) => handleUpdateSet(set.id, { reps: val })}
-                                    placeholder="reps"
-                                    accentColor={muscleColor}
-                                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
-                                    textColor={theme.textPrimary}
-                                  />
-                                </View>
-                                <View style={styles.widthActions}>
-                                  {index === activeSets.length - 1 && activeSets.length > 1 && (
-                                    <TouchableOpacity
-                                      style={styles.setDeleteBtn}
-                                      onPress={() => handleRemoveSet(set.id)}
-                                      activeOpacity={0.6}
-                                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                    >
-                                      <Trash2 size={12} color="#EF4444" strokeWidth={2} />
-                                    </TouchableOpacity>
-                                  )}
-                                </View>
-                              </View>
-                            ))}
-
-                            {/* Add Set button */}
-                            <TouchableOpacity
-                              style={[
-                                styles.addSetBtn,
-                                { backgroundColor: theme.cardBg, borderColor: theme.borderColor, marginVertical: 10 }
-                              ]}
-                              onPress={() => handleAddSet(targetEx.id)}
-                              activeOpacity={0.75}
-                            >
-                              <Plus size={14} color={theme.textSecondary} strokeWidth={2.5} />
-                              <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>ADD SET</Text>
-                            </TouchableOpacity>
-
-                            {/* Optional Note */}
-                            <View style={{ marginTop: 4, marginBottom: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.borderColor, paddingTop: 10 }}>
-                              <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary, marginBottom: 4, letterSpacing: 0.5 }}>
-                                EXERCISE NOTE
-                              </Text>
-                              <TextInput
-                                style={{
-                                  backgroundColor: theme.inputBg,
-                                  borderColor: theme.borderColor,
-                                  borderWidth: 1,
-                                  borderRadius: 8,
-                                  paddingHorizontal: 10,
-                                  paddingVertical: 8,
-                                  color: theme.textPrimary,
-                                  fontSize: 13,
-                                  minHeight: 44,
-                                  textAlignVertical: 'top',
-                                }}
-                                placeholder="Add an optional workout note..."
-                                placeholderTextColor={theme.inputPlaceholder}
-                                value={exerciseNote}
-                                onChangeText={setExerciseNote}
-                                multiline
-                                maxLength={150}
-                              />
-                            </View>
-                          </View>
-
-                          {/* Footer buttons */}
-                          <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
-                            <TouchableOpacity
-                              onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                setEditingModalExerciseId(null);
-                              }}
-                              style={[
-                                styles.finishSessionBtn,
-                                {
-                                  flex: 1,
-                                  backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
-                                  borderWidth: 1,
-                                  borderColor: theme.borderColor,
-                                }
-                              ]}
-                              activeOpacity={0.7}
-                            >
-                              <Text style={[styles.finishSessionBtnText, { color: theme.textSecondary }]}>CANCEL</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                              style={[styles.finishSessionBtn, { flex: 1, backgroundColor: '#10B981' }]}
-                              onPress={handleSaveModalExercise}
-                              activeOpacity={0.8}
-                            >
-                              <Text style={styles.finishSessionBtnText}>SAVE</Text>
-                            </TouchableOpacity>
-                          </View>
-                        </Card>
-                      </ScrollView>
-                    );
-                  })()
-                ) : (
-                  <>
+                {/* Workout List (Always mounted to preserve scroll position) */}
+                <View style={{ flex: 1 }}>
                 {/* Modal Header */}
                 <View style={styles.modalHeaderMinimal}>
                   <View style={styles.modalHeaderTitleCol}>
@@ -4648,7 +4390,269 @@ export default function SinglePageLandingScreen() {
                     </TouchableOpacity>
                   </View>
                 )}
-                  </>
+                </View>
+
+                {/* Workout Logging Overlay Sheet */}
+                {editingModalExerciseId !== null && (
+                  (() => {
+                    const targetEx = exercises.find((e) => e.id === editingModalExerciseId);
+                    if (!targetEx) return null;
+                    const muscleColor = categoryColors[targetEx.muscleGroup] || '#10B981';
+
+                    const prFromState = getExercisePR(targetEx.id);
+                    let pr = prFromState;
+                    if (!pr) {
+                      let max1RM = 0;
+                      let bestWeight = 0;
+                      let bestReps = 0;
+                      let bestDate = '';
+                      for (const session of history) {
+                        const logEx = session.exercises.find((e) => e.exerciseId === targetEx.id);
+                        if (logEx) {
+                          for (const set of logEx.sets) {
+                            if (set.weight > 0 && set.reps > 0) {
+                              const e1RM = set.weight * (1 + set.reps / 30);
+                              if (e1RM > max1RM) {
+                                max1RM = e1RM;
+                                bestWeight = set.weight;
+                                bestReps = set.reps;
+                                bestDate = session.date;
+                              }
+                            }
+                          }
+                        }
+                      }
+                      if (bestWeight > 0) {
+                        pr = { exerciseId: targetEx.id, weight: bestWeight, reps: bestReps, date: bestDate, estimatedOneRM: max1RM };
+                      }
+                    }
+                    const formattedDate = pr ? new Date(pr.date).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    }) : '';
+
+                    return (
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, zIndex: 50 }]}>
+                      <ScrollView
+                        style={{ flex: 1 }}
+                        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 24 }}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                      >
+                        <Card style={[styles.activeSessionCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                          {/* Header */}
+                          <View style={styles.activeSessionHeader}>
+                            <View style={{ flex: 1, paddingRight: 8 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                                <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor, height: 14, width: 3, borderRadius: 2 }]} />
+                                <Text style={[styles.activeSessionTitle, { color: theme.textPrimary, flexShrink: 1 }]} numberOfLines={1}>
+                                  {targetEx.name}
+                                </Text>
+                              </View>
+                              <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary }]}>
+                                {targetEx.muscleGroup.toUpperCase()} • {activeSets.length} set{activeSets.length !== 1 ? 's' : ''}
+                              </Text>
+                            </View>
+                            <TouchableOpacity
+                              onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setEditingModalExerciseId(null);
+                              }}
+                              activeOpacity={0.6}
+                              style={{ padding: 6 }}
+                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                              <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
+                            </TouchableOpacity>
+                          </View>
+
+                          <View style={{ marginVertical: 6 }}>
+                            {/* Best PR banner if available */}
+                            {pr && (
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : '#F9FAFB',
+                                  borderWidth: 1,
+                                  borderColor: theme.borderColor,
+                                  borderRadius: 8,
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 7,
+                                  marginBottom: 10,
+                                }}
+                              >
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                  <Trophy size={13} color="#10B981" strokeWidth={2} />
+                                  <Text style={{ fontSize: 9, fontWeight: '800', color: '#10B981', letterSpacing: 0.8 }}>
+                                    BEST
+                                  </Text>
+                                  <Text style={{ fontSize: 13, fontWeight: '800', color: theme.textPrimary, marginLeft: 2 }}>
+                                    {pr.weight} <Text style={{ fontSize: 10, fontWeight: '600', color: theme.textSecondary }}>kg</Text> × {pr.reps} <Text style={{ fontSize: 10, fontWeight: '600', color: theme.textSecondary }}>reps</Text>
+                                  </Text>
+                                </View>
+                                {formattedDate ? (
+                                  <Text style={{ fontSize: 11, fontWeight: '500', color: theme.textSecondary }}>
+                                    {formattedDate}
+                                  </Text>
+                                ) : null}
+                              </View>
+                            )}
+
+                            {/* Same for all sets toggle */}
+                            <TouchableOpacity
+                              style={[styles.exerciseLoggerOptionRow, { paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.borderColor, marginBottom: 8 }]}
+                              onPress={toggleSameForAll}
+                              activeOpacity={0.8}
+                            >
+                              <View style={{ flex: 1, paddingRight: 8 }}>
+                                <Text style={[styles.optionsTitle, { color: theme.textPrimary, fontSize: 13 }]}>Same for all sets</Text>
+                                <Text style={[styles.optionsSubtitle, { color: theme.textSecondary, fontSize: 11 }]}>
+                                  Sync weight and reps automatically
+                                </Text>
+                              </View>
+                              <View
+                                style={[
+                                  styles.switchTrack,
+                                  sameForAll
+                                    ? { backgroundColor: muscleColor, alignItems: 'flex-end' }
+                                    : { backgroundColor: '#D1D5DB', alignItems: 'flex-start' }
+                                ]}
+                              >
+                                <View style={styles.switchThumb} />
+                              </View>
+                            </TouchableOpacity>
+
+                            {/* Set row labels */}
+                            <View style={styles.setRowLabels}>
+                              <Text style={[styles.labelCol, styles.widthSet, { color: theme.textPrimary }]}>SET</Text>
+                              <Text style={[styles.labelCol, styles.widthWeight, { color: theme.textSecondary }]}>WEIGHT</Text>
+                              <Text style={[styles.labelCol, styles.widthReps, { color: theme.textSecondary }]}>REPS</Text>
+                              <View style={styles.widthActions} />
+                            </View>
+
+                            {/* Sets */}
+                            {activeSets.map((set, index) => (
+                              <View key={set.id} style={[styles.setRow, { borderBottomColor: theme.borderColor, paddingVertical: 8 }]}>
+                                <View style={styles.widthSet}>
+                                  <Text style={[styles.setText, { color: theme.textPrimary }]}>{index + 1}</Text>
+                                </View>
+                                <View style={styles.widthWeight}>
+                                  <IncrementInput
+                                    value={set.weight}
+                                    step={2.5}
+                                    allowDecimals={true}
+                                    onChange={(val) => handleUpdateSet(set.id, { weight: val })}
+                                    placeholder="kg"
+                                    accentColor={muscleColor}
+                                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
+                                    textColor={theme.textPrimary}
+                                  />
+                                </View>
+                                <View style={styles.widthReps}>
+                                  <IncrementInput
+                                    value={set.reps}
+                                    step={1}
+                                    allowDecimals={false}
+                                    onChange={(val) => handleUpdateSet(set.id, { reps: val })}
+                                    placeholder="reps"
+                                    accentColor={muscleColor}
+                                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
+                                    textColor={theme.textPrimary}
+                                  />
+                                </View>
+                                <View style={styles.widthActions}>
+                                  {index === activeSets.length - 1 && activeSets.length > 1 && (
+                                    <TouchableOpacity
+                                      style={styles.setDeleteBtn}
+                                      onPress={() => handleRemoveSet(set.id)}
+                                      activeOpacity={0.6}
+                                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                    >
+                                      <Trash2 size={12} color="#EF4444" strokeWidth={2} />
+                                    </TouchableOpacity>
+                                  )}
+                                </View>
+                              </View>
+                            ))}
+
+                            {/* Add Set button */}
+                            <TouchableOpacity
+                              style={[
+                                styles.addSetBtn,
+                                { backgroundColor: theme.cardBg, borderColor: theme.borderColor, marginVertical: 10 }
+                              ]}
+                              onPress={() => handleAddSet(targetEx.id)}
+                              activeOpacity={0.75}
+                            >
+                              <Plus size={14} color={theme.textSecondary} strokeWidth={2.5} />
+                              <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>ADD SET</Text>
+                            </TouchableOpacity>
+
+                            {/* Optional Note */}
+                            <View style={{ marginTop: 4, marginBottom: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.borderColor, paddingTop: 10 }}>
+                              <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary, marginBottom: 4, letterSpacing: 0.5 }}>
+                                EXERCISE NOTE
+                              </Text>
+                              <TextInput
+                                style={{
+                                  backgroundColor: theme.inputBg,
+                                  borderColor: theme.borderColor,
+                                  borderWidth: 1,
+                                  borderRadius: 8,
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 8,
+                                  color: theme.textPrimary,
+                                  fontSize: 13,
+                                  minHeight: 44,
+                                  textAlignVertical: 'top',
+                                }}
+                                placeholder="Add an optional workout note..."
+                                placeholderTextColor={theme.inputPlaceholder}
+                                value={exerciseNote}
+                                onChangeText={setExerciseNote}
+                                multiline
+                                maxLength={150}
+                              />
+                            </View>
+                          </View>
+
+                          {/* Footer buttons */}
+                          <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+                            <TouchableOpacity
+                              onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setEditingModalExerciseId(null);
+                              }}
+                              style={[
+                                styles.finishSessionBtn,
+                                {
+                                  flex: 1,
+                                  backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
+                                  borderWidth: 1,
+                                  borderColor: theme.borderColor,
+                                }
+                              ]}
+                              activeOpacity={0.7}
+                            >
+                              <Text style={[styles.finishSessionBtnText, { color: theme.textSecondary }]}>CANCEL</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              style={[styles.finishSessionBtn, { flex: 1, backgroundColor: '#10B981' }]}
+                              onPress={handleSaveModalExercise}
+                              activeOpacity={0.8}
+                            >
+                              <Text style={styles.finishSessionBtnText}>SAVE</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </Card>
+                      </ScrollView>
+                      </View>
+                    );
+                  })()
                 )}
               </KeyboardAvoidingView>
             </View>
