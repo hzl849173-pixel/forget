@@ -26,6 +26,7 @@ import {
   AppState,
   BackHandler,
   Dimensions,
+  Easing,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -401,7 +402,9 @@ export default function SinglePageLandingScreen() {
 
   // Profile Modal states
   const router = useRouter();
+  const screenWidth = Dimensions.get('window').width;
   const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const profileSlideAnim = React.useRef(new Animated.Value(screenWidth)).current;
   const [userProfile, setUserProfile] = useState<OnboardingProfile | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
@@ -412,6 +415,19 @@ export default function SinglePageLandingScreen() {
   const [editHeight, setEditHeight] = useState('');
   const [editWeight, setEditWeight] = useState('');
   const [editGoal, setEditGoal] = useState<FitnessGoal>('' as FitnessGoal);
+
+  const handleCloseProfile = (callback?: () => void) => {
+    Animated.timing(profileSlideAnim, {
+      toValue: screenWidth,
+      duration: 180,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => {
+      setProfileModalVisible(false);
+      setIsEditingProfile(false);
+      if (callback) callback();
+    });
+  };
 
   const getInitials = (name: string | null, email: string | null): string => {
     if (name) {
@@ -457,7 +473,14 @@ export default function SinglePageLandingScreen() {
       }
       
       setUserProfile(p);
+      profileSlideAnim.setValue(screenWidth);
       setProfileModalVisible(true);
+      Animated.timing(profileSlideAnim, {
+        toValue: 0,
+        duration: 200,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
     } catch (e) {
       console.log('Error opening profile', e);
     }
@@ -474,18 +497,16 @@ export default function SinglePageLandingScreen() {
       await setSignedOut();
       setUserEmail(null);
       setUserDisplayName(null);
-      setProfileModalVisible(false);
-      setIsEditingProfile(false);
+      handleCloseProfile();
     } catch (e) {
       console.log('Error signing out', e);
     }
   };
 
   const handleRedirectToSignIn = () => {
-    router.push('/onboarding/signin');
-    setTimeout(() => {
-      setProfileModalVisible(false);
-    }, 500);
+    handleCloseProfile(() => {
+      router.push('/onboarding/signin');
+    });
   };
 
   const handleStartEditProfile = () => {
@@ -6327,22 +6348,34 @@ export default function SinglePageLandingScreen() {
         {/* Profile Full Screen */}
         <Modal
           visible={profileModalVisible}
-          transparent={false}
-          animationType="slide"
-          onRequestClose={() => setProfileModalVisible(false)}
+          transparent={true}
+          animationType="none"
+          statusBarTranslucent={true}
+          onRequestClose={() => handleCloseProfile()}
         >
-          <View style={[styles.profileFull, { backgroundColor: theme.background }]}>
-            {/* Header */}
-            <View style={styles.profileFullHeader}>
-              <TouchableOpacity
-                onPress={() => setProfileModalVisible(false)}
-                activeOpacity={0.7}
-                style={styles.profileFullBack}
-              >
-                <ChevronLeft size={22} color={theme.textPrimary} strokeWidth={2.5} />
-                <Text style={[styles.profileFullBackText, { color: theme.textSecondary }]}>Back</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'transparent' }]}>
+            <Animated.View
+              style={[
+                styles.profileFull,
+                {
+                  backgroundColor: theme.background,
+                  width: '100%',
+                  height: '100%',
+                  transform: [{ translateX: profileSlideAnim }],
+                },
+              ]}
+            >
+              {/* Header */}
+              <View style={styles.profileFullHeader}>
+                <TouchableOpacity
+                  onPress={() => handleCloseProfile()}
+                  activeOpacity={0.7}
+                  style={styles.profileFullBack}
+                >
+                  <ChevronLeft size={22} color={theme.textPrimary} strokeWidth={2.5} />
+                  <Text style={[styles.profileFullBackText, { color: theme.textSecondary }]}>Back</Text>
+                </TouchableOpacity>
+              </View>
 
             <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
               {/* Profile Section */}
@@ -6370,10 +6403,11 @@ export default function SinglePageLandingScreen() {
                 <TouchableOpacity
                   style={[styles.profileStatCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
                   onPress={() => {
-                    setProfileModalVisible(false);
-                    setTimeout(() => {
-                      handleOpenConsistency();
-                    }, 400);
+                    handleCloseProfile(() => {
+                      setTimeout(() => {
+                        handleOpenConsistency();
+                      }, 100);
+                    });
                   }}
                   activeOpacity={0.7}
                 >
@@ -6654,8 +6688,9 @@ export default function SinglePageLandingScreen() {
                 </TouchableOpacity>
               )}
             </View>
-          </View>
-        </Modal>
+          </Animated.View>
+        </View>
+      </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
