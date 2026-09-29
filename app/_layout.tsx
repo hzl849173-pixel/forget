@@ -31,7 +31,7 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { WorkoutProvider } from '@/hooks/use-workout-storage';
-import { isOnboardingCompleted } from '@/lib/profile/profileStorage';
+import { isOnboardingCompleted, isSignedInFlag, setOnboardingCompleted as markOnboardingCompleted } from '@/lib/profile/profileStorage';
 import { useAppVersionCheck } from '@/lib/updates/versionCheck';
 import { AppUpdateModal } from '@/components/updates/AppUpdateModal';
 import * as SplashScreen from 'expo-splash-screen';
@@ -50,8 +50,13 @@ export default function RootLayout() {
     let mounted = true;
     (async () => {
       try {
-        const done = await isOnboardingCompleted();
+        const onboardingDone = await isOnboardingCompleted();
+        const signedIn = await isSignedInFlag();
+        const done = onboardingDone || signedIn;
         if (!mounted) return;
+        if (done && !onboardingDone) {
+          await markOnboardingCompleted();
+        }
         setOnboardingCompleted(done);
       } finally {
         if (mounted) {

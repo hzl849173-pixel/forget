@@ -36,7 +36,21 @@ export default function SignInScreen() {
         };
     }, []);
 
+    const handleBack = async () => {
+        const isDone = await isOnboardingCompleted();
+        if (isDone) {
+            router.replace('/');
+            return;
+        }
+        router.replace('/onboarding/weight');
+    };
+
     const handleSkip = async () => {
+        const isDone = await isOnboardingCompleted();
+        if (isDone) {
+            router.replace('/');
+            return;
+        }
         router.replace('/onboarding/templates');
     };
 
@@ -50,8 +64,9 @@ export default function SignInScreen() {
                 return;
             }
 
-            // Sign-in succeeded; persist signed-in flag
+            // Sign-in succeeded; persist signed-in flag and mark onboarding completed
             await setSignedIn();
+            await setOnboardingCompleted();
 
             if (user?.uid) {
                 // Check if a Firestore profile already exists for this user (returning user)
@@ -65,6 +80,9 @@ export default function SignInScreen() {
                         weightKg: cloudProfile.weightKg || 0,
                         goal: cloudProfile.goal || '',
                     });
+                    // Returning user with existing cloud profile goes straight to main journal!
+                    router.replace('/');
+                    return;
                 } else {
                     // New user: Save profile to Firestore from local onboarding answers
                     const p = await loadLocalProfile();
@@ -79,7 +97,12 @@ export default function SignInScreen() {
                 }
             }
 
-            router.replace('/onboarding/templates');
+            const isDone = await isOnboardingCompleted();
+            if (isDone) {
+                router.replace('/');
+            } else {
+                router.replace('/onboarding/templates');
+            }
         } catch (e: any) {
             Alert.alert(
                 'Google Sign-In',
@@ -93,7 +116,7 @@ export default function SignInScreen() {
     return (
         <SafeAreaView style={styles.safe}>
             <View style={styles.screen}>
-                <TouchableOpacity onPress={() => router.replace('/onboarding/weight')} activeOpacity={0.7} style={styles.backBtn}>
+                <TouchableOpacity onPress={handleBack} activeOpacity={0.7} style={styles.backBtn}>
                     <Text style={styles.backText}>{'< Back'}</Text>
                 </TouchableOpacity>
 

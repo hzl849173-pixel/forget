@@ -1,5 +1,8 @@
 import { getApps, initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeAuth, getAuth } from 'firebase/auth';
+// @ts-ignore - Metro bundler resolves firebase/auth to react-native field (dist/rn/index.js) which provides getReactNativePersistence
+import { getReactNativePersistence } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initializeFirestore, getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -13,7 +16,16 @@ const firebaseConfig = {
 export const app =
     getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);
+let authInstance;
+try {
+    authInstance = initializeAuth(app, {
+        persistence: getReactNativePersistence(AsyncStorage),
+    });
+} catch (e) {
+    authInstance = getAuth(app);
+}
+
+export const auth = authInstance;
 
 let database;
 try {
@@ -25,4 +37,3 @@ try {
 }
 
 export const db = database;
-

@@ -22,6 +22,8 @@ import {
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Animated,
   AppState,
   BackHandler,
@@ -109,12 +111,12 @@ const Haptics = {
 };
 
 import { auth } from '@/lib/firebase/firebaseConfig';
-import { loadLocalProfile, OnboardingProfile, setSignedOut, setSignedIn, saveLocalProfile, FitnessGoal, isOnboardingCompleted } from '@/lib/profile/profileStorage';
+import { loadLocalProfile, OnboardingProfile, setSignedOut, setSignedIn, setOnboardingCompleted, saveLocalProfile, FitnessGoal, isOnboardingCompleted } from '@/lib/profile/profileStorage';
 import { getProfileFromFirestore, saveProfileToFirestore } from '@/lib/firestore/profileFirestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { signOut } from 'firebase/auth';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { useGoogleSignIn, signOutFromGoogle } from '@/lib/auth/googleAuth';
 
 import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
@@ -408,6 +410,61 @@ export default function SinglePageLandingScreen() {
   const [userProfile, setUserProfile] = useState<OnboardingProfile | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
+  const { signIn: signInWithGoogle } = useGoogleSignIn();
+  const [isProfileSigningIn, setIsProfileSigningIn] = useState(false);
+
+  // Auto-restore profile and listen to Firebase auth session
+  React.useEffect(() => {
+    let isMounted = true;
+
+    // 1. Immediately load local profile from AsyncStorage so name/stats are available without delay
+    loadLocalProfile().then((localProfile) => {
+      if (isMounted && localProfile) {
+        setUserProfile(localProfile);
+      }
+    });
+
+    // 2. Listen to Firebase auth state (persisted across restarts via AsyncStorage)
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!isMounted) return;
+      if (currentUser) {
+        setUserEmail(currentUser.email);
+        setUserDisplayName(currentUser.displayName);
+        await setSignedIn();
+        await setOnboardingCompleted();
+
+        try {
+          const cloudProfile = await getProfileFromFirestore(currentUser.uid);
+          if (cloudProfile && isMounted) {
+            const p: OnboardingProfile = {
+              name: cloudProfile.name || currentUser.displayName || '',
+              heightCm: cloudProfile.heightCm || 0,
+              weightKg: cloudProfile.weightKg || 0,
+              goal: cloudProfile.goal || ('' as FitnessGoal),
+              updatedAt: new Date().toISOString(),
+            };
+            setUserProfile(p);
+            await saveLocalProfile({
+              name: p.name,
+              heightCm: p.heightCm,
+              weightKg: p.weightKg,
+              goal: p.goal,
+            });
+          }
+        } catch (e) {
+          console.log('Error fetching profile from firestore on auth change', e);
+        }
+      } else {
+        setUserEmail(null);
+        setUserDisplayName(null);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
 
   // Profile Editing states
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -467,12 +524,11 @@ export default function SinglePageLandingScreen() {
             goal: p.goal,
           });
         }
-      } else {
-        setUserEmail(null);
-        setUserDisplayName(null);
       }
       
-      setUserProfile(p);
+      if (p) {
+        setUserProfile(p);
+      }
       profileSlideAnim.setValue(screenWidth);
       setProfileModalVisible(true);
       Animated.timing(profileSlideAnim, {
@@ -503,10 +559,52 @@ export default function SinglePageLandingScreen() {
     }
   };
 
-  const handleRedirectToSignIn = () => {
-    handleCloseProfile(() => {
-      router.push('/onboarding/signin');
-    });
+  const handleProfileSignIn = async () => {
+    try {
+      setIsProfileSigningIn(true);
+      const user = await signInWithGoogle();
+      if (!user) {
+        return;
+      }
+
+      await setSignedIn();
+      await setOnboardingCompleted();
+      setUserEmail(user.email);
+      setUserDisplayName(user.displayName);
+
+      const cloudProfile = await getProfileFromFirestore(user.uid);
+      if (cloudProfile) {
+        const p: OnboardingProfile = {
+          name: cloudProfile.name || user.displayName || '',
+          heightCm: cloudProfile.heightCm || 0,
+          weightKg: cloudProfile.weightKg || 0,
+          goal: cloudProfile.goal || ('' as FitnessGoal),
+          updatedAt: new Date().toISOString(),
+        };
+        setUserProfile(p);
+        await saveLocalProfile({
+          name: p.name,
+          heightCm: p.heightCm,
+          weightKg: p.weightKg,
+          goal: p.goal,
+        });
+      } else {
+        const currentP = await loadLocalProfile();
+        if (currentP) {
+          await saveProfileToFirestore(user.uid, {
+            name: currentP.name || user.displayName || '',
+            heightCm: currentP.heightCm,
+            weightKg: currentP.weightKg,
+            goal: currentP.goal,
+          });
+        }
+      }
+    } catch (e: any) {
+      console.log('Error during profile sign in', e);
+      Alert.alert('Sign-In Failed', e?.message || 'Could not complete Google sign-in.');
+    } finally {
+      setIsProfileSigningIn(false);
+    }
   };
 
   const handleStartEditProfile = () => {
@@ -2023,8 +2121,6 @@ export default function SinglePageLandingScreen() {
     if (muscleArray.length === 3) return `${muscleArray[0]}, ${muscleArray[1]} & ${muscleArray[2]} Day`;
     return "Full Body Day";
   };
-
-  const { signIn: signInWithGoogle } = useGoogleSignIn();
 
   const ensureGoogleSignedIn = async (onSuccess: () => Promise<void>) => {
     if (auth.currentUser || userEmail) {
@@ -6669,7 +6765,7 @@ export default function SinglePageLandingScreen() {
 
             {/* Fixed Bottom: Sign Out / Sign In */}
             <View style={styles.profileFullBottom}>
-              {userEmail ? (
+              {userEmail || auth.currentUser ? (
                 <TouchableOpacity
                   style={styles.profileSignOutBtn}
                   onPress={handleLogout}
@@ -6679,12 +6775,19 @@ export default function SinglePageLandingScreen() {
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
-                  style={styles.profileSignInBtn}
-                  onPress={handleRedirectToSignIn}
+                  style={[styles.profileSignInBtn, isProfileSigningIn && { opacity: 0.7 }]}
+                  onPress={handleProfileSignIn}
+                  disabled={isProfileSigningIn}
                   activeOpacity={0.7}
                 >
-                  <User size={16} color="#FFFFFF" strokeWidth={2.5} />
-                  <Text style={styles.profileSignInText}>Sign in with Google</Text>
+                  {isProfileSigningIn ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <User size={16} color="#FFFFFF" strokeWidth={2.5} />
+                      <Text style={styles.profileSignInText}>Sign in with Google</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               )}
             </View>
