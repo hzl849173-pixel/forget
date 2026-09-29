@@ -315,8 +315,8 @@ export const useProgressCommandCenter = (
         hasRoutines: true,
         isDayZero: true,
         isWeekOne: false,
-        dayName: 'PROGRESSIVE OVERLOAD RADAR',
-        daySubtitle: 'Calibrates automatically after your first workout',
+        dayName: 'TARGETS TO BEAT',
+        daySubtitle: 'What to aim for next session',
         isToday: true,
         targets: [],
         splitName: 'Your Routine',
@@ -530,11 +530,9 @@ export const useProgressCommandCenter = (
           targetWeight: newWeight,
           targetReps: '8–10 reps',
           overloadType: 'weight',
-          badgeLabel: isWeekOne ? `+${inc} KG (LEVEL UP)` : `+${inc} KG BOOST`,
+          badgeLabel: `+${inc} kg boost`,
           badgeColor: '#10B981',
-          guidanceText: isWeekOne
-            ? 'Conquered 12 reps on Week 1 · Step up weight'
-            : 'Hit 12+ reps last time · Ready to level up weight',
+          guidanceText: '',
           isSolidified,
         });
       } else {
@@ -543,36 +541,25 @@ export const useProgressCommandCenter = (
         let badgeLabel = '';
         let badgeColor = '#3B82F6';
         let overloadType: RoutineExerciseTarget['overloadType'] = 'reps';
-        let guidanceText = '';
 
         if (isSolidified) {
           overloadType = 'solidified';
-          badgeLabel = 'SOLIDIFIED';
+          badgeLabel = 'solidified';
           badgeColor = '#8B5CF6';
-          targetReps = `${latest.reps + 1}–${Math.min(12, latest.reps + 2)} reps`;
-          guidanceText = `Locked across 2 sessions (${latest.weight}kg) · Push for rep ${latest.reps + 1}`;
+          targetReps = `${latest.reps + 1}–${Math.min(12, latest.reps + 2)}`;
         } else if (latest.reps === 11) {
-          targetReps = '12 reps';
-          badgeLabel = isWeekOne ? '+1 REP (BEAT WK 1)' : '+1 REP TO CAP';
+          targetReps = '12';
+          badgeLabel = '+1 rep to cap';
           badgeColor = '#3B82F6';
-          guidanceText = isWeekOne
-            ? 'Just 1 rep away from 12 · Unlock weight boost next'
-            : 'Just 1 rep away from 12 · Unlock weight boost next';
         } else if (latest.reps === 10) {
-          targetReps = '11–12 reps';
-          badgeLabel = isWeekOne ? '+1–2 REPS (BEAT WK 1)' : '+1–2 REPS';
+          targetReps = '11–12';
+          badgeLabel = '+1–2 reps';
           badgeColor = '#3B82F6';
-          guidanceText = isWeekOne
-            ? `Week 1 baseline: 10 reps · Aim for 11–12 reps`
-            : 'Push for 11–12 reps before adding weight';
         } else {
           const nextReps = Math.min(12, latest.reps + 2);
-          targetReps = `${latest.reps + 1}–${nextReps} reps`;
-          badgeLabel = isWeekOne ? '+1–2 REPS (BEAT WK 1)' : '+1–2 REPS';
+          targetReps = `${latest.reps + 1}–${nextReps}`;
+          badgeLabel = '+1–2 reps';
           badgeColor = '#3B82F6';
-          guidanceText = isWeekOne
-            ? `Week 1 baseline: ${latest.reps} reps · Push for ${latest.reps + 1}–${nextReps} reps`
-            : 'Build volume toward 12-rep threshold';
         }
 
         targets.push({
@@ -586,21 +573,19 @@ export const useProgressCommandCenter = (
           overloadType,
           badgeLabel,
           badgeColor,
-          guidanceText,
+          guidanceText: '',
           isSolidified,
         });
       }
     });
 
-    const routineSubtitle = isWeekOne
-      ? `${splitName} · Baseline set · Ready to beat Week 1`
-      : `${splitName} · Habit learned from last 2 weeks`;
+    const routineSubtitle = `${splitName} · What to aim for next session`;
 
     return {
       hasRoutines: true,
       isDayZero: false,
       isWeekOne,
-      dayName: `${dayName} TARGETS`,
+      dayName: 'TARGETS TO BEAT',
       daySubtitle: routineSubtitle,
       isToday,
       targets,

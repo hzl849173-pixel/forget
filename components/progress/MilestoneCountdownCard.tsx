@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Target, Sparkles, TrendingUp, Zap, ChevronRight } from 'lucide-react-native';
+import { Target, ChevronRight } from 'lucide-react-native';
 import { MilestoneTarget, UpcomingSessionRoutine } from './useProgressCommandCenter';
 
 interface MilestoneCountdownCardProps {
@@ -15,7 +15,6 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
   onStartWorkout,
 }) => {
   // Day 0: Brand new user with 0 workouts logged
-  // Render high-converting action trigger card (No fake exercises!)
   if (routine?.isDayZero) {
     return (
       <View style={styles.card}>
@@ -24,56 +23,29 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
             <Target size={16} color="#3B82F6" strokeWidth={2.5} />
           </View>
           <View style={styles.headerTextWrap}>
-            <View style={styles.titleRow}>
-              <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-                PROGRESSIVE OVERLOAD RADAR
-              </Text>
-              <View style={[styles.habitBadge, { backgroundColor: '#3B82F612' }]}>
-                <Zap size={10} color="#2563EB" strokeWidth={2.5} />
-                <Text style={[styles.habitBadgeText, { color: '#2563EB' }]}>AUTOMATIC</Text>
-              </View>
-            </View>
-            <Text style={styles.headerSubtitle} numberOfLines={1} ellipsizeMode="tail">
-              Calibrates automatically after your first workout
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              TARGETS TO BEAT
+            </Text>
+            <Text style={styles.headerSubtitle} numberOfLines={1}>
+              What to aim for next session
             </Text>
           </View>
         </View>
 
         <View style={styles.divider} />
 
-        <View style={styles.dayZeroBody}>
-          <Text style={styles.dayZeroDesc}>
-            Log today's workout in under 30 seconds. The moment you finish, your routine habits, upcoming weight targets, and live recovery battery will automatically calibrate to your exact split.
+        <View style={styles.dayZeroContainer}>
+          <Text style={styles.dayZeroText}>
+            Log your workout today. Your future targets and progressive overload recommendations will automatically appear here.
           </Text>
-
-          <View style={styles.featuresList}>
-            <View style={styles.featureItem}>
-              <View style={styles.featureDot} />
-              <Text style={styles.featureText} numberOfLines={1} ellipsizeMode="tail">
-                Auto Day-of-the-Week Habit Tracking
-              </Text>
-            </View>
-            <View style={styles.featureItem}>
-              <View style={styles.featureDot} />
-              <Text style={styles.featureText} numberOfLines={1} ellipsizeMode="tail">
-                12-Rep Double Progression Recommendations
-              </Text>
-            </View>
-            <View style={styles.featureItem}>
-              <View style={styles.featureDot} />
-              <Text style={styles.featureText} numberOfLines={1} ellipsizeMode="tail">
-                Live Muscle Recovery Battery (0% – 100%)
-              </Text>
-            </View>
-          </View>
 
           {onStartWorkout && (
             <TouchableOpacity
-              style={styles.dayZeroBtn}
+              style={styles.actionBtn}
               onPress={onStartWorkout}
               activeOpacity={0.8}
             >
-              <Text style={styles.dayZeroBtnText}>+ LOG TODAY'S WORKOUT</Text>
+              <Text style={styles.actionBtnText}>+ LOG TODAY'S WORKOUT</Text>
               <ChevronRight size={14} color="#FFFFFF" strokeWidth={2.5} />
             </TouchableOpacity>
           )}
@@ -82,7 +54,7 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
     );
   }
 
-  // Week 1+ with intelligent habit-learned routine targets
+  // Active routine with intelligent habit-learned targets
   if (routine && routine.hasRoutines && routine.targets.length > 0) {
     return (
       <View style={styles.card}>
@@ -92,23 +64,10 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
             <Target size={16} color="#3B82F6" strokeWidth={2.5} />
           </View>
           <View style={styles.headerTextWrap}>
-            <View style={styles.titleRow}>
-              <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-                {routine.dayName}
-              </Text>
-              {routine.isWeekOne ? (
-                <View style={[styles.habitBadge, { backgroundColor: '#8B5CF615' }]}>
-                  <Sparkles size={10} color="#7C3AED" strokeWidth={2.5} />
-                  <Text style={[styles.habitBadgeText, { color: '#7C3AED' }]}>WEEK 1 TARGETS</Text>
-                </View>
-              ) : (
-                <View style={styles.habitBadge}>
-                  <Sparkles size={10} color="#3B82F6" strokeWidth={2.5} />
-                  <Text style={styles.habitBadgeText}>2-WEEK HABIT</Text>
-                </View>
-              )}
-            </View>
-            <Text style={styles.headerSubtitle} numberOfLines={1} ellipsizeMode="tail">
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {routine.dayName}
+            </Text>
+            <Text style={styles.headerSubtitle} numberOfLines={1}>
               {routine.daySubtitle}
             </Text>
           </View>
@@ -116,60 +75,48 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
 
         <View style={styles.divider} />
 
-        {/* Routine Exercises List */}
+        {/* Column Headers for instant clarity */}
+        <View style={styles.columnHeaderRow}>
+          <Text style={styles.columnHeaderLeft}>LAST SESSION</Text>
+          <Text style={styles.columnHeaderRight}>NEXT GOAL</Text>
+        </View>
+
+        {/* Minimal flat rows identical to Personal Records */}
         <View style={styles.list}>
-          {routine.targets.map((item, index) => (
-            <View key={item.exerciseId} style={styles.routineItem}>
-              {/* Top row: Exercise Name + Progression Badge */}
-              <View style={styles.itemHeader}>
-                <View style={styles.exerciseNameRow}>
-                  <View style={styles.indexCircle}>
-                    <Text style={styles.indexText}>{index + 1}</Text>
-                  </View>
-                  <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-                    {item.exerciseName}
-                  </Text>
-                </View>
-
-                <View
-                  style={[
-                    styles.overloadBadge,
-                    {
-                      backgroundColor: `${item.badgeColor}15`,
-                      borderColor: `${item.badgeColor}35`,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.overloadBadgeText, { color: item.badgeColor }]}>
-                    {item.badgeLabel}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Data comparison row */}
-              <View style={styles.metricRow}>
-                <Text style={styles.prevPerf} numberOfLines={1} ellipsizeMode="tail">
-                  Last:{' '}
-                  <Text style={styles.prevPerfVal}>
-                    {item.lastWeight > 0 ? `${item.lastWeight} kg × ` : ''}
-                    {item.lastReps > 0 ? `${item.lastReps} reps` : 'None yet'}
-                  </Text>
+          {routine.targets.map((item, idx) => (
+            <View
+              key={item.exerciseId}
+              style={[
+                styles.row,
+                idx === routine.targets.length - 1 && { borderBottomWidth: 0 },
+              ]}
+            >
+              <View style={styles.leftCol}>
+                <Text style={styles.exerciseName} numberOfLines={1}>
+                  {item.exerciseName}
                 </Text>
-
-                <View style={styles.targetCol}>
-                  <Text style={styles.targetLabel}>TARGET</Text>
-                  <Text style={styles.targetGoalVal} numberOfLines={1} ellipsizeMode="tail">
-                    {item.targetWeight > 0 ? `${item.targetWeight} kg` : 'Reps'}
-                    <Text style={styles.targetGoalSub}> × {item.targetReps}</Text>
-                  </Text>
-                </View>
+                <Text style={styles.lastText} numberOfLines={1}>
+                  {item.lastWeight > 0 ? `${item.lastWeight} kg × ` : ''}{item.lastReps > 0 ? `${item.lastReps} reps` : 'None logged'}
+                </Text>
               </View>
 
-              {/* Guidance Micro Note */}
-              <View style={styles.guidanceRow}>
-                <TrendingUp size={11} color="#6B7280" strokeWidth={2} />
-                <Text style={styles.guidanceText} numberOfLines={1} ellipsizeMode="tail">
-                  {item.guidanceText}
+              <View style={styles.rightCol}>
+                <Text style={styles.targetText} numberOfLines={1}>
+                  {item.targetWeight > 0 ? (
+                    <>
+                      {item.targetWeight}{' '}
+                      <Text style={styles.unitText}>kg</Text>
+                      {' × '}{item.targetReps}
+                    </>
+                  ) : (
+                    `Reps × ${item.targetReps}`
+                  )}
+                </Text>
+                <Text
+                  style={[styles.badgeText, { color: item.badgeColor }]}
+                  numberOfLines={1}
+                >
+                  {item.badgeLabel}
                 </Text>
               </View>
             </View>
@@ -179,7 +126,7 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
     );
   }
 
-  // Fallback: Legacy milestone targets if routine is not yet established
+  // Fallback: Milestone targets if routine is not yet established
   if (milestones.length === 0) return null;
 
   return (
@@ -189,10 +136,10 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
           <Target size={16} color="#3B82F6" strokeWidth={2.5} />
         </View>
         <View style={styles.headerTextWrap}>
-          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-            NEXT LIFT TARGETS
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            TARGETS TO BEAT
           </Text>
-          <Text style={styles.headerSubtitle} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={styles.headerSubtitle} numberOfLines={1}>
             Progressive overload milestones
           </Text>
         </View>
@@ -200,38 +147,37 @@ export const MilestoneCountdownCard: React.FC<MilestoneCountdownCardProps> = ({
 
       <View style={styles.divider} />
 
-      <View style={styles.list}>
-        {milestones.map((item) => (
-          <View key={item.exerciseId} style={styles.item}>
-            <View style={styles.itemTop}>
-              <View style={styles.infoCol}>
-                <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-                  {item.exerciseName}
-                </Text>
-                <Text style={styles.meta} numberOfLines={1} ellipsizeMode="tail">
-                  Best: <Text style={styles.bold}>{item.currentMaxWeight} kg</Text>
-                </Text>
-              </View>
+      {/* Column Headers for fallback */}
+      <View style={styles.columnHeaderRow}>
+        <Text style={styles.columnHeaderLeft}>CURRENT BEST</Text>
+        <Text style={styles.columnHeaderRight}>NEXT GOAL</Text>
+      </View>
 
-              <View style={styles.targetBadge}>
-                <Text style={styles.targetBadgeLabel}>TARGET</Text>
-                <Text style={styles.targetVal}>{item.targetWeight} kg</Text>
-              </View>
+      <View style={styles.list}>
+        {milestones.map((item, idx) => (
+          <View
+            key={item.exerciseId}
+            style={[
+              styles.row,
+              idx === milestones.length - 1 && { borderBottomWidth: 0 },
+            ]}
+          >
+            <View style={styles.leftCol}>
+              <Text style={styles.exerciseName} numberOfLines={1}>
+                {item.exerciseName}
+              </Text>
+              <Text style={styles.lastText} numberOfLines={1}>
+                Best: {item.currentMaxWeight} kg
+              </Text>
             </View>
 
-            <View style={styles.progressRow}>
-              <View style={styles.track}>
-                <View
-                  style={[
-                    styles.fill,
-                    {
-                      width: `${item.progressPercent}%`,
-                      backgroundColor: item.progressPercent >= 80 ? '#10B981' : '#3B82F6',
-                    },
-                  ]}
-                />
-              </View>
-              <Text style={styles.neededText}>+{item.weightNeeded} kg</Text>
+            <View style={styles.rightCol}>
+              <Text style={styles.targetText} numberOfLines={1}>
+                {item.targetWeight} <Text style={styles.unitText}>kg</Text>
+              </Text>
+              <Text style={[styles.badgeText, { color: '#10B981' }]} numberOfLines={1}>
+                +{item.weightNeeded} kg needed
+              </Text>
             </View>
           </View>
         ))}
@@ -244,7 +190,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 18,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     shadowColor: '#000000',
@@ -252,8 +198,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
-    marginBottom: 16,
-    overflow: 'hidden',
+    marginBottom: 24,
   },
   header: {
     flexDirection: 'row',
@@ -273,35 +218,11 @@ const styles = StyleSheet.create({
     flex: 1,
     flexShrink: 1,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 6,
-  },
   headerTitle: {
     fontSize: 12,
     fontWeight: '800',
     color: '#111827',
     letterSpacing: 0.6,
-    flex: 1,
-    flexShrink: 1,
-  },
-  habitBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#3B82F612',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 99,
-    flexShrink: 0,
-  },
-  habitBadgeText: {
-    fontSize: 8.5,
-    fontWeight: '800',
-    color: '#2563EB',
-    letterSpacing: 0.4,
   },
   headerSubtitle: {
     fontSize: 11,
@@ -311,155 +232,87 @@ const styles = StyleSheet.create({
   divider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: '#F3F4F6',
-    marginVertical: 12,
+    marginVertical: 14,
   },
-  list: {
-    gap: 9,
-  },
-  routineItem: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    padding: 11,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    gap: 6,
-  },
-  itemHeader: {
+  columnHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 6,
+    paddingBottom: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#F3F4F6',
   },
-  exerciseNameRow: {
+  columnHeaderLeft: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#9CA3AF',
+    letterSpacing: 0.8,
+  },
+  columnHeaderRight: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#9CA3AF',
+    letterSpacing: 0.8,
+    textAlign: 'right',
+  },
+  list: {
+    gap: 0,
+  },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#F3F4F6',
+  },
+  leftCol: {
     flex: 1,
     flexShrink: 1,
+    marginRight: 10,
   },
-  indexCircle: {
-    width: 17,
-    height: 17,
-    borderRadius: 8.5,
-    backgroundColor: '#E5E7EB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  indexText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#4B5563',
-  },
-  name: {
+  exerciseName: {
     fontSize: 13,
     fontWeight: '700',
     color: '#111827',
-    flex: 1,
-    flexShrink: 1,
   },
-  overloadBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 5,
-    borderWidth: 1,
-    flexShrink: 0,
+  lastText: {
+    fontSize: 10.5,
+    color: '#9CA3AF',
+    fontWeight: '500',
+    marginTop: 2,
   },
-  overloadBadgeText: {
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-  metricRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 1,
-    gap: 8,
-  },
-  prevPerf: {
-    fontSize: 11,
-    color: '#6B7280',
-    flex: 1,
-    flexShrink: 1,
-  },
-  prevPerfVal: {
-    fontWeight: '700',
-    color: '#111827',
-  },
-  targetCol: {
+  rightCol: {
     alignItems: 'flex-end',
     flexShrink: 0,
-    maxWidth: '52%',
   },
-  targetLabel: {
-    fontSize: 8,
+  targetText: {
+    fontSize: 13,
     fontWeight: '800',
-    color: '#9CA3AF',
-    letterSpacing: 0.5,
-  },
-  targetGoalVal: {
-    fontSize: 12,
-    fontWeight: '900',
     color: '#111827',
   },
-  targetGoalSub: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#4B5563',
-  },
-  guidanceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingTop: 2,
-    width: '100%',
-  },
-  guidanceText: {
+  unitText: {
     fontSize: 10,
     fontWeight: '600',
     color: '#6B7280',
-    flex: 1,
-    flexShrink: 1,
+  },
+  badgeText: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    marginTop: 1,
   },
 
   // Day 0 Action Card styles
-  dayZeroBody: {
-    gap: 10,
+  dayZeroContainer: {
+    paddingVertical: 4,
+    gap: 14,
   },
-  dayZeroDesc: {
+  dayZeroText: {
     fontSize: 12,
-    color: '#4B5563',
-    lineHeight: 17,
+    color: '#6B7280',
+    lineHeight: 18,
   },
-  featuresList: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
-    padding: 10,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  featureDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: '#3B82F6',
-    flexShrink: 0,
-  },
-  featureText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#374151',
-    flex: 1,
-    flexShrink: 1,
-  },
-  dayZeroBtn: {
+  actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -468,84 +321,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    marginTop: 4,
+    marginTop: 2,
   },
-  dayZeroBtnText: {
-    fontSize: 12,
+  actionBtnText: {
+    fontSize: 11.5,
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: 0.5,
-  },
-
-  // Fallback styles
-  item: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    padding: 11,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    gap: 8,
-  },
-  itemTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  infoCol: {
-    flex: 1,
-    flexShrink: 1,
-    marginRight: 6,
-  },
-  meta: {
-    fontSize: 11,
-    color: '#6B7280',
-    marginTop: 1,
-  },
-  bold: {
-    fontWeight: '800',
-    color: '#111827',
-  },
-  targetBadge: {
-    backgroundColor: '#111827',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    alignItems: 'center',
-    minWidth: 54,
-    flexShrink: 0,
-  },
-  targetBadgeLabel: {
-    fontSize: 8,
-    fontWeight: '800',
-    color: '#9CA3AF',
-    letterSpacing: 0.5,
-  },
-  targetVal: {
-    fontSize: 11,
-    fontWeight: '900',
-    color: '#FFFFFF',
-  },
-  progressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  track: {
-    flex: 1,
-    height: 4,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  fill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  neededText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#6B7280',
-    flexShrink: 0,
   },
 });

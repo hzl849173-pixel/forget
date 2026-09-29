@@ -2,12 +2,10 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useWorkoutAnalytics } from '../../hooks/use-workout-analytics';
 import { useWorkout } from '../../hooks/use-workout-storage';
-import { usePostWorkoutValidation } from './usePostWorkoutValidation';
 import { useProgressCommandCenter } from './useProgressCommandCenter';
-import { PostWorkoutValidationCard } from './PostWorkoutValidationCard';
-import { MuscleReadinessCard } from './MuscleReadinessCard';
 import { MilestoneCountdownCard } from './MilestoneCountdownCard';
 import { PersonalRecordsView } from './PersonalRecordsView';
+import { MuscleReadinessCard } from './MuscleReadinessCard';
 
 interface ProgressDashboardProps {
   initialModalTab?: 'overview' | 'analytics' | 'milestones' | null;
@@ -21,32 +19,26 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
   const { prs, exercises } = useWorkoutAnalytics();
   const { history } = useWorkout();
 
-  // 1. Post-workout validation & encouragement intelligence
-  const validation = usePostWorkoutValidation(history, exercises);
-
-  // 2. Readiness and next milestone data
+  // Readiness, routines, and next targets
   const { muscleReadiness, readinessSummary, milestones, upcomingRoutine } = useProgressCommandCenter(history, exercises);
 
   return (
     <View style={styles.container}>
-      {/* 1. Post-Workout Validation & Dopamine Card */}
-      <PostWorkoutValidationCard validation={validation} />
+      {/* 1. Personal Records Board */}
+      <PersonalRecordsView prs={prs} />
 
-      {/* 2. Visual Muscle Recovery & Repair Battery Chart (Red / Amber / Green) */}
-      <MuscleReadinessCard
-        readinessList={muscleReadiness}
-        summary={readinessSummary}
-      />
-
-      {/* 3. Next Habit-Learned Routine Targets with 12-Rep Double Progression */}
+      {/* 2. Next Session Progressive Overload Targets */}
       <MilestoneCountdownCard
         routine={upcomingRoutine}
         milestones={milestones}
         onStartWorkout={onStartWorkout}
       />
 
-      {/* 4. Unified Personal Records Board */}
-      <PersonalRecordsView prs={prs} />
+      {/* 3. Visual Muscle Recovery & Repair Battery */}
+      <MuscleReadinessCard
+        readinessList={muscleReadiness}
+        summary={readinessSummary}
+      />
     </View>
   );
 };
