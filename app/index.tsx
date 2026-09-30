@@ -4354,6 +4354,11 @@ export default function SinglePageLandingScreen() {
                         {section.title.toUpperCase()}
                       </Text>
                       <View style={[styles.modalSectionHeaderLine, { backgroundColor: theme.borderColor }]} />
+                      {section.title === 'Added Workouts' && (
+                        <Text style={{ fontSize: 10, fontWeight: '600', color: theme.textSecondary, letterSpacing: 0.2 }}>
+                          hold to delete
+                        </Text>
+                      )}
                     </View>
                   )}
                   renderItem={({ item, section }) => {
@@ -4440,6 +4445,29 @@ export default function SinglePageLandingScreen() {
                               setEditingModalExerciseId(item.id);
                             }
                           }}
+                          onLongPress={() => {
+                            if (item.isCustom) {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                              Alert.alert(
+                                'Delete Custom Workout',
+                                `Are you sure you want to delete "${item.name}" from your workout library?`,
+                                [
+                                  { text: 'Cancel', style: 'cancel' },
+                                  {
+                                    text: 'Delete',
+                                    style: 'destructive',
+                                    onPress: async () => {
+                                      await deleteCustomExercise(item.id);
+                                      if (selectedModalMuscle) {
+                                        setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle, undefined, new Set([item.id])));
+                                      }
+                                    },
+                                  },
+                                ]
+                              );
+                            }
+                          }}
+                          delayLongPress={450}
                           activeOpacity={0.65}
                         >
                           {fromTemplateList && (
@@ -4503,22 +4531,6 @@ export default function SinglePageLandingScreen() {
                               strokeWidth={isFav ? 2.2 : 1.8}
                             />
                           </TouchableOpacity>
-
-                          {item.isCustom && (
-                            <TouchableOpacity
-                              style={styles.modalExerciseActionBtn}
-                              onPress={async () => {
-                                await deleteCustomExercise(item.id);
-                                if (selectedModalMuscle) {
-                                  setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle, undefined, new Set([item.id])));
-                                }
-                              }}
-                              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-                              activeOpacity={0.7}
-                            >
-                              <Trash2 size={15} color="#EF4444" strokeWidth={2} />
-                            </TouchableOpacity>
-                          )}
                         </View>
                       </View>
                     );
