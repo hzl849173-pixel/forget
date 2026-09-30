@@ -1181,6 +1181,9 @@ export default function SinglePageLandingScreen() {
   const [customAlertButtons, setCustomAlertButtons] = useState<{ text: string; style?: 'cancel' | 'destructive' | 'default'; onPress?: () => void }[]>([]);
   const [customAlertIcon, setCustomAlertIcon] = useState<React.ReactNode | null>(null);
 
+  // Custom Workout Delete Confirmation Dialog State
+  const [exerciseToDelete, setExerciseToDelete] = useState<{ id: string; name: string } | null>(null);
+
   const showCustomAlert = (
     title: string,
     message: string,
@@ -1196,6 +1199,10 @@ export default function SinglePageLandingScreen() {
 
   React.useEffect(() => {
     const handleBackButton = () => {
+      if (exerciseToDelete !== null) {
+        setExerciseToDelete(null);
+        return true;
+      }
       if (editingTemplateExerciseId !== null) {
         setEditingTemplateExerciseId(null);
         return true;
@@ -4170,6 +4177,10 @@ export default function SinglePageLandingScreen() {
           presentationStyle="overFullScreen"
           statusBarTranslucent={true}
           onRequestClose={() => {
+            if (exerciseToDelete !== null) {
+              setExerciseToDelete(null);
+              return;
+            }
             if (editingModalExerciseId) {
               setEditingModalExerciseId(null);
               return;
@@ -4447,24 +4458,8 @@ export default function SinglePageLandingScreen() {
                           }}
                           onLongPress={() => {
                             if (item.isCustom) {
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                              Alert.alert(
-                                'Delete Custom Workout',
-                                `Are you sure you want to delete "${item.name}" from your workout library?`,
-                                [
-                                  { text: 'Cancel', style: 'cancel' },
-                                  {
-                                    text: 'Delete',
-                                    style: 'destructive',
-                                    onPress: async () => {
-                                      await deleteCustomExercise(item.id);
-                                      if (selectedModalMuscle) {
-                                        setSortedExerciseList(sortExercisesForMuscle(selectedModalMuscle, undefined, new Set([item.id])));
-                                      }
-                                    },
-                                  },
-                                ]
-                              );
+                              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                              setExerciseToDelete({ id: item.id, name: item.name });
                             }
                           }}
                           delayLongPress={450}
@@ -4897,6 +4892,97 @@ export default function SinglePageLandingScreen() {
                 )}
               </KeyboardAvoidingView>
             </View>
+
+            {/* Aesthetic Delete Custom Workout Confirmation Overlay */}
+            {exerciseToDelete && (
+              <View style={styles.modalDeleteOverlay}>
+                <Pressable
+                  style={StyleSheet.absoluteFill}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setExerciseToDelete(null);
+                  }}
+                />
+                <View style={[styles.alertCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                  <View style={[styles.alertIconWrapper, { backgroundColor: isDarkMode ? '#EF444415' : '#FEE2E2' }]}>
+                    <Trash2 size={26} color="#EF4444" strokeWidth={2.2} />
+                  </View>
+
+                  <Text style={[styles.alertTitle, { color: theme.textPrimary }]}>
+                    Delete Custom Workout
+                  </Text>
+
+                  <Text style={[styles.alertMessage, { color: theme.textSecondary }]}>
+                    Are you sure you want to delete "{exerciseToDelete.name}" from your workout library?
+                  </Text>
+
+                  <View style={styles.alertButtonsRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.alertBtn,
+                        {
+                          backgroundColor: isDarkMode ? '#212330' : '#E5E7EB',
+                          flex: 1,
+                        },
+                      ]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setExerciseToDelete(null);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.alertBtnText,
+                          {
+                            color: theme.textSecondary,
+                            fontWeight: '600',
+                          },
+                        ]}
+                      >
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.alertBtn,
+                        {
+                          backgroundColor: '#EF444420',
+                          flex: 1,
+                        },
+                      ]}
+                      onPress={async () => {
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        const toDelete = exerciseToDelete;
+                        setExerciseToDelete(null);
+                        if (toDelete) {
+                          await deleteCustomExercise(toDelete.id);
+                          if (selectedModalMuscle) {
+                            setSortedExerciseList(
+                              sortExercisesForMuscle(selectedModalMuscle, undefined, new Set([toDelete.id]))
+                            );
+                          }
+                        }
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.alertBtnText,
+                          {
+                            color: '#EF4444',
+                            fontWeight: '800',
+                          },
+                        ]}
+                      >
+                        Delete
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
           </View>
         </Modal>
 
@@ -8687,6 +8773,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   // Custom Alert Styles
+  modalDeleteOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    zIndex: 999,
+    elevation: 20,
+  },
   alertOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
