@@ -4361,15 +4361,17 @@ export default function SinglePageLandingScreen() {
                   removeClippedSubviews={Platform.OS === 'android'}
                   renderSectionHeader={({ section }) => (
                     <View style={styles.modalSectionHeader}>
-                      <Text style={[styles.modalSectionHeaderText, { color: theme.textSecondary }]}>
-                        {section.title.toUpperCase()}
-                      </Text>
-                      <View style={[styles.modalSectionHeaderLine, { backgroundColor: theme.borderColor }]} />
-                      {section.title === 'Added Workouts' && (
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: theme.textSecondary, letterSpacing: 0.2 }}>
-                          hold to delete
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={[styles.modalSectionHeaderText, { color: theme.textSecondary }]}>
+                          {section.title.toUpperCase()}
                         </Text>
-                      )}
+                        {section.title === 'Added Workouts' && (
+                          <Text style={{ fontSize: 10, fontWeight: '500', color: theme.textSecondary, opacity: 0.65, letterSpacing: 0.2 }}>
+                            (hold to delete)
+                          </Text>
+                        )}
+                      </View>
+                      <View style={[styles.modalSectionHeaderLine, { backgroundColor: theme.borderColor }]} />
                     </View>
                   )}
                   renderItem={({ item, section }) => {
