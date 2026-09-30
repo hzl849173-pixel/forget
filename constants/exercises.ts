@@ -484,204 +484,941 @@ export const MOVEMENT_PATTERN_GROUPS: string[][] = [
 
 export const STAPLE_REPLACEMENT_MAP: Record<string, string[]> = {
   // ==========================
-  // 1. BICEPS
+  // 1. CHEST
   // ==========================
+  // Flat Barbell Bench Press
+  'bb-bench-press': [
+    'db-bench-press',
+    'chest-press-machine',
+    'smith-bench-press',
+    'bb-incline-press',
+    'db-incline-press',
+    'hammer-strength-press',
+    'chest-dips',
+  ],
+  // Incline Barbell Press
+  'bb-incline-press': [
+    'db-incline-press',
+    'smith-incline-press',
+    'incline-machine-chest-press',
+    'db-bench-press',
+    'bb-bench-press',
+    'chest-press-machine',
+  ],
+  // Incline Dumbbell Press
+  'db-incline-press': [
+    'bb-incline-press',
+    'smith-incline-press',
+    'incline-machine-chest-press',
+    'db-bench-press',
+    'bb-bench-press',
+    'chest-press-machine',
+  ],
+  // Flat Dumbbell Press
+  'db-bench-press': [
+    'bb-bench-press',
+    'chest-press-machine',
+    'smith-bench-press',
+    'db-incline-press',
+    'bb-incline-press',
+    'hammer-strength-press',
+  ],
+  // Chest Press Machine
+  'chest-press-machine': [
+    'db-bench-press',
+    'bb-bench-press',
+    'smith-bench-press',
+    'incline-machine-chest-press',
+    'db-incline-press',
+    'hammer-strength-press',
+  ],
+  // Hammer Strength Chest Press
+  'hammer-strength-press': [
+    'chest-press-machine',
+    'db-bench-press',
+    'bb-bench-press',
+    'smith-bench-press',
+    'db-incline-press',
+  ],
+  // Incline Machine Chest Press
+  'incline-machine-chest-press': [
+    'db-incline-press',
+    'bb-incline-press',
+    'smith-incline-press',
+    'chest-press-machine',
+    'db-bench-press',
+  ],
+  // Smith Machine Bench Press
+  'smith-bench-press': [
+    'bb-bench-press',
+    'db-bench-press',
+    'chest-press-machine',
+    'smith-incline-press',
+    'bb-incline-press',
+  ],
+  // Smith Machine Incline Bench Press
+  'smith-incline-press': [
+    'bb-incline-press',
+    'db-incline-press',
+    'incline-machine-chest-press',
+    'smith-bench-press',
+    'db-bench-press',
+    'bb-bench-press',
+  ],
+  // Decline Barbell Press
+  'bb-decline-press': [
+    'db-decline-press',
+    'machine-decline-press',
+    'chest-dips',
+    'db-bench-press',
+    'bb-bench-press',
+  ],
+  // Decline Dumbbell Press
+  'db-decline-press': [
+    'bb-decline-press',
+    'machine-decline-press',
+    'chest-dips',
+    'db-bench-press',
+  ],
+  // Machine Decline Press
+  'machine-decline-press': [
+    'chest-dip-machine',
+    'bb-decline-press',
+    'db-decline-press',
+    'chest-press-machine',
+  ],
+  // Parallel Bar Dips
+  'chest-dips': [
+    'chest-dip-machine',
+    'bb-decline-press',
+    'db-decline-press',
+    'db-bench-press',
+    'push-ups',
+  ],
+  // Chest Dip Machine
+  'chest-dip-machine': [
+    'chest-dips',
+    'machine-decline-press',
+    'db-decline-press',
+    'chest-press-machine',
+  ],
+  // Pec Deck Fly
+  'pec-deck': [
+    'machine-fly',
+    'cable-crossover',
+    'low-to-high-cable',
+    'high-to-low-cable',
+    'db-flyes',
+    'db-incline-flyes',
+  ],
+  // Machine Fly
+  'machine-fly': [
+    'pec-deck',
+    'cable-crossover',
+    'low-to-high-cable',
+    'high-to-low-cable',
+    'db-flyes',
+  ],
+  // Cable Crossover
+  'cable-crossover': [
+    'pec-deck',
+    'machine-fly',
+    'high-to-low-cable',
+    'low-to-high-cable',
+    'db-flyes',
+  ],
+  // High to Low Cable Fly
+  'high-to-low-cable': [
+    'cable-crossover',
+    'pec-deck',
+    'machine-fly',
+    'low-to-high-cable',
+    'db-decline-press',
+  ],
+  // Low to High Cable Fly
+  'low-to-high-cable': [
+    'cable-crossover',
+    'pec-deck',
+    'db-incline-flyes',
+    'machine-fly',
+    'high-to-low-cable',
+  ],
+  // Flat Dumbbell Flyes
+  'db-flyes': [
+    'db-incline-flyes',
+    'pec-deck',
+    'machine-fly',
+    'cable-crossover',
+  ],
+  // Incline Dumbbell Flyes
+  'db-incline-flyes': [
+    'db-flyes',
+    'low-to-high-cable',
+    'pec-deck',
+    'machine-fly',
+    'cable-crossover',
+  ],
+  // Push-up
+  'push-ups': [
+    'weighted-pushups',
+    'incline-pushup',
+    'db-bench-press',
+    'chest-dips',
+  ],
+
+  // ==========================
+  // 2. BICEPS
+  // ==========================
+  // Dumbbell Curl
   'db-bicep-curl': [
     'incline-db-curl',
     'db-hammer-curl',
-    'bb-curl',
-    'ez-bar-curl',
     'cable-bicep-curl',
+    'ez-bar-curl',
+    'bb-curl',
     'ez-bar-preacher-curl',
   ],
+  // Incline Dumbbell Curl
+  'incline-db-curl': [
+    'db-bicep-curl',
+    'bayesian-cable-curl',
+    'incline-hammer-curl',
+    'cable-bicep-curl',
+    'ez-bar-curl',
+    'spider-curl-bb',
+  ],
+  // Dumbbell Hammer Curl
   'db-hammer-curl': [
     'cable-hammer-curl',
+    'cable-rope-curl',
     'incline-hammer-curl',
+    'crossbody-hammer',
     'db-bicep-curl',
-    'rev-bb-curl',
+    'rev-ez-bar-curl',
   ],
+  // Incline Hammer Curl
+  'incline-hammer-curl': [
+    'db-hammer-curl',
+    'cable-hammer-curl',
+    'incline-db-curl',
+    'crossbody-hammer',
+  ],
+  // Cable Hammer Curl
+  'cable-hammer-curl': [
+    'db-hammer-curl',
+    'cable-rope-curl',
+    'incline-hammer-curl',
+    'cable-bicep-curl',
+    'db-bicep-curl',
+  ],
+  // Cable Rope Curl
+  'cable-rope-curl': [
+    'cable-hammer-curl',
+    'db-hammer-curl',
+    'cable-bicep-curl',
+    'db-bicep-curl',
+  ],
+  // Barbell Curl
   'bb-curl': [
     'ez-bar-curl',
     'db-bicep-curl',
     'cable-bicep-curl',
+    'incline-db-curl',
     'ez-bar-preacher-curl',
   ],
+  // EZ Bar Curl
   'ez-bar-curl': [
     'bb-curl',
     'db-bicep-curl',
     'cable-bicep-curl',
+    'incline-db-curl',
     'ez-bar-preacher-curl',
   ],
+  // Cable Curl
+  'cable-bicep-curl': [
+    'db-bicep-curl',
+    'ez-bar-curl',
+    'bayesian-cable-curl',
+    'bb-curl',
+    'incline-db-curl',
+    'cable-hammer-curl',
+  ],
+  // Bayesian Cable Curl
+  'bayesian-cable-curl': [
+    'incline-db-curl',
+    'cable-bicep-curl',
+    'db-bicep-curl',
+    'ez-bar-curl',
+  ],
+  // EZ-Bar Preacher Curl
   'ez-bar-preacher-curl': [
     'machine-preacher-curl',
     'db-preacher-curl',
+    'spider-curl-bb',
     'ez-bar-curl',
-    'cable-bicep-curl',
+    'db-bicep-curl',
   ],
+  // Machine Preacher Curl
   'machine-preacher-curl': [
     'ez-bar-preacher-curl',
     'db-preacher-curl',
-    'ez-bar-curl',
+    'spider-curl-bb',
     'cable-bicep-curl',
+    'ez-bar-curl',
   ],
+  // Dumbbell Preacher Curl
   'db-preacher-curl': [
     'machine-preacher-curl',
     'ez-bar-preacher-curl',
-    'ez-bar-curl',
+    'spider-curl-bb',
+    'incline-db-curl',
+    'db-bicep-curl',
+  ],
+  // Concentration Curl
+  'concentration-curl': [
+    'db-preacher-curl',
+    'machine-preacher-curl',
+    'db-bicep-curl',
     'cable-bicep-curl',
   ],
-
-  // ==========================
-  // 2. CHEST
-  // ==========================
-  'bb-bench-press': [
-    'db-bench-press',
-    'bb-incline-press',
-    'db-incline-press',
-    'chest-press-machine',
-    'smith-bench-press',
+  // Spider Curl
+  'spider-curl': [
+    'spider-curl-bb',
+    'db-preacher-curl',
+    'ez-bar-preacher-curl',
+    'incline-db-curl',
   ],
-  'bb-incline-press': [
-    'db-incline-press',
-    'smith-incline-press',
-    'bb-bench-press',
-    'db-bench-press',
+  'spider-curl-bb': [
+    'spider-curl',
+    'ez-bar-preacher-curl',
+    'machine-preacher-curl',
+    'incline-db-curl',
   ],
-  'db-bench-press': [
-    'bb-bench-press',
-    'db-incline-press',
-    'chest-press-machine',
-    'smith-bench-press',
+  // Reverse Curls
+  'rev-ez-bar-curl': [
+    'rev-bb-curl',
+    'cable-reverse-curl',
+    'rev-db-curl',
+    'db-hammer-curl',
   ],
-  'pec-deck': [
-    'machine-fly',
-    'cable-crossover',
-    'high-to-low-cable',
-    'low-to-high-cable',
-    'db-flyes',
-    'db-incline-flyes',
+  'rev-bb-curl': [
+    'rev-ez-bar-curl',
+    'cable-reverse-curl',
+    'rev-db-curl',
+    'db-hammer-curl',
   ],
 
   // ==========================
   // 3. BACK
   // ==========================
+  // Lat Pulldown
   'lat-pulldown': [
     'pull-ups',
-    'chin-up-back',
+    'neutral-grip-lat-pulldown',
+    'wide-grip-lat-pulldown',
     'close-grip-pulldown',
     'single-arm-pulldown',
     'underhand-pulldown',
+    'cable-row',
   ],
+  // Neutral Grip Lat Pulldown
+  'neutral-grip-lat-pulldown': [
+    'lat-pulldown',
+    'close-grip-pulldown',
+    'pull-ups',
+    'wide-grip-lat-pulldown',
+    'cable-row',
+  ],
+  // Close Grip Lat Pulldown
+  'close-grip-pulldown': [
+    'neutral-grip-lat-pulldown',
+    'lat-pulldown',
+    'single-arm-pulldown',
+    'pull-ups',
+    'underhand-pulldown',
+  ],
+  // Wide Grip Lat Pulldown
+  'wide-grip-lat-pulldown': [
+    'lat-pulldown',
+    'pull-ups',
+    'neutral-grip-lat-pulldown',
+    'close-grip-pulldown',
+  ],
+  // Underhand Lat Pulldown
+  'underhand-pulldown': [
+    'chin-up-back',
+    'lat-pulldown',
+    'close-grip-pulldown',
+    'neutral-grip-lat-pulldown',
+  ],
+  // Single-Arm Lat Pulldown
+  'single-arm-pulldown': [
+    'lat-pulldown',
+    'close-grip-pulldown',
+    'single-arm-cable-row',
+    'neutral-grip-lat-pulldown',
+  ],
+  // Pull-up
+  'pull-ups': [
+    'lat-pulldown',
+    'chin-up-back',
+    'neutral-grip-lat-pulldown',
+    'wide-grip-lat-pulldown',
+    'underhand-pulldown',
+  ],
+  // Chin-up
+  'chin-up-back': [
+    'pull-ups',
+    'underhand-pulldown',
+    'lat-pulldown',
+    'close-grip-pulldown',
+  ],
+  // Barbell Bent Over Row
   'bb-row': [
+    'cable-row',
+    'tbar-row',
+    'chest-supported-db-row',
+    'machine-row',
+    'db-row',
+    'pendlay-row',
+  ],
+  // Pendlay Row
+  'pendlay-row': [
+    'bb-row',
+    'tbar-row',
+    'cable-row',
+    'chest-supported-db-row',
+  ],
+  // Seated Cable Row
+  'cable-row': [
+    'bb-row',
+    'single-arm-cable-row',
+    'machine-row',
+    'chest-supported-db-row',
+    'db-row',
+    'tbar-row',
+  ],
+  // Single-Arm Cable Row
+  'single-arm-cable-row': [
+    'cable-row',
+    'db-row',
+    'chest-supported-db-row',
+    'machine-row',
+    'single-arm-pulldown',
+  ],
+  // Dumbbell Row
+  'db-row': [
+    'chest-supported-db-row',
+    'single-arm-cable-row',
+    'cable-row',
+    'bb-row',
+    'machine-row',
+  ],
+  // Chest-Supported Dumbbell Row
+  'chest-supported-db-row': [
+    'cable-row',
+    'db-row',
+    'tbar-row',
+    'machine-row',
+    'bb-row',
+  ],
+  // T-Bar Row
+  'tbar-row': [
+    'bb-row',
     'cable-row',
     'chest-supported-db-row',
     'machine-row',
     'db-row',
   ],
-  'cable-row': [
-    'bb-row',
-    'db-row',
+  // Machine Row
+  'machine-row': [
+    'cable-row',
     'chest-supported-db-row',
-    'machine-row',
+    'bb-row',
+    'tbar-row',
+    'db-row',
   ],
+  // Deadlift
   'deadlift': [
     'trap-bar-deadlift',
     'rdl',
     'rack-pulls',
+    'stiff-leg-deadlift',
+  ],
+  // Trap Bar Deadlift
+  'trap-bar-deadlift': [
+    'deadlift',
+    'rdl',
+    'rack-pulls',
+  ],
+  // Rack Pulls
+  'rack-pulls': [
+    'deadlift',
+    'trap-bar-deadlift',
+    'bb-shrugs',
+  ],
+  // Straight Arm Pulldown
+  'straight-arm-pulldown': [
+    'cable-back-pullover',
+    'db-back-pullover',
+    'lat-pulldown',
+  ],
+  // Cable Back Pullover
+  'cable-back-pullover': [
+    'straight-arm-pulldown',
+    'db-back-pullover',
+    'lat-pulldown',
+  ],
+  // Shrugs
+  'bb-shrugs': [
+    'db-shrugs',
+    'rack-pulls',
+    'bb-upright-row',
+  ],
+  'db-shrugs': [
+    'bb-shrugs',
+    'db-upright-row',
   ],
 
   // ==========================
   // 4. SHOULDERS
   // ==========================
+  // Overhead Barbell Press
   'bb-overhead-press': [
     'db-shoulder-press',
-    'machine-shoulder-press',
+    'seated-bb-shoulder-press',
     'smith-shoulder-press',
+    'machine-shoulder-press',
     'arnold-press',
   ],
+  // Seated Barbell Shoulder Press
+  'seated-bb-shoulder-press': [
+    'db-shoulder-press',
+    'bb-overhead-press',
+    'smith-shoulder-press',
+    'machine-shoulder-press',
+    'arnold-press',
+  ],
+  // Dumbbell Shoulder Press
+  'db-shoulder-press': [
+    'bb-overhead-press',
+    'seated-bb-shoulder-press',
+    'smith-shoulder-press',
+    'machine-shoulder-press',
+    'arnold-press',
+  ],
+  // Arnold Press
+  'arnold-press': [
+    'db-shoulder-press',
+    'bb-overhead-press',
+    'machine-shoulder-press',
+    'smith-shoulder-press',
+  ],
+  // Smith Machine Shoulder Press
+  'smith-shoulder-press': [
+    'machine-shoulder-press',
+    'db-shoulder-press',
+    'seated-bb-shoulder-press',
+    'bb-overhead-press',
+  ],
+  // Machine Shoulder Press
+  'machine-shoulder-press': [
+    'smith-shoulder-press',
+    'db-shoulder-press',
+    'seated-bb-shoulder-press',
+    'bb-overhead-press',
+  ],
+  // Dumbbell Lateral Raise
   'db-lateral-raise': [
     'cable-lateral-raise',
     'machine-lateral-raise',
-    'face-pull',
-    'db-front-raise',
+    'leaning-db-lateral-raise',
+    'db-upright-row',
+    'cable-upright-row',
   ],
+  // Cable Lateral Raise
+  'cable-lateral-raise': [
+    'db-lateral-raise',
+    'machine-lateral-raise',
+    'leaning-db-lateral-raise',
+    'cable-upright-row',
+  ],
+  // Machine Lateral Raise
+  'machine-lateral-raise': [
+    'cable-lateral-raise',
+    'db-lateral-raise',
+    'leaning-db-lateral-raise',
+  ],
+  // Leaning Dumbbell Lateral Raise
+  'leaning-db-lateral-raise': [
+    'db-lateral-raise',
+    'cable-lateral-raise',
+    'machine-lateral-raise',
+  ],
+  // Face Pull
   'face-pull': [
     'reverse-pec-deck',
     'machine-rear-delt-fly',
+    'cable-rear-delt-fly',
     'db-rear-delt-fly',
+    'cable-rear-delt-row',
   ],
-  'db-rear-delt-fly': [
-    'reverse-pec-deck',
-    'face-pull',
-  ],
+  // Reverse Pec Deck
   'reverse-pec-deck': [
     'face-pull',
     'machine-rear-delt-fly',
+    'cable-rear-delt-fly',
     'db-rear-delt-fly',
+  ],
+  // Dumbbell Rear Delt Fly
+  'db-rear-delt-fly': [
+    'reverse-pec-deck',
+    'face-pull',
+    'machine-rear-delt-fly',
+    'cable-rear-delt-fly',
+  ],
+  // Machine Rear Delt Fly
+  'machine-rear-delt-fly': [
+    'reverse-pec-deck',
+    'face-pull',
+    'cable-rear-delt-fly',
+    'db-rear-delt-fly',
+  ],
+  // Cable Rear Delt Fly
+  'cable-rear-delt-fly': [
+    'reverse-pec-deck',
+    'face-pull',
+    'machine-rear-delt-fly',
+    'db-rear-delt-fly',
+  ],
+  // Upright Rows
+  'bb-upright-row': [
+    'ez-bar-upright-row',
+    'db-upright-row',
+    'cable-upright-row',
+    'db-lateral-raise',
+  ],
+  'ez-bar-upright-row': [
+    'bb-upright-row',
+    'db-upright-row',
+    'cable-upright-row',
+    'db-lateral-raise',
+  ],
+  'db-upright-row': [
+    'bb-upright-row',
+    'cable-upright-row',
+    'db-lateral-raise',
+    'cable-lateral-raise',
+  ],
+  'cable-upright-row': [
+    'db-upright-row',
+    'bb-upright-row',
+    'cable-lateral-raise',
+    'db-lateral-raise',
   ],
 
   // ==========================
   // 5. TRICEPS
   // ==========================
+  // Tricep Pushdown
   'tricep-pushdown': [
     'rope-pushdown',
+    'cable-vbar-pushdown',
+    'straight-bar-pushdown',
     'cable-rope-overhead',
     'skull-crushers',
-    'close-grip-bench',
     'bench-dips',
+    'close-grip-bench',
   ],
+  // Rope Pushdown
+  'rope-pushdown': [
+    'tricep-pushdown',
+    'cable-vbar-pushdown',
+    'cable-rope-overhead',
+    'overhead-db-extension',
+    'skull-crushers',
+  ],
+  // Cable V-Bar Pushdown
+  'cable-vbar-pushdown': [
+    'tricep-pushdown',
+    'rope-pushdown',
+    'straight-bar-pushdown',
+    'skull-crushers',
+  ],
+  // Straight Bar Pushdown
+  'straight-bar-pushdown': [
+    'tricep-pushdown',
+    'cable-vbar-pushdown',
+    'rope-pushdown',
+    'close-grip-bench',
+  ],
+  // Overhead Cable Extension
   'cable-overhead-ext': [
+    'cable-rope-overhead',
     'overhead-db-extension',
-    'rope-pushdown',
+    'two-arm-db-overhead-ext',
     'skull-crushers',
-    'close-grip-bench',
+    'rope-pushdown',
+    'ez-bar-french-press',
   ],
+  // Cable Rope Overhead Extension
   'cable-rope-overhead': [
+    'cable-overhead-ext',
     'overhead-db-extension',
-    'rope-pushdown',
     'skull-crushers',
-    'close-grip-bench',
+    'rope-pushdown',
+    'two-arm-db-overhead-ext',
   ],
+  // Overhead Dumbbell Extension
+  'overhead-db-extension': [
+    'cable-rope-overhead',
+    'cable-overhead-ext',
+    'two-arm-db-overhead-ext',
+    'skull-crushers',
+    'rope-pushdown',
+  ],
+  // Two-Arm DB Overhead Extension
+  'two-arm-db-overhead-ext': [
+    'overhead-db-extension',
+    'cable-rope-overhead',
+    'skull-crushers',
+  ],
+  // Skull Crusher
   'skull-crushers': [
     'ez-bar-skull-crusher',
     'db-skull-crushers',
+    'close-grip-bench',
     'cable-rope-overhead',
     'rope-pushdown',
+    'overhead-db-extension',
+  ],
+  // EZ-Bar Skull Crusher
+  'ez-bar-skull-crusher': [
+    'skull-crushers',
+    'db-skull-crushers',
     'close-grip-bench',
+    'cable-rope-overhead',
+    'rope-pushdown',
+  ],
+  // Dumbbell Skull Crushers
+  'db-skull-crushers': [
+    'ez-bar-skull-crusher',
+    'skull-crushers',
+    'close-grip-bench',
+    'cable-rope-overhead',
+  ],
+  // Close Grip Bench Press
+  'close-grip-bench': [
+    'skull-crushers',
+    'bench-dips',
+    'weighted-dips',
+    'tricep-pushdown',
+    'rope-pushdown',
+  ],
+  // Tricep Dips
+  'bench-dips': [
+    'weighted-dips',
+    'tricep-dip-machine',
+    'close-grip-bench',
+    'tricep-pushdown',
+  ],
+  // Weighted Dips
+  'weighted-dips': [
+    'bench-dips',
+    'tricep-dip-machine',
+    'close-grip-bench',
+  ],
+  // Tricep Dip Machine
+  'tricep-dip-machine': [
+    'bench-dips',
+    'weighted-dips',
+    'close-grip-bench',
+    'tricep-pushdown',
   ],
 
   // ==========================
   // 6. LEGS
   // ==========================
+  // Barbell Squat
   'bb-squat': [
     'leg-press',
     'hack-squat',
     'smith-squat',
     'front-squat',
     'goblet-squat',
+    'bulgarian-split-squat',
+    'v-squat-machine',
   ],
+  // Leg Press
+  'leg-press': [
+    'hack-squat',
+    'bb-squat',
+    'smith-squat',
+    'v-squat-machine',
+    'bulgarian-split-squat',
+    'front-squat',
+  ],
+  // Hack Squat
+  'hack-squat': [
+    'leg-press',
+    'bb-squat',
+    'smith-squat',
+    'v-squat-machine',
+    'front-squat',
+  ],
+  // Smith Machine Squat
+  'smith-squat': [
+    'hack-squat',
+    'leg-press',
+    'bb-squat',
+    'front-squat',
+    'goblet-squat',
+  ],
+  // Front Squat
+  'front-squat': [
+    'bb-squat',
+    'hack-squat',
+    'leg-press',
+    'goblet-squat',
+  ],
+  // Goblet Squat
+  'goblet-squat': [
+    'leg-press',
+    'hack-squat',
+    'bb-squat',
+    'bulgarian-split-squat',
+  ],
+  // Bulgarian Split Squat
+  'bulgarian-split-squat': [
+    'lunges',
+    'bb-walking-lunge',
+    'rev-lunge',
+    'leg-press',
+    'goblet-squat',
+  ],
+  // Lunges
+  'lunges': [
+    'bulgarian-split-squat',
+    'bb-walking-lunge',
+    'rev-lunge',
+    'goblet-squat',
+  ],
+  // Leg Extensions
+  'leg-extensions': [
+    'goblet-squat',
+    'leg-press',
+    'hack-squat',
+  ],
+  // Romanian Deadlift (RDL)
   'rdl': [
     'db-rdl',
     'stiff-leg-deadlift',
     'seated-leg-curls',
     'lying-leg-curls',
     'hip-thrust',
+    'single-leg-rdl',
   ],
+  // Dumbbell RDL
+  'db-rdl': [
+    'rdl',
+    'stiff-leg-deadlift',
+    'seated-leg-curls',
+    'lying-leg-curls',
+    'hip-thrust',
+  ],
+  // Stiff-Leg Deadlift
+  'stiff-leg-deadlift': [
+    'rdl',
+    'db-rdl',
+    'seated-leg-curls',
+    'lying-leg-curls',
+  ],
+  // Lying Leg Curls
   'lying-leg-curls': [
     'seated-leg-curls',
     'rdl',
+    'db-rdl',
+    'stiff-leg-deadlift',
   ],
+  // Seated Leg Curls
   'seated-leg-curls': [
     'lying-leg-curls',
     'rdl',
+    'db-rdl',
+    'stiff-leg-deadlift',
   ],
+  // Hip Thrust
+  'hip-thrust': [
+    'machine-hip-thrust',
+    'glute-bridge',
+    'rdl',
+    'db-rdl',
+  ],
+  // Machine Hip Thrust
+  'machine-hip-thrust': [
+    'hip-thrust',
+    'glute-bridge',
+    'rdl',
+  ],
+  // Standing Calf Raises
   'standing-calf-raises': [
     'seated-calf-raises',
     'calf-press-legpress',
   ],
+  // Seated Calf Raises
   'seated-calf-raises': [
     'standing-calf-raises',
     'calf-press-legpress',
+  ],
+  // Calf Press on Leg Press
+  'calf-press-legpress': [
+    'standing-calf-raises',
+    'seated-calf-raises',
+  ],
+
+  // ==========================
+  // 7. ABS
+  // ==========================
+  // Cable Crunch
+  'cable-crunch': [
+    'ab-crunch',
+    'machine-ab-crunch',
+    'hanging-knee-raise',
+    'lying-leg-raises',
+    'plank',
+  ],
+  // Ab Crunch
+  'ab-crunch': [
+    'cable-crunch',
+    'machine-ab-crunch',
+    'hanging-knee-raise',
+    'bicycle-crunches',
+  ],
+  // Machine Ab Crunch
+  'machine-ab-crunch': [
+    'cable-crunch',
+    'ab-crunch',
+    'hanging-knee-raise',
+  ],
+  // Hanging Knee Raise
+  'hanging-knee-raise': [
+    'lying-leg-raises',
+    'cable-crunch',
+    'ab-crunch',
+    'plank',
+  ],
+  // Lying Leg Raises
+  'lying-leg-raises': [
+    'hanging-knee-raise',
+    'reverse-crunch',
+    'cable-crunch',
+  ],
+  // Plank
+  'plank': [
+    'ab-wheel',
+    'hanging-knee-raise',
+    'cable-crunch',
+    'russian-twist',
   ],
 };
 
@@ -712,14 +1449,23 @@ export const getMovementPatternGroup = (exerciseId: string, muscleGroup: MuscleG
   const words = currentEx.name
     .toLowerCase()
     .split(' ')
-    .filter((w) => w.length > 3 && !['barbell', 'dumbbell', 'cable', 'machine', 'smith'].includes(w));
+    .filter((w) => w.length > 2 && !['barbell', 'dumbbell', 'cable', 'machine', 'smith'].includes(w));
 
   if (words.length > 0) {
+    // Try finding if there's a staple exercise in this muscle group that shares the movement pattern
+    const stapleMatch = sameMuscle.find((e) => STAPLE_REPLACEMENT_MAP[e.id] && words.some((w) => e.name.toLowerCase().includes(w)));
+    if (stapleMatch && STAPLE_REPLACEMENT_MAP[stapleMatch.id]) {
+      const list = STAPLE_REPLACEMENT_MAP[stapleMatch.id]
+        .map((id) => allExercises.find((e) => e.id === id))
+        .filter((e): e is ExerciseSeed => e !== undefined && e.id !== exerciseId);
+      if (list.length > 0) return [stapleMatch, ...list];
+    }
+
     const matchingByName = sameMuscle.filter((e) => words.some((w) => e.name.toLowerCase().includes(w)));
     if (matchingByName.length > 1) return matchingByName;
   }
 
-  return [];
+  return sameMuscle.slice(0, 6);
 };
 
 export const getMovementFamilyIds = (exerciseId: string): string[] => {

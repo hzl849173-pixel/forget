@@ -734,12 +734,23 @@ export default function SinglePageLandingScreen() {
     name: string;
   } | null>(null);
   const [customReplacements, setCustomReplacements] = useState<Record<string, string[]>>({});
+  const [replacementFrequencies, setReplacementFrequencies] = useState<Record<string, Record<string, number>>>({});
 
   React.useEffect(() => {
     AsyncStorage.getItem('@custom_replacement_map').then((data) => {
       if (data) {
         try {
           setCustomReplacements(JSON.parse(data));
+        } catch (e) {
+          // ignore parse error
+        }
+      }
+    });
+
+    AsyncStorage.getItem('@exercise_replacement_frequency').then((data) => {
+      if (data) {
+        try {
+          setReplacementFrequencies(JSON.parse(data));
         } catch (e) {
           // ignore parse error
         }
@@ -1395,28 +1406,73 @@ export default function SinglePageLandingScreen() {
     );
 
     const userCustomIds = customReplacements[currentExerciseId] || [];
+    const patternGroup = getMovementPatternGroup(currentExerciseId, muscleGroup, exercises);
+
+    // Candidates from the curated pattern group, excluding current and active exercises
+    const validPatternExs = patternGroup.filter(
+      (ex) => ex.id !== currentExerciseId && !activeExIds.has(ex.id)
+    );
+
+    // User replacement frequency map for this movement
+    const freqMap = replacementFrequencies[currentExerciseId] || {};
+
+    // ANCHOR & ADAPT ARCHITECTURE:
+    // Slot 1-3: Fixed Anchors (Top staples remain fixed to protect muscle memory)
+    const anchorSlots = validPatternExs.slice(0, 3);
+    const chosenIds = new Set(anchorSlots.map((e) => e.id));
+
+    // Adaptive Slots:
+    // 1. User explicitly added exercises via "+ More" picker
     const customExs = userCustomIds
       .map((id) => exercises.find((e) => e.id === id))
-      .filter((e): e is Exercise => e !== undefined && !activeExIds.has(e.id) && e.id !== currentExerciseId)
-      .map((e) => ({ ...e, isUserAdded: true }));
+      .filter((e): e is Exercise => e !== undefined && !activeExIds.has(e.id) && e.id !== currentExerciseId && !chosenIds.has(e.id))
+      .map((e) => ({ ...e, isUserAdded: true, isFrequent: false }));
 
-    const patternGroup = getMovementPatternGroup(currentExerciseId, muscleGroup, exercises)
-      .filter((ex) => ex.id !== currentExerciseId && !activeExIds.has(ex.id) && !userCustomIds.includes(ex.id))
-      .map((e) => ({ ...e, isUserAdded: false }));
+    customExs.forEach((e) => chosenIds.add(e.id));
 
-    const combined = [...customExs, ...patternGroup];
-    if (combined.length > 0) {
-      return combined.slice(0, 6);
+    // 2. Repeated user habits (used at least 2 times for this exercise), sorted stably by frequency
+    const frequentReplacements = Object.entries(freqMap)
+      .filter(([exId, count]) => count >= 2 && !chosenIds.has(exId) && !activeExIds.has(exId) && exId !== currentExerciseId)
+      .sort((a, b) => b[1] - a[1])
+      .map(([exId]) => exercises.find((e) => e.id === exId))
+      .filter((e): e is Exercise => e !== undefined)
+      .map((e) => ({ ...e, isUserAdded: false, isFrequent: true }));
+
+    frequentReplacements.forEach((e) => chosenIds.add(e.id));
+
+    // 3. Remaining staples from the movement pattern group
+    const remainingStaples = validPatternExs
+      .filter((e) => !chosenIds.has(e.id))
+      .map((e) => ({ ...e, isUserAdded: false, isFrequent: false }));
+
+    remainingStaples.forEach((e) => chosenIds.add(e.id));
+
+    // Combine in stable order
+    const finalOptions = [
+      ...anchorSlots.map((e) => ({
+        ...e,
+        isUserAdded: userCustomIds.includes(e.id),
+        isFrequent: (freqMap[e.id] || 0) >= 2,
+      })),
+      ...customExs,
+      ...frequentReplacements,
+      ...remainingStaples,
+    ];
+
+    if (finalOptions.length >= 6) {
+      return finalOptions.slice(0, 6);
     }
 
-    const sameMuscle = exercises.filter((ex) =>
-      ex.muscleGroup === muscleGroup &&
-      ex.id !== currentExerciseId &&
-      !activeExIds.has(ex.id) &&
-      !userCustomIds.includes(ex.id)
-    ).map((e) => ({ ...e, isUserAdded: false }));
+    // Fallback: fill with same muscle group if fewer than 6
+    const sameMuscle = exercises.filter(
+      (ex) =>
+        ex.muscleGroup === muscleGroup &&
+        ex.id !== currentExerciseId &&
+        !activeExIds.has(ex.id) &&
+        !chosenIds.has(ex.id)
+    ).map((e) => ({ ...e, isUserAdded: false, isFrequent: false }));
 
-    return [...customExs, ...sameMuscle].slice(0, 6);
+    return [...finalOptions, ...sameMuscle].slice(0, 6);
   };
 
   const handleReplaceExercise = (activeId: string, currentExerciseId: string, newExerciseId: string) => {
@@ -1434,6 +1490,22 @@ export default function SinglePageLandingScreen() {
 
     setActiveSessionExercises(updated);
     AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+
+    // Record replacement habit frequency
+    setReplacementFrequencies((prev) => {
+      const currentMap = prev[currentExerciseId] || {};
+      const newCount = (currentMap[newExerciseId] || 0) + 1;
+      const updatedFreq = {
+        ...prev,
+        [currentExerciseId]: {
+          ...currentMap,
+          [newExerciseId]: newCount,
+        },
+      };
+      AsyncStorage.setItem('@exercise_replacement_frequency', JSON.stringify(updatedFreq)).catch(() => {});
+      return updatedFreq;
+    });
+
     setReplacingActiveId(null);
     setMainScrollEnabled(true);
   };
@@ -2924,9 +2996,10 @@ export default function SinglePageLandingScreen() {
                             ) : (
                               options.map((alt, optIdx) => {
                                 const isUserAdded = !!(alt as any).isUserAdded;
+                                const isFrequent = !!(alt as any).isFrequent;
                                 const groupColor = isUserAdded
                                   ? '#06B6D4'
-                                  : (INSTRUMENT_COLORS[alt.instrument] || categoryColors[alt.muscleGroup] || '#10B981');
+                                  : (isFrequent ? '#8B5CF6' : (INSTRUMENT_COLORS[alt.instrument] || categoryColors[alt.muscleGroup] || '#10B981'));
                                 return (
                                   <TouchableOpacity
                                     key={alt.id}
@@ -2936,6 +3009,7 @@ export default function SinglePageLandingScreen() {
                                       styles.replaceOptionItem,
                                       { borderBottomColor: theme.borderColor, backgroundColor: theme.cardBg },
                                       isUserAdded && { backgroundColor: isDarkMode ? '#06B6D40C' : '#06B6D408' },
+                                      isFrequent && !isUserAdded && { backgroundColor: isDarkMode ? '#8B5CF60C' : '#8B5CF608' },
                                     ]}
                                   >
                                     <View style={[styles.activeSessionItemAccent, { backgroundColor: groupColor }]} />
@@ -2946,7 +3020,9 @@ export default function SinglePageLandingScreen() {
                                     </View>
                                     <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${groupColor}18` }]}>
                                       <Text style={[styles.activeSessionMuscleBadgeText, { color: groupColor }]}>
-                                        {isUserAdded ? `SAVED • ${alt.instrument.toUpperCase()}` : alt.instrument.toUpperCase()}
+                                        {isUserAdded
+                                          ? `SAVED • ${alt.instrument.toUpperCase()}`
+                                          : (isFrequent ? `FREQUENT • ${alt.instrument.toUpperCase()}` : alt.instrument.toUpperCase())}
                                       </Text>
                                     </View>
                                   </TouchableOpacity>
