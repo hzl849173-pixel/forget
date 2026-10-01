@@ -710,20 +710,7 @@ export default function SinglePageLandingScreen() {
 
   const [activeSessionExercises, setActiveSessionExercises] = useState<LoggedExercise[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<number>(0);
-  const [sessionElapsedSeconds, setSessionElapsedSeconds] = useState(0);
 
-  React.useEffect(() => {
-    if (sessionStartTime > 0) {
-      const update = () => {
-        setSessionElapsedSeconds(Math.max(0, Math.floor((Date.now() - sessionStartTime) / 1000)));
-      };
-      update();
-      const interval = setInterval(update, 1000);
-      return () => clearInterval(interval);
-    } else {
-      setSessionElapsedSeconds(0);
-    }
-  }, [sessionStartTime]);
 
   const [sessionInitialLoaded, setSessionInitialLoaded] = useState(false);
   const [editSessionExerciseModalVisible, setEditSessionExerciseModalVisible] = useState(false);
@@ -922,15 +909,7 @@ export default function SinglePageLandingScreen() {
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const formatSessionDuration = (totalSec: number) => {
-    const hrs = Math.floor(totalSec / 3600);
-    const mins = Math.floor((totalSec % 3600) / 60);
-    const secs = totalSec % 60;
-    if (hrs > 0) {
-      return `${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
-    }
-    return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
+
 
   const handleTimerFinished = async () => {
     if (restTimerRef.current) clearInterval(restTimerRef.current);
@@ -5213,20 +5192,26 @@ export default function SinglePageLandingScreen() {
                       year: 'numeric',
                     }) : '';
 
+                    const isLiveLogger = loggingMode === 'live';
+                    const ContentWrapper = isLiveLogger ? View : Card;
+                    const contentWrapperProps = isLiveLogger
+                      ? { style: { flex: 1, paddingBottom: 16 } }
+                      : { style: [styles.activeSessionCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }] };
+
                     return (
-                      <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, zIndex: 50 }]}>
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: isLiveLogger ? theme.cardBg : theme.background, zIndex: 50 }]}>
                         <ScrollView
                           style={{ flex: 1 }}
                           contentContainerStyle={{
                             paddingHorizontal: 16,
-                            paddingTop: insets.top > 0 ? insets.top + 8 : 32,
+                            paddingTop: insets.top > 0 ? insets.top + 8 : 16,
                             paddingBottom: insets.bottom > 0 ? insets.bottom + 24 : 32,
                           }}
                           keyboardShouldPersistTaps="handled"
                           showsVerticalScrollIndicator={false}
                         >
-                          {/* Live Mode Top Header: Minimize, Live Session Timer, Rest Timer */}
-                          {loggingMode === 'live' && (
+                          {/* Live Mode Top Header: Minimize on left, Rest Timer on right */}
+                          {isLiveLogger && (
                             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                               <TouchableOpacity
                                 onPress={() => {
@@ -5275,43 +5260,61 @@ export default function SinglePageLandingScreen() {
                                 </Text>
                               </TouchableOpacity>
 
-                              {/* Center Live Session Elapsed Timer */}
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#10B981' }} />
-                                <Text style={{ fontSize: 13, fontWeight: '800', color: theme.textPrimary, letterSpacing: 0.5, fontVariant: ['tabular-nums'] }}>
-                                  {formatSessionDuration(sessionElapsedSeconds)}
-                                </Text>
-                              </View>
-
-                              {/* Rest Timer Button */}
-                              <TouchableOpacity
-                                onPress={() => {
-                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                  setRestTimerVisible(true);
-                                }}
-                                activeOpacity={0.7}
-                                style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  gap: 5,
-                                  paddingVertical: 6,
-                                  paddingHorizontal: 11,
-                                  borderRadius: 99,
-                                  backgroundColor: restTimerRunning ? (isDarkMode ? '#10B98125' : '#10B98118') : (isDarkMode ? '#13141C' : '#F0F9FF'),
-                                  borderWidth: 1,
-                                  borderColor: restTimerRunning ? '#10B981' : theme.borderColor,
-                                }}
-                              >
-                                <Timer size={13} color={restTimerRunning ? '#10B981' : theme.textSecondary} strokeWidth={2.2} />
-                                <Text style={{ fontSize: 11, fontWeight: '800', color: restTimerRunning ? '#10B981' : theme.textSecondary, letterSpacing: 0.3 }}>
-                                  {restTimerRunning ? formatRestTime(restTimerSeconds) : 'REST'}
-                                </Text>
-                              </TouchableOpacity>
+                              {/* Rest Timer Button / Active Countdown */}
+                              {restTimerRunning ? (
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setRestTimerVisible(true);
+                                  }}
+                                  activeOpacity={0.8}
+                                  style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    gap: 5,
+                                    paddingVertical: 6,
+                                    paddingHorizontal: 12,
+                                    borderRadius: 99,
+                                    backgroundColor: isDarkMode ? '#10B98125' : '#10B98118',
+                                    borderWidth: 1,
+                                    borderColor: '#10B981',
+                                  }}
+                                >
+                                  <Timer size={13} color="#10B981" strokeWidth={2.4} />
+                                  <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981', letterSpacing: 0.5 }}>
+                                    {formatRestTime(restTimerSeconds)}
+                                  </Text>
+                                </TouchableOpacity>
+                              ) : (
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setRestTimerVisible(true);
+                                  }}
+                                  activeOpacity={0.7}
+                                  style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    gap: 5,
+                                    paddingVertical: 6,
+                                    paddingHorizontal: 12,
+                                    borderRadius: 99,
+                                    backgroundColor: isDarkMode ? 'rgba(56, 189, 248, 0.08)' : '#F0F9FF',
+                                    borderWidth: 1,
+                                    borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.28)' : '#BAE6FD',
+                                  }}
+                                >
+                                  <Timer size={13} color={isDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth={2.4} />
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: isDarkMode ? '#38BDF8' : '#0284C7', letterSpacing: 0.4 }}>
+                                    REST TIMER
+                                  </Text>
+                                </TouchableOpacity>
+                              )}
                             </View>
                           )}
 
                           {/* Selected Workouts Navigation Strip (Live Mode) */}
-                          {loggingMode === 'live' && activeSessionExercises.length > 1 && (
+                          {isLiveLogger && activeSessionExercises.length > 1 && (
                             <View style={[styles.loggerNavPillWrap, { marginTop: 0, marginBottom: 12 }]}>
                               {activeSessionExercises.map((item, index) => {
                                 const isSelected = item.exerciseId === editingModalExerciseId;
@@ -5365,7 +5368,7 @@ export default function SinglePageLandingScreen() {
                             </View>
                           )}
 
-                          <Card style={[styles.activeSessionCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+                          <ContentWrapper {...contentWrapperProps}>
                             {/* Header */}
                             <View style={[styles.activeSessionHeader, { alignItems: 'flex-start' }]}>
                               <View style={{ flex: 1, paddingRight: 8 }}>
@@ -5657,7 +5660,7 @@ export default function SinglePageLandingScreen() {
                               </TouchableOpacity>
                             </View>
                           )}
-                        </Card>
+                        </ContentWrapper>
                       </ScrollView>
                       </View>
                     );
