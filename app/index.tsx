@@ -4234,7 +4234,7 @@ export default function SinglePageLandingScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <TouchableOpacity
                       onPress={() => {
-                        setNewExerciseName('');
+                        setNewExerciseName(search.trim() || '');
                         setAddExerciseVisible(true);
                       }}
                       activeOpacity={0.7}
@@ -4532,13 +4532,85 @@ export default function SinglePageLandingScreen() {
                       </View>
                     );
                   }}
+                  ListEmptyComponent={
+                    <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 13, color: theme.textSecondary, fontStyle: 'italic', marginBottom: 12, textAlign: 'center' }}>
+                        {search.trim() ? `No workouts found matching "${search.trim()}"` : 'No workouts in this section'}
+                      </Text>
+                      <TouchableOpacity
+                        activeOpacity={0.6}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setNewExerciseName(search.trim());
+                          setAddExerciseVisible(true);
+                        }}
+                        style={[
+                          styles.modalExerciseItem,
+                          {
+                            width: '100%',
+                            backgroundColor: theme.cardBg,
+                            borderColor: theme.borderColor,
+                          },
+                        ]}
+                      >
+                        <View style={[styles.activeSessionItemAccent, { backgroundColor: currentMuscleColor }]} />
+                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 4 }}>
+                          <Plus size={14} color={currentMuscleColor} strokeWidth={2.5} />
+                          <Text
+                            style={[
+                              styles.modalExerciseName,
+                              { color: theme.textSecondary, fontSize: 13, fontWeight: '600' },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {search.trim() ? `Add "${search.trim()}" to library...` : `Add new ${selectedModalMuscle || ''} exercise...`}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  }
+                  ListFooterComponent={
+                    exerciseSections.length > 0 ? (
+                      <TouchableOpacity
+                        activeOpacity={0.6}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setNewExerciseName(search.trim());
+                          setAddExerciseVisible(true);
+                        }}
+                        style={[
+                          styles.modalExerciseItem,
+                          {
+                            backgroundColor: theme.cardBg,
+                            borderColor: theme.borderColor,
+                            marginTop: 4,
+                            marginBottom: 16,
+                          },
+                        ]}
+                      >
+                        <View style={[styles.activeSessionItemAccent, { backgroundColor: currentMuscleColor }]} />
+                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 4 }}>
+                          <Plus size={14} color={currentMuscleColor} strokeWidth={2.5} />
+                          <Text
+                            style={[
+                              styles.modalExerciseName,
+                              { color: theme.textSecondary, fontSize: 13, fontWeight: '600' },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {search.trim() ? `Add "${search.trim()}" to library...` : `Add new ${selectedModalMuscle || ''} exercise...`}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    ) : null
+                  }
                 />
 
                 {/* Modal Sticky Footer if active session is not empty */}
                 {activeSessionExercises.length > 0 && !fromTemplateList && (
                   <View style={[styles.modalStickyFooter, { backgroundColor: theme.cardBg, borderTopColor: theme.borderColor }]}>
-                    <Text style={[styles.modalFooterText, { color: theme.textPrimary }]}>
-                      {activeSessionExercises.length} Workout{activeSessionExercises.length > 1 ? 's' : ''} in Active Session
+                    <Text style={[styles.modalFooterText, { color: theme.textPrimary }]} numberOfLines={1}>
+                      {activeSessionExercises.length} {activeSessionExercises.length === 1 ? 'exercise' : 'exercises'} in session
                     </Text>
                     <TouchableOpacity
                       style={[styles.modalFinishBtn, { backgroundColor: '#10B981' }]}
@@ -4550,7 +4622,7 @@ export default function SinglePageLandingScreen() {
                       }}
                       activeOpacity={0.8}
                     >
-                      <Text style={styles.modalFinishBtnText}>FINISH</Text>
+                      <Text style={styles.modalFinishBtnText}>VIEW SESSION</Text>
                     </TouchableOpacity>
                   </View>
                 )}
