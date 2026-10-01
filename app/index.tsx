@@ -3874,7 +3874,7 @@ export default function SinglePageLandingScreen() {
                   }}
                 >
                   <Text style={{ fontSize: 10, fontWeight: '800', color: loggingMode === 'live' ? '#10B981' : theme.textSecondary, letterSpacing: 0.5 }}>
-                    {loggingMode === 'live' ? 'LIVE SESSION IN GYM' : 'FOCUS SESSION (REC)'}
+                    {loggingMode === 'live' ? 'LIVE SESSION (IN GYM)' : 'FOCUS (RECOMMENDED)'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -5598,60 +5598,108 @@ export default function SinglePageLandingScreen() {
               </Text>
 
               <View style={{ width: '100%', flexDirection: 'column', gap: 12 }}>
-                <TouchableOpacity
-                  onPress={() => {
-                    handleSetLoggingMode('post_workout');
-                    setWorkflowModalVisible(false);
-                  }}
-                  activeOpacity={0.7}
+                {/* Segmented Switcher */}
+                <View
                   style={{
-                    paddingVertical: 14,
-                    paddingHorizontal: 14,
-                    borderRadius: 14,
-                    borderWidth: 1.5,
-                    borderColor: loggingMode === 'post_workout' ? '#10B981' : theme.borderColor,
-                    backgroundColor: loggingMode === 'post_workout' ? (isDarkMode ? '#10B98115' : '#10B9810A') : (isDarkMode ? '#171822' : '#F9FAFB'),
+                    flexDirection: 'row',
+                    backgroundColor: isDarkMode ? '#13141C' : '#F3F4F6',
+                    borderRadius: 12,
+                    padding: 4,
+                    borderWidth: 1,
+                    borderColor: theme.borderColor,
+                    gap: 4,
                   }}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '800', color: loggingMode === 'post_workout' ? '#10B981' : theme.textPrimary }}>
-                      Focus Session
+                  <TouchableOpacity
+                    onPress={() => handleSetLoggingMode('post_workout')}
+                    activeOpacity={0.7}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      paddingHorizontal: 6,
+                      borderRadius: 9,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: loggingMode === 'post_workout'
+                        ? (isDarkMode ? '#1E2235' : '#FFFFFF')
+                        : 'transparent',
+                      borderWidth: loggingMode === 'post_workout' ? 1 : 0,
+                      borderColor: loggingMode === 'post_workout' ? '#10B981' : 'transparent',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: '800',
+                        color: loggingMode === 'post_workout' ? '#10B981' : theme.textSecondary,
+                        textAlign: 'center',
+                      }}
+                    >
+                      Focus (Recommended)
                     </Text>
-                    <View style={{ backgroundColor: '#10B98125', paddingHorizontal: 7, paddingVertical: 2.5, borderRadius: 6 }}>
-                      <Text style={{ fontSize: 9, fontWeight: '800', color: '#10B981', letterSpacing: 0.5 }}>RECOMMENDED</Text>
-                    </View>
-                  </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => handleSetLoggingMode('live')}
+                    activeOpacity={0.7}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      paddingHorizontal: 6,
+                      borderRadius: 9,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: loggingMode === 'live'
+                        ? (isDarkMode ? '#1E2235' : '#FFFFFF')
+                        : 'transparent',
+                      borderWidth: loggingMode === 'live' ? 1 : 0,
+                      borderColor: loggingMode === 'live' ? '#10B981' : 'transparent',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: '800',
+                        color: loggingMode === 'live' ? '#10B981' : theme.textSecondary,
+                        textAlign: 'center',
+                      }}
+                    >
+                      Live Session (In Gym)
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Contextual Description */}
+                <View
+                  style={{
+                    paddingVertical: 10,
+                    paddingHorizontal: 12,
+                    borderRadius: 10,
+                    backgroundColor: isDarkMode ? '#10B98110' : '#10B98108',
+                    borderLeftWidth: 3,
+                    borderLeftColor: '#10B981',
+                  }}
+                >
                   <Text style={{ fontSize: 11.5, color: theme.textSecondary, lineHeight: 17 }}>
-                    Make your workout phone-free. No checking your phone between sets, no distractions, no breaking your training flow. Finish your workout, then log everything in under 30 seconds.
+                    {loggingMode === 'post_workout'
+                      ? 'Phone-free training. Finish your workout without distractions, then log everything in under 30 seconds.'
+                      : 'Track sets live in the gym. Log as you go with active exercise lineups and automatic rest timers between sets.'}
                   </Text>
-                </TouchableOpacity>
+                </View>
 
                 <TouchableOpacity
-                  onPress={() => {
-                    handleSetLoggingMode('live');
-                    setWorkflowModalVisible(false);
-                  }}
-                  activeOpacity={0.7}
+                  onPress={() => setWorkflowModalVisible(false)}
+                  activeOpacity={0.8}
                   style={{
-                    paddingVertical: 14,
-                    paddingHorizontal: 14,
-                    borderRadius: 14,
-                    borderWidth: 1.5,
-                    borderColor: loggingMode === 'live' ? '#10B981' : theme.borderColor,
-                    backgroundColor: loggingMode === 'live' ? (isDarkMode ? '#10B98115' : '#10B9810A') : (isDarkMode ? '#171822' : '#F9FAFB'),
+                    marginTop: 4,
+                    paddingVertical: 11,
+                    borderRadius: 10,
+                    backgroundColor: '#10B981',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '800', color: loggingMode === 'live' ? '#10B981' : theme.textPrimary }}>
-                      Live Session in Gym
-                    </Text>
-                    <View style={{ backgroundColor: isDarkMode ? '#242738' : '#E5E7EB', paddingHorizontal: 7, paddingVertical: 2.5, borderRadius: 6 }}>
-                      <Text style={{ fontSize: 9, fontWeight: '800', color: theme.textSecondary, letterSpacing: 0.5 }}>IN-GYM</Text>
-                    </View>
-                  </View>
-                  <Text style={{ fontSize: 11.5, color: theme.textSecondary, lineHeight: 17 }}>
-                    Your workout, tracked live. Log sets as you go with your exercise lineup and automatic rest timers. Less remembering later, but more phone interaction during your workout.
-                  </Text>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13 }}>Done</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -7365,33 +7413,45 @@ export default function SinglePageLandingScreen() {
               {/* Logging Workflow Mode */}
               <View style={styles.profileFullSection}>
                 <Text style={[styles.profileFullSectionTitle, { color: theme.textPrimary }]}>LOGGING WORKFLOW</Text>
-                <View style={[styles.profileFitnessCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, padding: 14 }]}>
-                  <Text style={{ fontSize: 12, color: theme.textSecondary, marginBottom: 12, lineHeight: 17 }}>
-                    Choose how you prefer to track your workouts:
-                  </Text>
-                  <View style={{ flexDirection: 'column', gap: 10 }}>
+                <View style={[styles.profileFitnessCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, padding: 12 }]}>
+                  {/* Segmented Switcher */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      backgroundColor: isDarkMode ? '#13141C' : '#F3F4F6',
+                      borderRadius: 12,
+                      padding: 4,
+                      borderWidth: 1,
+                      borderColor: theme.borderColor,
+                      gap: 4,
+                    }}
+                  >
                     <TouchableOpacity
                       onPress={() => handleSetLoggingMode('post_workout')}
                       activeOpacity={0.7}
                       style={{
-                        paddingVertical: 12,
-                        paddingHorizontal: 14,
-                        borderRadius: 12,
-                        borderWidth: 1.5,
-                        borderColor: loggingMode === 'post_workout' ? '#10B981' : theme.borderColor,
-                        backgroundColor: loggingMode === 'post_workout' ? (isDarkMode ? '#10B98115' : '#10B9810A') : (isDarkMode ? '#171822' : '#F9FAFB'),
+                        flex: 1,
+                        paddingVertical: 10,
+                        paddingHorizontal: 6,
+                        borderRadius: 9,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: loggingMode === 'post_workout'
+                          ? (isDarkMode ? '#1E2235' : '#FFFFFF')
+                          : 'transparent',
+                        borderWidth: loggingMode === 'post_workout' ? 1 : 0,
+                        borderColor: loggingMode === 'post_workout' ? '#10B981' : 'transparent',
                       }}
                     >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <Text style={{ fontSize: 13, fontWeight: '800', color: loggingMode === 'post_workout' ? '#10B981' : theme.textPrimary }}>
-                          Focus Session
-                        </Text>
-                        <View style={{ backgroundColor: '#10B98125', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}>
-                          <Text style={{ fontSize: 9, fontWeight: '800', color: '#10B981', letterSpacing: 0.5 }}>RECOMMENDED</Text>
-                        </View>
-                      </View>
-                      <Text style={{ fontSize: 11, color: theme.textSecondary, lineHeight: 16 }}>
-                        Make your workout phone-free. No checking your phone between sets, no distractions, no breaking your training flow. Finish your workout, then log everything in under 30 seconds.
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: '800',
+                          color: loggingMode === 'post_workout' ? '#10B981' : theme.textSecondary,
+                          textAlign: 'center',
+                        }}
+                      >
+                        Focus (Recommended)
                       </Text>
                     </TouchableOpacity>
 
@@ -7399,24 +7459,49 @@ export default function SinglePageLandingScreen() {
                       onPress={() => handleSetLoggingMode('live')}
                       activeOpacity={0.7}
                       style={{
-                        paddingVertical: 12,
-                        paddingHorizontal: 14,
-                        borderRadius: 12,
-                        borderWidth: 1.5,
-                        borderColor: loggingMode === 'live' ? '#10B981' : theme.borderColor,
-                        backgroundColor: loggingMode === 'live' ? (isDarkMode ? '#10B98115' : '#10B9810A') : (isDarkMode ? '#171822' : '#F9FAFB'),
+                        flex: 1,
+                        paddingVertical: 10,
+                        paddingHorizontal: 6,
+                        borderRadius: 9,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: loggingMode === 'live'
+                          ? (isDarkMode ? '#1E2235' : '#FFFFFF')
+                          : 'transparent',
+                        borderWidth: loggingMode === 'live' ? 1 : 0,
+                        borderColor: loggingMode === 'live' ? '#10B981' : 'transparent',
                       }}
                     >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <Text style={{ fontSize: 13, fontWeight: '800', color: loggingMode === 'live' ? '#10B981' : theme.textPrimary }}>
-                          Live Session in Gym
-                        </Text>
-                        <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary }}>IN-GYM</Text>
-                      </View>
-                      <Text style={{ fontSize: 11, color: theme.textSecondary, lineHeight: 16 }}>
-                        Your workout, tracked live. Log sets as you go with your exercise lineup and automatic rest timers. Less remembering later, but more phone interaction during your workout.
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: '800',
+                          color: loggingMode === 'live' ? '#10B981' : theme.textSecondary,
+                          textAlign: 'center',
+                        }}
+                      >
+                        Live Session (In Gym)
                       </Text>
                     </TouchableOpacity>
+                  </View>
+
+                  {/* Contextual Description */}
+                  <View
+                    style={{
+                      marginTop: 10,
+                      paddingVertical: 10,
+                      paddingHorizontal: 12,
+                      borderRadius: 10,
+                      backgroundColor: isDarkMode ? '#10B98110' : '#10B98108',
+                      borderLeftWidth: 3,
+                      borderLeftColor: '#10B981',
+                    }}
+                  >
+                    <Text style={{ fontSize: 11.5, color: theme.textSecondary, lineHeight: 17 }}>
+                      {loggingMode === 'post_workout'
+                        ? 'Phone-free training. Finish your workout without distractions, then log everything in under 30 seconds.'
+                        : 'Track sets live in the gym. Log as you go with active exercise lineups and automatic rest timers between sets.'}
+                    </Text>
                   </View>
                 </View>
               </View>
