@@ -742,18 +742,39 @@ export default function SinglePageLandingScreen() {
   const [customReplacements, setCustomReplacements] = useState<Record<string, string[]>>({});
   const [replacementFrequencies, setReplacementFrequencies] = useState<Record<string, Record<string, number>>>({});
 
+  const [hasSeenModeExplanation, setHasSeenModeExplanation] = useState(false);
+
   const handleSetLoggingMode = async (mode: 'post_workout' | 'live') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoggingMode(mode);
+    setHasSeenModeExplanation(true);
     await AsyncStorage.setItem('@workout_logging_mode', mode);
+    await AsyncStorage.setItem('@has_seen_mode_explanation', 'true');
+  };
+
+  const handleToggleModeFromHomepage = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (!hasSeenModeExplanation) {
+      setWorkflowModalVisible(true);
+      setHasSeenModeExplanation(true);
+      await AsyncStorage.setItem('@has_seen_mode_explanation', 'true');
+      return;
+    }
+    const nextMode = loggingMode === 'live' ? 'post_workout' : 'live';
+    setLoggingMode(nextMode);
+    await AsyncStorage.setItem('@workout_logging_mode', nextMode);
   };
 
   React.useEffect(() => {
     AsyncStorage.getItem('@workout_logging_mode').then((saved) => {
       if (saved === 'live' || saved === 'post_workout') {
         setLoggingMode(saved);
-      } else {
-        setWorkflowModalVisible(true);
+      }
+    });
+
+    AsyncStorage.getItem('@has_seen_mode_explanation').then((seen) => {
+      if (seen === 'true') {
+        setHasSeenModeExplanation(true);
       }
     });
 
@@ -3989,10 +4010,7 @@ export default function SinglePageLandingScreen() {
                       {loggingMode === 'live' ? 'SELECT WORKOUT LINEUP' : 'SELECT MUSCLE GROUP'}
                     </Text>
                     <TouchableOpacity
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setWorkflowModalVisible(true);
-                      }}
+                      onPress={handleToggleModeFromHomepage}
                       activeOpacity={0.7}
                       style={{
                         flexDirection: 'row',
@@ -5963,7 +5981,11 @@ export default function SinglePageLandingScreen() {
           visible={workflowModalVisible}
           transparent={true}
           animationType="fade"
-          onRequestClose={() => setWorkflowModalVisible(false)}
+          onRequestClose={() => {
+            setWorkflowModalVisible(false);
+            setHasSeenModeExplanation(true);
+            AsyncStorage.setItem('@has_seen_mode_explanation', 'true');
+          }}
         >
           <View style={styles.alertOverlay}>
             <View style={[styles.alertCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxWidth: 360, padding: 20 }]}>
@@ -5972,7 +5994,11 @@ export default function SinglePageLandingScreen() {
                   WORKOUT MODE
                 </Text>
                 <TouchableOpacity
-                  onPress={() => setWorkflowModalVisible(false)}
+                  onPress={() => {
+                    setWorkflowModalVisible(false);
+                    setHasSeenModeExplanation(true);
+                    AsyncStorage.setItem('@has_seen_mode_explanation', 'true');
+                  }}
                   activeOpacity={0.7}
                   style={{ padding: 4 }}
                 >
@@ -6075,7 +6101,11 @@ export default function SinglePageLandingScreen() {
                 </View>
 
                 <TouchableOpacity
-                  onPress={() => setWorkflowModalVisible(false)}
+                  onPress={() => {
+                    setWorkflowModalVisible(false);
+                    setHasSeenModeExplanation(true);
+                    AsyncStorage.setItem('@has_seen_mode_explanation', 'true');
+                  }}
                   activeOpacity={0.8}
                   style={{
                     marginTop: 4,
