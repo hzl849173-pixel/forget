@@ -4,27 +4,85 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { LogBox } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 LogBox.ignoreLogs([
   'Unable to activate keep awake',
 ]);
 
-import notifee, { EventType } from '@notifee/react-native';
+import notifee, { EventType, AndroidImportance, TriggerType } from '@notifee/react-native';
 
 notifee.onBackgroundEvent(async ({ type, detail }) => {
-  if (type === EventType.ACTION_PRESS && detail.pressAction?.id === 'stop-alarm') {
-    try {
-      await notifee.cancelNotification('workout-alarm-trigger');
-    } catch (e) {}
-    try {
-      await notifee.cancelNotification('rest-timer-active-ongoing');
-    } catch (e) {}
+  if (type === EventType.ACTION_PRESS) {
+    if (detail.pressAction?.id === 'stop-alarm') {
+      try {
+        await notifee.cancelNotification('workout-alarm-trigger');
+      } catch (e) {}
+      try {
+        await notifee.cancelNotification('rest-timer-active-ongoing');
+      } catch (e) {}
+      try {
+        await AsyncStorage.removeItem('@workout_rest_timer_target_end');
+        await AsyncStorage.removeItem('@workout_rest_timer_duration');
+      } catch (e) {}
+    } else if (detail.pressAction?.id === 'add-30s') {
+      try {
+        await notifee.cancelNotification('workout-alarm-trigger');
+      } catch (e) {}
+      try {
+        await notifee.cancelNotification('rest-timer-active-ongoing');
+      } catch (e) {}
+      try {
+        const triggerTime = Date.now() + 30 * 1000;
+        await AsyncStorage.setItem('@workout_rest_timer_target_end', String(triggerTime));
+        await AsyncStorage.setItem('@workout_rest_timer_duration', '30');
+        await notifee.createTriggerNotification(
+          {
+            id: 'workout-alarm-trigger',
+            title: "Time's up! ⏱️",
+            body: "Rest period over. Time to start your next set!",
+            android: {
+              channelId: 'workout-alarm-v11',
+              smallIcon: 'notification_icon',
+              color: '#10B981',
+              importance: AndroidImportance.HIGH,
+              sound: 'default',
+              vibrationPattern: [100, 500, 250, 500],
+              ongoing: true,
+              autoCancel: false,
+              pressAction: { id: 'default' },
+              actions: [
+                {
+                  title: '+ 30s',
+                  pressAction: { id: 'add-30s' },
+                },
+                {
+                  title: 'DISMISS',
+                  pressAction: { id: 'stop-alarm' },
+                },
+              ],
+            },
+          },
+          {
+            type: TriggerType.TIMESTAMP,
+            timestamp: triggerTime,
+            alarmManager: {
+              allowWhileIdle: true,
+            },
+          }
+        );
+      } catch (e) {}
+    }
   } else if (type === EventType.DISMISSED) {
     try {
       await notifee.cancelNotification('rest-timer-active-ongoing');
     } catch (e) {}
     try {
       await notifee.cancelNotification('workout-alarm-trigger');
+    } catch (e) {}
+    try {
+      await AsyncStorage.removeItem('@workout_rest_timer_target_end');
+      await AsyncStorage.removeItem('@workout_rest_timer_duration');
     } catch (e) {}
   }
 });

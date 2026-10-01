@@ -695,6 +695,8 @@ export default function SinglePageLandingScreen() {
   const [templateLogSelectVisible, setTemplateLogSelectVisible] = useState(false);
   const [templateLogSelectedIds, setTemplateLogSelectedIds] = useState<Set<string>>(new Set());
   const [selectedPickerExerciseIds, setSelectedPickerExerciseIds] = useState<Set<string>>(new Set());
+  const [loggingMode, setLoggingMode] = useState<'post_workout' | 'live'>('post_workout');
+  const [workflowModalVisible, setWorkflowModalVisible] = useState(false);
 
   const [sortedExerciseList, setSortedExerciseList] = useState<Exercise[]>([]);
   const [customShoulderIds, setCustomShoulderIds] = useState<Set<string>>(new Set());
@@ -736,7 +738,21 @@ export default function SinglePageLandingScreen() {
   const [customReplacements, setCustomReplacements] = useState<Record<string, string[]>>({});
   const [replacementFrequencies, setReplacementFrequencies] = useState<Record<string, Record<string, number>>>({});
 
+  const handleSetLoggingMode = async (mode: 'post_workout' | 'live') => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setLoggingMode(mode);
+    await AsyncStorage.setItem('@workout_logging_mode', mode);
+  };
+
   React.useEffect(() => {
+    AsyncStorage.getItem('@workout_logging_mode').then((saved) => {
+      if (saved === 'live' || saved === 'post_workout') {
+        setLoggingMode(saved);
+      } else {
+        setWorkflowModalVisible(true);
+      }
+    });
+
     AsyncStorage.getItem('@custom_replacement_map').then((data) => {
       if (data) {
         try {
@@ -797,67 +813,6 @@ export default function SinglePageLandingScreen() {
       await notifee.requestPermission();
     } catch (e) {}
   };
-
-  React.useEffect(() => {
-    async function configureNotifications() {
-      try {
-        if (Platform.OS === 'android') {
-          try {
-            await notifee.createChannel({
-              id: 'workout-alarm-v11',
-              name: 'Workout Alarm',
-              importance: AndroidImportance.HIGH,
-              sound: 'default',
-              vibration: true,
-              vibrationPattern: [100, 500, 250, 500],
-              bypassDnd: true,
-              visibility: AndroidVisibility.PUBLIC,
-            });
-
-            await notifee.createChannel({
-              id: 'rest-timer-ongoing-v11',
-              name: 'Rest Timer Live Countdown',
-              importance: AndroidImportance.LOW,
-              sound: undefined,
-              vibration: false,
-              visibility: AndroidVisibility.PUBLIC,
-            });
-          } catch (e) {}
-
-          try {
-            await Notifications.setNotificationChannelAsync('workout-alarm-v11', {
-              name: 'Workout Alarm',
-              importance: Notifications.AndroidImportance.MAX,
-              vibrationPattern: [100, 500, 250, 500],
-              lightColor: '#10B981',
-              sound: 'default',
-              enableVibrate: true,
-              bypassDnd: true,
-              lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-            });
-
-            await Notifications.setNotificationChannelAsync('rest-timer-ongoing-v11', {
-              name: 'Rest Timer Live Countdown',
-              importance: Notifications.AndroidImportance.LOW,
-              sound: undefined,
-              vibrationPattern: undefined,
-            });
-          } catch (e) {}
-        }
-      } catch (e) {
-        console.warn('Notification setup error:', e);
-      }
-    }
-    configureNotifications();
-
-    const unsubscribeForeground = notifee.onForegroundEvent(({ type, detail }) => {
-      if (type === EventType.ACTION_PRESS && detail.pressAction?.id === 'stop-alarm') {
-        stopRestTimer();
-      }
-    });
-
-    return () => unsubscribeForeground();
-  }, []);
 
   const updateOngoingNotification = async (sec: number, targetEndMs?: number | null) => {
     // Disabled ongoing live notification per user preference so status bar stays clean while timer is running
@@ -920,7 +875,11 @@ export default function SinglePageLandingScreen() {
             pressAction: { id: 'default' },
             actions: [
               {
-                title: 'STOP',
+                title: '+ 30s',
+                pressAction: { id: 'add-30s' },
+              },
+              {
+                title: 'DISMISS',
                 pressAction: { id: 'stop-alarm' },
               },
             ],
@@ -937,69 +896,8 @@ export default function SinglePageLandingScreen() {
     }
   };
 
-  React.useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active' && restTimerTargetEndRef.current) {
-        const remainingMs = restTimerTargetEndRef.current - Date.now();
-        const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
-        setRestTimerSeconds(remainingSec);
-        if (remainingSec <= 0) {
-          handleTimerFinished();
-        }
-      }
-    });
-    return () => subscription.remove();
-  }, [restTimerSound]);
-
-  const loggerScrollViewRef = React.useRef<ScrollView | null>(null);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  React.useEffect(() => {
-    const showSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      (e) => {
-        setKeyboardHeight(e.endCoordinates.height);
-      }
-    );
-    const hideSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => {
-        setKeyboardHeight(0);
-      }
-    );
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
-
-  const playTimerSound = async () => {
-    try {
-      const { Audio } = require('expo-av');
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: false,
-      });
-      const soundFile = require('@/assets/sounds/alarm.wav');
-      const { sound } = await Audio.Sound.createAsync(soundFile, {
-        shouldPlay: true,
-        isLooping: true,
-        volume: 1.0,
-      });
-      soundObjectRef.current = sound;
-    } catch (e) {
-      console.warn('Sound playback failed:', e);
-    }
-  };
-
-  const stopTimerSound = async () => {
-    if (soundObjectRef.current) {
-      try { await soundObjectRef.current.stopAsync(); } catch { }
-      try { await soundObjectRef.current.unloadAsync(); } catch { }
-      soundObjectRef.current = null;
-    }
-  };
+  const playTimerSound = async () => {};
+  const stopTimerSound = async () => {};
 
   const formatRestTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -1012,20 +910,35 @@ export default function SinglePageLandingScreen() {
     restTimerRef.current = null;
     restTimerTargetEndRef.current = null;
     setRestTimerRunning(false);
+    setRestTimerSeconds(0);
     dismissOngoingNotification();
+    await AsyncStorage.removeItem('@workout_rest_timer_target_end').catch(() => {});
+    await AsyncStorage.removeItem('@workout_rest_timer_duration').catch(() => {});
 
     const isMinimized = AppState.currentState !== 'active';
 
     if (!isMinimized) {
       cancelRestTimerNotification();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      if (restTimerSound !== 'none') {
-        playTimerSound();
-      }
       showCustomAlert(
-        'Rest Timer Done',
+        'Rest Finished',
         'Time to start your next set!',
-        [{ text: 'OK', onPress: () => stopTimerSound() }],
+        [
+          {
+            text: '+ 30s',
+            color: '#38BDF8',
+            bgColor: isDarkMode ? 'rgba(56, 189, 248, 0.15)' : '#E0F2FE',
+            onPress: () => {
+              startRestTimer(30);
+            },
+          },
+          {
+            text: 'READY',
+            color: '#10B981',
+            bgColor: isDarkMode ? 'rgba(16, 185, 129, 0.15)' : '#DCFCE7',
+            onPress: () => {},
+          },
+        ],
         <Timer size={28} color="#10B981" />
       );
     }
@@ -1043,6 +956,8 @@ export default function SinglePageLandingScreen() {
     setRestTimerDuration(seconds);
     setRestTimerSeconds(seconds);
     setRestTimerRunning(true);
+    await AsyncStorage.setItem('@workout_rest_timer_target_end', String(targetEnd)).catch(() => {});
+    await AsyncStorage.setItem('@workout_rest_timer_duration', String(seconds)).catch(() => {});
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     const isScheduled = await scheduleRestTimerNotification(seconds, targetEnd);
@@ -1069,6 +984,9 @@ export default function SinglePageLandingScreen() {
     restTimerRef.current = null;
     restTimerTargetEndRef.current = null;
     setRestTimerRunning(false);
+    setRestTimerSeconds(0);
+    AsyncStorage.removeItem('@workout_rest_timer_target_end').catch(() => {});
+    AsyncStorage.removeItem('@workout_rest_timer_duration').catch(() => {});
   };
 
   const resetRestTimer = () => {
@@ -1079,8 +997,166 @@ export default function SinglePageLandingScreen() {
     restTimerRef.current = null;
     restTimerTargetEndRef.current = null;
     setRestTimerRunning(false);
-    setRestTimerSeconds(restTimerDuration);
+    setRestTimerSeconds(0);
+    AsyncStorage.removeItem('@workout_rest_timer_target_end').catch(() => {});
+    AsyncStorage.removeItem('@workout_rest_timer_duration').catch(() => {});
   };
+
+  const syncRestTimerFromStorage = async () => {
+    try {
+      const storedEnd = await AsyncStorage.getItem('@workout_rest_timer_target_end');
+      if (storedEnd) {
+        const targetEnd = parseInt(storedEnd, 10);
+        const now = Date.now();
+        if (targetEnd > now) {
+          const remainingSec = Math.max(1, Math.ceil((targetEnd - now) / 1000));
+          const storedDur = await AsyncStorage.getItem('@workout_rest_timer_duration');
+          const duration = storedDur ? parseInt(storedDur, 10) : 30;
+
+          restTimerTargetEndRef.current = targetEnd;
+          setRestTimerDuration(duration);
+          setRestTimerSeconds(remainingSec);
+          setRestTimerRunning(true);
+
+          if (restTimerRef.current) clearInterval(restTimerRef.current);
+          restTimerRef.current = setInterval(() => {
+            if (!restTimerTargetEndRef.current) return;
+            const remMs = restTimerTargetEndRef.current - Date.now();
+            const remSec = Math.max(0, Math.ceil(remMs / 1000));
+            setRestTimerSeconds(remSec);
+            if (remSec <= 0) {
+              handleTimerFinished();
+            }
+          }, 1000);
+          return;
+        } else {
+          await AsyncStorage.removeItem('@workout_rest_timer_target_end').catch(() => {});
+          await AsyncStorage.removeItem('@workout_rest_timer_duration').catch(() => {});
+          if (restTimerRunning || restTimerTargetEndRef.current) {
+            handleTimerFinished();
+          }
+        }
+      } else if (restTimerTargetEndRef.current) {
+        const now = Date.now();
+        if (restTimerTargetEndRef.current > now) {
+          const remainingSec = Math.max(1, Math.ceil((restTimerTargetEndRef.current - now) / 1000));
+          setRestTimerSeconds(remainingSec);
+          if (!restTimerRef.current) {
+            restTimerRef.current = setInterval(() => {
+              if (!restTimerTargetEndRef.current) return;
+              const remMs = restTimerTargetEndRef.current - Date.now();
+              const remSec = Math.max(0, Math.ceil(remMs / 1000));
+              setRestTimerSeconds(remSec);
+              if (remSec <= 0) {
+                handleTimerFinished();
+              }
+            }, 1000);
+          }
+        } else {
+          handleTimerFinished();
+        }
+      }
+    } catch (e) {}
+  };
+
+  React.useEffect(() => {
+    async function configureNotifications() {
+      try {
+        if (Platform.OS === 'android') {
+          try {
+            await notifee.createChannel({
+              id: 'workout-alarm-v11',
+              name: 'Workout Alarm',
+              importance: AndroidImportance.HIGH,
+              sound: 'default',
+              vibration: true,
+              vibrationPattern: [100, 500, 250, 500],
+              bypassDnd: true,
+              visibility: AndroidVisibility.PUBLIC,
+            });
+
+            await notifee.createChannel({
+              id: 'rest-timer-ongoing-v11',
+              name: 'Rest Timer Live Countdown',
+              importance: AndroidImportance.LOW,
+              sound: undefined,
+              vibration: false,
+              visibility: AndroidVisibility.PUBLIC,
+            });
+          } catch (e) {}
+
+          try {
+            await Notifications.setNotificationChannelAsync('workout-alarm-v11', {
+              name: 'Workout Alarm',
+              importance: Notifications.AndroidImportance.MAX,
+              vibrationPattern: [100, 500, 250, 500],
+              lightColor: '#10B981',
+              sound: 'default',
+              enableVibrate: true,
+              bypassDnd: true,
+              lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            });
+
+            await Notifications.setNotificationChannelAsync('rest-timer-ongoing-v11', {
+              name: 'Rest Timer Live Countdown',
+              importance: Notifications.AndroidImportance.LOW,
+              sound: undefined,
+              vibrationPattern: undefined,
+            });
+          } catch (e) {}
+        }
+      } catch (e) {
+        console.warn('Notification setup error:', e);
+      }
+    }
+    configureNotifications();
+
+    const unsubscribeForeground = notifee.onForegroundEvent(({ type, detail }) => {
+      if (type === EventType.ACTION_PRESS) {
+        if (detail.pressAction?.id === 'stop-alarm') {
+          stopRestTimer();
+        } else if (detail.pressAction?.id === 'add-30s') {
+          startRestTimer(30);
+        }
+      } else if (type === EventType.PRESS) {
+        syncRestTimerFromStorage();
+      }
+    });
+
+    return () => unsubscribeForeground();
+  }, []);
+
+  React.useEffect(() => {
+    syncRestTimerFromStorage();
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        syncRestTimerFromStorage();
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
+  const loggerScrollViewRef = React.useRef<ScrollView | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  React.useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Weekly calendar state
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
@@ -1178,7 +1254,7 @@ export default function SinglePageLandingScreen() {
   const [customAlertVisible, setCustomAlertVisible] = useState(false);
   const [customAlertTitle, setCustomAlertTitle] = useState('');
   const [customAlertMessage, setCustomAlertMessage] = useState('');
-  const [customAlertButtons, setCustomAlertButtons] = useState<{ text: string; style?: 'cancel' | 'destructive' | 'default'; onPress?: () => void }[]>([]);
+  const [customAlertButtons, setCustomAlertButtons] = useState<{ text: string; style?: 'cancel' | 'destructive' | 'default'; color?: string; bgColor?: string; onPress?: () => void }[]>([]);
   const [customAlertIcon, setCustomAlertIcon] = useState<React.ReactNode | null>(null);
 
   // Custom Workout Delete Confirmation Dialog State
@@ -1187,7 +1263,7 @@ export default function SinglePageLandingScreen() {
   const showCustomAlert = (
     title: string,
     message: string,
-    buttons: { text: string; style?: 'cancel' | 'destructive' | 'default'; onPress?: () => void }[] = [{ text: 'OK' }],
+    buttons: { text: string; style?: 'cancel' | 'destructive' | 'default'; color?: string; bgColor?: string; onPress?: () => void }[] = [{ text: 'OK' }],
     icon?: React.ReactNode
   ) => {
     setCustomAlertTitle(title);
@@ -1199,6 +1275,10 @@ export default function SinglePageLandingScreen() {
 
   React.useEffect(() => {
     const handleBackButton = () => {
+      if (workflowModalVisible) {
+        setWorkflowModalVisible(false);
+        return true;
+      }
       if (exerciseToDelete !== null) {
         setExerciseToDelete(null);
         return true;
@@ -1234,7 +1314,7 @@ export default function SinglePageLandingScreen() {
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', handleBackButton);
     return () => subscription.remove();
-  }, [templateListVisible, editingActiveExerciseId, editingTemplateExerciseId, editingModalExerciseId, replacingActiveId]);
+  }, [templateListVisible, editingActiveExerciseId, editingTemplateExerciseId, editingModalExerciseId, replacingActiveId, workflowModalVisible]);
 
   React.useEffect(() => {
     return () => {
@@ -1926,6 +2006,10 @@ export default function SinglePageLandingScreen() {
     setInPlaceLoggingContext(null);
     setShowNoteInput(false);
     setMainScrollEnabled(true);
+
+    if (loggingMode === 'live') {
+      startRestTimer(restTimerDuration || 90);
+    }
 
     const updatedExercises = activeSessionExercises.map((le) => {
       const isTarget = le.id ? le.id === editingActiveExerciseId : le.exerciseId === targetExId;
@@ -2872,8 +2956,8 @@ export default function SinglePageLandingScreen() {
                   activeOpacity={0.7}
                 >
                   <Timer size={14} color={restTimerRunning ? '#FFFFFF' : theme.textSecondary} strokeWidth={2.5} />
-                  {restTimerRunning || restTimerSeconds > 0 ? (
-                    <Text style={[styles.restTimerText, { color: restTimerRunning ? '#FFFFFF' : '#10B981' }]}>
+                  {restTimerRunning && restTimerSeconds > 0 ? (
+                    <Text style={[styles.restTimerText, { color: '#FFFFFF' }]}>
                       {formatRestTime(restTimerSeconds)}
                     </Text>
                   ) : null}
@@ -3087,24 +3171,24 @@ export default function SinglePageLandingScreen() {
                       return (
                         <View>
                           {/* Top Fixed Action Bar: CANCEL on left, SAVE on right */}
-                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                             <TouchableOpacity
                               onPress={() => handleCancelInPlaceLogger()}
                               activeOpacity={0.7}
                               style={{
                                 flexDirection: 'row',
                                 alignItems: 'center',
-                                gap: 5,
+                                gap: 4,
                                 paddingVertical: 6,
                                 paddingHorizontal: 12,
                                 borderRadius: 99,
-                                backgroundColor: isDarkMode ? '#171822' : '#F3F4F6',
+                                backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.08)' : '#FEE2E2',
                                 borderWidth: 1,
-                                borderColor: isDarkMode ? '#262838' : theme.borderColor,
+                                borderColor: isDarkMode ? 'rgba(239, 68, 68, 0.22)' : '#FECACA',
                               }}
                             >
-                              <X size={13} color={theme.textSecondary} strokeWidth={2.4} />
-                              <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textSecondary, letterSpacing: 0.5 }}>
+                              <X size={12} color={isDarkMode ? '#F87171' : '#DC2626'} strokeWidth={2.4} />
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: isDarkMode ? '#F87171' : '#DC2626', letterSpacing: 0.5 }}>
                                 CANCEL
                               </Text>
                             </TouchableOpacity>
@@ -3131,7 +3215,7 @@ export default function SinglePageLandingScreen() {
 
                           {/* Top Workout Navigation Pill Wrap (All exercises visible on one page, zero scrolling) */}
                           {listForSwitcher.length > 1 && (
-                            <View style={styles.loggerNavPillWrap}>
+                            <View style={[styles.loggerNavPillWrap, { marginTop: 2, marginBottom: 14 }]}>
                               {listForSwitcher.map((item, index) => {
                                 const isSelected = isFromTemplate
                                   ? item.exerciseId === (inPlaceLoggingContext?.templateExerciseId || editingActiveExerciseId)
@@ -3201,30 +3285,87 @@ export default function SinglePageLandingScreen() {
                           >
                             {/* Exercise Header & Details (Inside Scrollable Area) */}
                             <View style={{ marginBottom: 8, paddingBottom: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.borderColor }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                                <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor, height: 14, width: 3, borderRadius: 2 }]} />
-                                <Text style={[styles.activeSessionTitle, { color: theme.textPrimary, flexShrink: 1 }]} numberOfLines={1}>
-                                  {targetEx.name}
-                                </Text>
-                              </View>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
-                                <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary, marginTop: 0 }]}>
-                                  {targetEx.muscleGroup.toUpperCase()} • {activeSets.length} set{activeSets.length !== 1 ? 's' : ''}
-                                </Text>
-                                {targetEx.target ? (
-                                  <View style={{
-                                    backgroundColor: `${muscleColor}14`,
-                                    paddingHorizontal: 6,
-                                    paddingVertical: 1.5,
-                                    borderRadius: 4,
-                                    borderWidth: 0.5,
-                                    borderColor: `${muscleColor}28`,
-                                  }}>
-                                    <Text style={{ fontSize: 10, fontWeight: '600', color: muscleColor, letterSpacing: 0.1 }}>
-                                      {targetEx.target}
+                              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                                <View style={{ flex: 1, paddingRight: 4 }}>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                                    <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor, height: 14, width: 3, borderRadius: 2 }]} />
+                                    <Text style={[styles.activeSessionTitle, { color: theme.textPrimary, flexShrink: 1 }]} numberOfLines={1}>
+                                      {targetEx.name}
                                     </Text>
                                   </View>
-                                ) : null}
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
+                                    <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary, marginTop: 0 }]}>
+                                      {targetEx.muscleGroup.toUpperCase()} • {activeSets.length} set{activeSets.length !== 1 ? 's' : ''}
+                                    </Text>
+                                    {targetEx.target ? (
+                                      <View style={{
+                                        backgroundColor: `${muscleColor}14`,
+                                        paddingHorizontal: 6,
+                                        paddingVertical: 1.5,
+                                        borderRadius: 4,
+                                        borderWidth: 0.5,
+                                        borderColor: `${muscleColor}28`,
+                                      }}>
+                                        <Text style={{ fontSize: 10, fontWeight: '600', color: muscleColor, letterSpacing: 0.1 }}>
+                                          {targetEx.target}
+                                        </Text>
+                                      </View>
+                                    ) : null}
+                                  </View>
+                                </View>
+
+                                {/* Rest Timer Pill on the right of the heading */}
+                                <View style={{ marginRight: 6 }}>
+                                  {restTimerRunning ? (
+                                    <TouchableOpacity
+                                      onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setRestTimerVisible(true);
+                                      }}
+                                      activeOpacity={0.8}
+                                      style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        gap: 5,
+                                        paddingVertical: 5,
+                                        paddingHorizontal: 11,
+                                        borderRadius: 99,
+                                        backgroundColor: isDarkMode ? '#10B98125' : '#10B98118',
+                                        borderWidth: 1,
+                                        borderColor: '#10B981',
+                                      }}
+                                    >
+                                      <Timer size={12} color="#10B981" strokeWidth={2.4} />
+                                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#10B981', letterSpacing: 0.5 }}>
+                                        {formatRestTime(restTimerSeconds)}
+                                      </Text>
+                                    </TouchableOpacity>
+                                  ) : (
+                                    <TouchableOpacity
+                                      onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setRestTimerVisible(true);
+                                      }}
+                                      activeOpacity={0.7}
+                                      style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        gap: 5,
+                                        paddingVertical: 5,
+                                        paddingHorizontal: 11,
+                                        borderRadius: 99,
+                                        backgroundColor: isDarkMode ? 'rgba(56, 189, 248, 0.08)' : '#F0F9FF',
+                                        borderWidth: 1,
+                                        borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.28)' : '#BAE6FD',
+                                      }}
+                                    >
+                                      <Timer size={12} color="#38BDF8" strokeWidth={2.4} />
+                                      <Text style={{ fontSize: 10, fontWeight: '700', color: isDarkMode ? '#38BDF8' : '#0284C7', letterSpacing: 0.4 }}>
+                                        REST TIMER
+                                      </Text>
+                                    </TouchableOpacity>
+                                  )}
+                                </View>
                               </View>
                             </View>
                             {/* Best PR banner if available */}
@@ -3710,7 +3851,33 @@ export default function SinglePageLandingScreen() {
               })()}
 
               {/* Muscle Selector Cards Grid */}
-              <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>SELECT MUSCLE GROUP</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: 12 }}>
+                <Text style={[styles.sectionHeader, { color: theme.textSecondary, marginTop: 0, marginBottom: 0 }]}>
+                  {loggingMode === 'live' ? 'SELECT WORKOUT LINEUP' : 'SELECT MUSCLE GROUP'}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setWorkflowModalVisible(true);
+                  }}
+                  activeOpacity={0.7}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    paddingVertical: 5,
+                    paddingHorizontal: 11,
+                    borderRadius: 99,
+                    backgroundColor: loggingMode === 'live' ? (isDarkMode ? '#10B98118' : '#10B98110') : (isDarkMode ? '#13141C' : '#F3F4F6'),
+                    borderWidth: 1,
+                    borderColor: loggingMode === 'live' ? '#10B981' : (isDarkMode ? '#282A3A' : theme.borderColor),
+                  }}
+                >
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: loggingMode === 'live' ? '#10B981' : theme.textSecondary, letterSpacing: 0.5 }}>
+                    {loggingMode === 'live' ? 'LIVE SESSION IN GYM' : 'FOCUS SESSION (REC)'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.muscleGrid}>
                 {MUSCLE_GROUPS.map((muscle) => {
                   const muscleColor = categoryColors[muscle] || '#10B981';
@@ -4272,7 +4439,11 @@ export default function SinglePageLandingScreen() {
                       style={[styles.modalHeaderSubtitle, { color: theme.textSecondary }]}
                       numberOfLines={1}
                     >
-                      {cameFromReplaceTarget ? 'Select replacement workout' : 'Select a workout to start logging'}
+                      {cameFromReplaceTarget
+                        ? 'Select replacement workout'
+                        : loggingMode === 'live'
+                        ? 'Select exercises to build your session'
+                        : 'Select an exercise to log'}
                     </Text>
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -4439,7 +4610,8 @@ export default function SinglePageLandingScreen() {
                               return;
                             }
 
-                            if (fromTemplateList) {
+                            if (fromTemplateList || loggingMode === 'live') {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                               setSelectedPickerExerciseIds((prev) => {
                                 const next = new Set(prev);
                                 if (next.has(item.id)) {
@@ -4511,7 +4683,7 @@ export default function SinglePageLandingScreen() {
                           delayLongPress={450}
                           activeOpacity={0.65}
                         >
-                          {fromTemplateList && (
+                          {(fromTemplateList || loggingMode === 'live') && (
                             <View
                               style={[
                                 styles.modalExerciseCheckbox,
@@ -4650,8 +4822,8 @@ export default function SinglePageLandingScreen() {
                   }
                 />
 
-                {/* Modal Sticky Footer if active session is not empty */}
-                {activeSessionExercises.length > 0 && !fromTemplateList && (
+                {/* Modal Sticky Footer if active session is not empty in post-workout mode */}
+                {loggingMode === 'post_workout' && activeSessionExercises.length > 0 && !fromTemplateList && (
                   <View style={[styles.modalStickyFooter, { backgroundColor: theme.cardBg, borderTopColor: theme.borderColor }]}>
                     <Text style={[styles.modalFooterText, { color: theme.textPrimary }]} numberOfLines={1}>
                       {activeSessionExercises.length} {activeSessionExercises.length === 1 ? 'exercise' : 'exercises'} in session
@@ -4667,6 +4839,105 @@ export default function SinglePageLandingScreen() {
                       activeOpacity={0.8}
                     >
                       <Text style={styles.modalFinishBtnText}>VIEW SESSION</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Modal Sticky Footer in Live mode */}
+                {loggingMode === 'live' && !fromTemplateList && (selectedPickerExerciseIds.size > 0 || activeSessionExercises.length > 0) && (
+                  <View style={[styles.modalStickyFooter, { backgroundColor: theme.cardBg, borderTopColor: theme.borderColor }]}>
+                    <Text style={[styles.modalFooterText, { color: theme.textPrimary }]} numberOfLines={1}>
+                      {selectedPickerExerciseIds.size > 0
+                        ? `${selectedPickerExerciseIds.size} Exercise${selectedPickerExerciseIds.size !== 1 ? 's' : ''} Selected`
+                        : `${activeSessionExercises.length} ${activeSessionExercises.length === 1 ? 'exercise' : 'exercises'} in session`}
+                    </Text>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalFinishBtn,
+                        {
+                          backgroundColor: selectedPickerExerciseIds.size > 0 || activeSessionExercises.length > 0 ? '#10B981' : theme.borderColor
+                        }
+                      ]}
+                      onPress={async () => {
+                        if (selectedPickerExerciseIds.size === 0) {
+                          if (activeSessionExercises.length > 0) {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setSelectedModalMuscle(null);
+                            setSelectedSubGroup(null);
+                            setActiveSegment('log');
+                          }
+                          return;
+                        }
+
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        const newExercises: LoggedExercise[] = [];
+                        selectedPickerExerciseIds.forEach((id) => {
+                          if (activeSessionExercises.some(e => e.exerciseId === id)) return;
+
+                          const previousLog = getPreviousWorkoutForExercise(id);
+                          const initialSets: WorkoutSet[] = [];
+                          if (previousLog && previousLog.sets.length > 0) {
+                            previousLog.sets.forEach((set) => {
+                              initialSets.push({ id: generateId(), weight: set.weight, reps: set.reps, isCompleted: false });
+                            });
+                          }
+
+                          while (initialSets.length < 3) {
+                            const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
+                            initialSets.push({
+                              id: generateId(),
+                              weight: lastSet ? lastSet.weight : 0,
+                              reps: lastSet ? lastSet.reps : 0,
+                              isCompleted: false,
+                            });
+                          }
+                          newExercises.push({
+                            id: generateId(),
+                            exerciseId: id,
+                            sets: initialSets,
+                          });
+                        });
+
+                        let updatedList = [...activeSessionExercises];
+                        if (newExercises.length > 0) {
+                          updatedList = [...activeSessionExercises, ...newExercises];
+                          setActiveSessionExercises(updatedList);
+                          AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updatedList));
+                        }
+
+                        if (sessionStartTime === 0) {
+                          const now = Date.now();
+                          setSessionStartTime(now);
+                          AsyncStorage.setItem('@session_start_time', now.toString());
+                        }
+
+                        setSelectedModalMuscle(null);
+                        setSelectedSubGroup(null);
+                        setSelectedPickerExerciseIds(new Set());
+                        setActiveSegment('log');
+
+                        // Automatically open first exercise into logger for immediate training!
+                        const firstToOpen = newExercises[0] || updatedList[0];
+                        if (firstToOpen) {
+                          const targetId = firstToOpen.id || firstToOpen.exerciseId;
+                          setEditingActiveExerciseId(targetId);
+                          setActiveSets(firstToOpen.sets.map((s) => ({ ...s })));
+                          setExerciseNote(firstToOpen.notes || '');
+                          setInPlaceLoggingContext({
+                            source: 'active_session',
+                            wasAlreadyInActiveSession: true,
+                          });
+                        }
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.modalFinishBtnText}>
+                        {selectedPickerExerciseIds.size > 0
+                          ? (activeSessionExercises.length > 0
+                              ? `ADD TO WORKOUT (${selectedPickerExerciseIds.size})`
+                              : `START WORKOUT (${selectedPickerExerciseIds.size})`)
+                          : 'VIEW SESSION'}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -5164,13 +5435,19 @@ export default function SinglePageLandingScreen() {
         <Modal
           visible={restTimerVisible}
           transparent={true}
-          animationType="none"
+          animationType="fade"
           onRequestClose={() => setRestTimerVisible(false)}
         >
           <View style={styles.timerOverlay}>
             <View style={[styles.timerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
               <TouchableOpacity
-                style={styles.timerCloseBtn}
+                style={[
+                  styles.timerCloseBtn,
+                  {
+                    backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
+                    borderColor: theme.borderColor,
+                  },
+                ]}
                 onPress={() => setRestTimerVisible(false)}
                 activeOpacity={0.7}
               >
@@ -5178,111 +5455,191 @@ export default function SinglePageLandingScreen() {
               </TouchableOpacity>
 
               <Text style={[styles.timerDisplay, { color: restTimerRunning ? '#10B981' : theme.textPrimary }]}>
-                {formatRestTime(restTimerSeconds)}
+                {formatRestTime(restTimerSeconds > 0 ? restTimerSeconds : restTimerDuration)}
               </Text>
 
               <View style={styles.timerActions}>
                 {restTimerRunning ? (
                   <>
                     <TouchableOpacity
-                      style={[styles.timerActionBtn, { backgroundColor: '#EF444420' }]}
+                      style={[styles.timerActionBtn, { backgroundColor: '#EF444420', paddingHorizontal: 16 }]}
                       onPress={stopRestTimer}
                       activeOpacity={0.7}
                     >
                       <Text style={[styles.timerActionText, { color: '#EF4444' }]}>STOP</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
-                      style={[styles.timerActionBtn, { backgroundColor: '#6B728020' }]}
+                      style={[styles.timerActionBtn, { backgroundColor: '#10B98120', paddingHorizontal: 16 }]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        const newTarget = (restTimerSeconds > 0 ? restTimerSeconds : restTimerDuration) + 30;
+                        startRestTimer(newTarget);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.timerActionText, { color: '#10B981' }]}>+30s</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.timerActionBtn, { backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6', paddingHorizontal: 16 }]}
                       onPress={resetRestTimer}
                       activeOpacity={0.7}
                     >
-                      <Text style={[styles.timerActionText, { color: '#6B7280' }]}>RESET</Text>
+                      <Text style={[styles.timerActionText, { color: theme.textSecondary }]}>RESET</Text>
                     </TouchableOpacity>
                   </>
                 ) : (
                   <>
                     <TouchableOpacity
-                      style={[styles.timerActionBtn, { backgroundColor: '#10B98120' }]}
-                      onPress={() => startRestTimer(restTimerSeconds > 0 ? restTimerSeconds : restTimerDuration)}
+                      style={[styles.timerActionBtn, { backgroundColor: '#10B98120', paddingHorizontal: 24 }]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        startRestTimer(restTimerSeconds > 0 ? restTimerSeconds : restTimerDuration);
+                      }}
                       activeOpacity={0.7}
                     >
                       <Text style={[styles.timerActionText, { color: '#10B981' }]}>START</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
-                      style={[styles.timerActionBtn, { backgroundColor: '#6B728020' }]}
+                      style={[styles.timerActionBtn, { backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6', paddingHorizontal: 24 }]}
                       onPress={resetRestTimer}
                       activeOpacity={0.7}
                     >
-                      <Text style={[styles.timerActionText, { color: '#6B7280' }]}>RESET</Text>
+                      <Text style={[styles.timerActionText, { color: theme.textSecondary }]}>RESET</Text>
                     </TouchableOpacity>
                   </>
                 )}
               </View>
 
               <View style={styles.timerPresets}>
-                {[30, 60, 90, 120, 180, 300].map((sec) => (
-                  <TouchableOpacity
-                    key={sec}
-                    style={[
-                      styles.timerPresetBtn,
-                      {
-                        backgroundColor: restTimerDuration === sec && !restTimerRunning ? '#3B82F620' : theme.background,
-                        borderColor: restTimerDuration === sec && !restTimerRunning ? '#3B82F6' : theme.borderColor,
-                      }
-                    ]}
-                    onPress={() => {
-                      if (!restTimerRunning) {
-                        setRestTimerDuration(sec);
-                        setRestTimerSeconds(sec);
-                      }
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.timerPresetText,
-                        { color: restTimerDuration === sec && !restTimerRunning ? '#3B82F6' : theme.textSecondary },
-                      ]}
-                    >
-                      {sec >= 60 ? `${sec / 60} min` : `${sec}s`}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <View style={[styles.timerSoundBox, { borderTopColor: theme.borderColor }]}>
-                <Text style={[styles.timerSoundLabel, { color: theme.textSecondary }]}>SOUND</Text>
-                <View style={styles.timerSoundOptions}>
-                  {(['alarm', 'none'] as const).map((opt) => (
+                {[30, 60, 90, 120, 180, 300].map((sec) => {
+                  const isSelected = restTimerDuration === sec;
+                  return (
                     <TouchableOpacity
-                      key={opt}
+                      key={sec}
                       style={[
-                        styles.timerSoundBtn,
+                        styles.timerPresetBtn,
                         {
-                          backgroundColor: restTimerSound === opt ? '#3B82F620' : theme.background,
-                          borderColor: restTimerSound === opt ? '#3B82F6' : theme.borderColor,
+                          backgroundColor: isSelected ? '#10B98120' : theme.background,
+                          borderColor: isSelected ? '#10B981' : theme.borderColor,
                         }
                       ]}
-                      onPress={() => setRestTimerSound(opt)}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setRestTimerDuration(sec);
+                        setRestTimerSeconds(sec);
+                        if (restTimerRunning) {
+                          startRestTimer(sec);
+                        }
+                      }}
                       activeOpacity={0.7}
                     >
                       <Text
                         style={[
-                          styles.timerSoundBtnText,
-                          { color: restTimerSound === opt ? '#3B82F6' : theme.textSecondary },
+                          styles.timerPresetText,
+                          { color: isSelected ? '#10B981' : theme.textSecondary },
                         ]}
                       >
-                        {opt === 'none' ? 'OFF' : opt.toUpperCase()}
+                        {sec >= 60 ? `${sec / 60} min` : `${sec}s`}
                       </Text>
                     </TouchableOpacity>
-                  ))}
-                </View>
+                  );
+                })}
               </View>
             </View>
           </View>
         </Modal>
 
 
+
+        {/* Workout Mode / Workflow Selection Modal */}
+        <Modal
+          visible={workflowModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setWorkflowModalVisible(false)}
+        >
+          <View style={styles.alertOverlay}>
+            <View style={[styles.alertCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxWidth: 360, padding: 20 }]}>
+              <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <Text style={{ fontSize: 14, fontWeight: '900', color: theme.textPrimary, letterSpacing: 0.3 }}>
+                  WORKOUT MODE
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setWorkflowModalVisible(false)}
+                  activeOpacity={0.7}
+                  style={{ padding: 4 }}
+                >
+                  <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={{ fontSize: 12, color: theme.textSecondary, marginBottom: 16, lineHeight: 17, alignSelf: 'flex-start' }}>
+                Choose how you prefer to track your workouts:
+              </Text>
+
+              <View style={{ width: '100%', flexDirection: 'column', gap: 12 }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleSetLoggingMode('post_workout');
+                    setWorkflowModalVisible(false);
+                  }}
+                  activeOpacity={0.7}
+                  style={{
+                    paddingVertical: 14,
+                    paddingHorizontal: 14,
+                    borderRadius: 14,
+                    borderWidth: 1.5,
+                    borderColor: loggingMode === 'post_workout' ? '#10B981' : theme.borderColor,
+                    backgroundColor: loggingMode === 'post_workout' ? (isDarkMode ? '#10B98115' : '#10B9810A') : (isDarkMode ? '#171822' : '#F9FAFB'),
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: loggingMode === 'post_workout' ? '#10B981' : theme.textPrimary }}>
+                      Focus Session
+                    </Text>
+                    <View style={{ backgroundColor: '#10B98125', paddingHorizontal: 7, paddingVertical: 2.5, borderRadius: 6 }}>
+                      <Text style={{ fontSize: 9, fontWeight: '800', color: '#10B981', letterSpacing: 0.5 }}>RECOMMENDED</Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 11.5, color: theme.textSecondary, lineHeight: 17 }}>
+                    Make your workout phone-free. No checking your phone between sets, no distractions, no breaking your training flow. Finish your workout, then log everything in under 30 seconds.
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    handleSetLoggingMode('live');
+                    setWorkflowModalVisible(false);
+                  }}
+                  activeOpacity={0.7}
+                  style={{
+                    paddingVertical: 14,
+                    paddingHorizontal: 14,
+                    borderRadius: 14,
+                    borderWidth: 1.5,
+                    borderColor: loggingMode === 'live' ? '#10B981' : theme.borderColor,
+                    backgroundColor: loggingMode === 'live' ? (isDarkMode ? '#10B98115' : '#10B9810A') : (isDarkMode ? '#171822' : '#F9FAFB'),
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: loggingMode === 'live' ? '#10B981' : theme.textPrimary }}>
+                      Live Session in Gym
+                    </Text>
+                    <View style={{ backgroundColor: isDarkMode ? '#242738' : '#E5E7EB', paddingHorizontal: 7, paddingVertical: 2.5, borderRadius: 6 }}>
+                      <Text style={{ fontSize: 9, fontWeight: '800', color: theme.textSecondary, letterSpacing: 0.5 }}>IN-GYM</Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 11.5, color: theme.textSecondary, lineHeight: 17 }}>
+                    Your workout, tracked live. Log sets as you go with your exercise lineup and automatic rest timers. Less remembering later, but more phone interaction during your workout.
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         {/* Custom Modern Alert Modal */}
         <Modal
@@ -5309,18 +5666,20 @@ export default function SinglePageLandingScreen() {
                   const isDestructive = btn.style === 'destructive';
                   const isCancel = btn.style === 'cancel';
 
-                  let btnBg = isDarkMode ? '#1E1E28' : '#F3F4F6';
-                  let textColor = theme.textPrimary;
+                  let btnBg = btn.bgColor || (isDarkMode ? '#1E1E28' : '#F3F4F6');
+                  let textColor = btn.color || theme.textPrimary;
 
-                  if (isDestructive) {
-                    btnBg = '#EF444420';
-                    textColor = '#EF4444';
-                  } else if (!isCancel) {
-                    btnBg = '#3B82F620';
-                    textColor = '#3B82F6';
-                  } else {
-                    btnBg = isDarkMode ? '#212330' : '#E5E7EB';
-                    textColor = theme.textSecondary;
+                  if (!btn.bgColor && !btn.color) {
+                    if (isDestructive) {
+                      btnBg = '#EF444420';
+                      textColor = '#EF4444';
+                    } else if (!isCancel) {
+                      btnBg = '#3B82F620';
+                      textColor = '#3B82F6';
+                    } else {
+                      btnBg = isDarkMode ? '#212330' : '#E5E7EB';
+                      textColor = theme.textSecondary;
+                    }
                   }
 
                   return (
@@ -6743,31 +7102,36 @@ export default function SinglePageLandingScreen() {
         >
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'transparent' }]}>
             <Animated.View
-              style={[
-                styles.profileFull,
-                {
-                  backgroundColor: theme.background,
-                  width: '100%',
-                  height: '100%',
-                  transform: [{ translateX: profileSlideAnim }],
-                },
-              ]}
+              style={{
+                flex: 1,
+                backgroundColor: theme.background,
+                width: '100%',
+                height: '100%',
+                transform: [{ translateX: profileSlideAnim }],
+              }}
             >
-              {/* Header */}
-              <View style={styles.profileFullHeader}>
-                <TouchableOpacity
-                  onPress={() => handleCloseProfile()}
-                  activeOpacity={0.7}
-                  style={styles.profileFullBack}
-                >
-                  <ChevronLeft size={22} color={theme.textPrimary} strokeWidth={2.5} />
-                  <Text style={[styles.profileFullBackText, { color: theme.textSecondary }]}>Back</Text>
-                </TouchableOpacity>
-              </View>
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{
+                  paddingTop: Math.max(insets.top, 24) + 8,
+                  paddingBottom: Math.max(insets.bottom, 20) + 32,
+                }}
+                showsVerticalScrollIndicator={false}
+              >
+                {/* Header */}
+                <View style={styles.profileFullHeader}>
+                  <TouchableOpacity
+                    onPress={() => handleCloseProfile()}
+                    activeOpacity={0.7}
+                    style={styles.profileFullBack}
+                  >
+                    <ChevronLeft size={22} color={theme.textPrimary} strokeWidth={2.5} />
+                    <Text style={[styles.profileFullBackText, { color: theme.textSecondary }]}>Back</Text>
+                  </TouchableOpacity>
+                </View>
 
-            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-              {/* Profile Section */}
-              <View style={styles.profileFullTop}>
+                {/* Profile Section */}
+                <View style={styles.profileFullTop}>
                 <View style={[styles.profileAvatar, { backgroundColor: userEmail || auth.currentUser ? '#111827' : '#212330' }]}>
                   <Text style={styles.profileAvatarText}>
                     {getInitials(userDisplayName || userProfile?.name || null, userEmail)}
@@ -6981,6 +7345,65 @@ export default function SinglePageLandingScreen() {
                 </View>
               </View>
 
+              {/* Logging Workflow Mode */}
+              <View style={styles.profileFullSection}>
+                <Text style={[styles.profileFullSectionTitle, { color: theme.textPrimary }]}>LOGGING WORKFLOW</Text>
+                <View style={[styles.profileFitnessCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, padding: 14 }]}>
+                  <Text style={{ fontSize: 12, color: theme.textSecondary, marginBottom: 12, lineHeight: 17 }}>
+                    Choose how you prefer to track your workouts:
+                  </Text>
+                  <View style={{ flexDirection: 'column', gap: 10 }}>
+                    <TouchableOpacity
+                      onPress={() => handleSetLoggingMode('post_workout')}
+                      activeOpacity={0.7}
+                      style={{
+                        paddingVertical: 12,
+                        paddingHorizontal: 14,
+                        borderRadius: 12,
+                        borderWidth: 1.5,
+                        borderColor: loggingMode === 'post_workout' ? '#10B981' : theme.borderColor,
+                        backgroundColor: loggingMode === 'post_workout' ? (isDarkMode ? '#10B98115' : '#10B9810A') : (isDarkMode ? '#171822' : '#F9FAFB'),
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '800', color: loggingMode === 'post_workout' ? '#10B981' : theme.textPrimary }}>
+                          Focus Session
+                        </Text>
+                        <View style={{ backgroundColor: '#10B98125', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}>
+                          <Text style={{ fontSize: 9, fontWeight: '800', color: '#10B981', letterSpacing: 0.5 }}>RECOMMENDED</Text>
+                        </View>
+                      </View>
+                      <Text style={{ fontSize: 11, color: theme.textSecondary, lineHeight: 16 }}>
+                        Make your workout phone-free. No checking your phone between sets, no distractions, no breaking your training flow. Finish your workout, then log everything in under 30 seconds.
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => handleSetLoggingMode('live')}
+                      activeOpacity={0.7}
+                      style={{
+                        paddingVertical: 12,
+                        paddingHorizontal: 14,
+                        borderRadius: 12,
+                        borderWidth: 1.5,
+                        borderColor: loggingMode === 'live' ? '#10B981' : theme.borderColor,
+                        backgroundColor: loggingMode === 'live' ? (isDarkMode ? '#10B98115' : '#10B9810A') : (isDarkMode ? '#171822' : '#F9FAFB'),
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '800', color: loggingMode === 'live' ? '#10B981' : theme.textPrimary }}>
+                          Live Session in Gym
+                        </Text>
+                        <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary }}>IN-GYM</Text>
+                      </View>
+                      <Text style={{ fontSize: 11, color: theme.textSecondary, lineHeight: 16 }}>
+                        Your workout, tracked live. Log sets as you go with your exercise lineup and automatic rest timers. Less remembering later, but more phone interaction during your workout.
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+
               {/* Achievements */}
               <View style={styles.profileFullSection}>
                 <Text style={[styles.profileFullSectionTitle, { color: theme.textPrimary }]}>ACHIEVEMENTS</Text>
@@ -7052,38 +7475,36 @@ export default function SinglePageLandingScreen() {
                 </View>
               ) : null}
 
-              <View style={{ height: 24 }} />
-            </ScrollView>
-
-            {/* Fixed Bottom: Sign Out / Sign In */}
-            <View style={styles.profileFullBottom}>
-              {userEmail || auth.currentUser ? (
-                <TouchableOpacity
-                  style={styles.profileSignOutBtn}
-                  onPress={handleLogout}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.profileSignOutText}>Sign out</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={[styles.profileSignInBtn, isProfileSigningIn && { opacity: 0.7 }]}
-                  onPress={handleProfileSignIn}
-                  disabled={isProfileSigningIn}
-                  activeOpacity={0.7}
-                >
-                  {isProfileSigningIn ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                {/* Bottom: Sign Out / Sign In */}
+                <View style={[styles.profileFullSection, { marginTop: 12 }]}>
+                  {userEmail || auth.currentUser ? (
+                    <TouchableOpacity
+                      style={styles.profileSignOutBtn}
+                      onPress={handleLogout}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.profileSignOutText}>Sign out</Text>
+                    </TouchableOpacity>
                   ) : (
-                    <>
-                      <User size={16} color="#FFFFFF" strokeWidth={2.5} />
-                      <Text style={styles.profileSignInText}>Sign in with Google</Text>
-                    </>
+                    <TouchableOpacity
+                      style={[styles.profileSignInBtn, isProfileSigningIn && { opacity: 0.7 }]}
+                      onPress={handleProfileSignIn}
+                      disabled={isProfileSigningIn}
+                      activeOpacity={0.7}
+                    >
+                      {isProfileSigningIn ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <>
+                          <User size={16} color="#FFFFFF" strokeWidth={2.5} />
+                          <Text style={styles.profileSignInText}>Sign in with Google</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
                   )}
-                </TouchableOpacity>
-              )}
-            </View>
-          </Animated.View>
+                </View>
+              </ScrollView>
+            </Animated.View>
         </View>
       </Modal>
       </KeyboardAvoidingView>
@@ -8501,7 +8922,7 @@ const styles = StyleSheet.create({
   },
   timerActionBtn: {
     paddingVertical: 10,
-    paddingHorizontal: 32,
+    paddingHorizontal: 24,
     borderRadius: 12,
   },
   timerActionText: {
