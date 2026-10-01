@@ -3086,14 +3086,52 @@ export default function SinglePageLandingScreen() {
 
                       return (
                         <View>
-                          {/* Top Workout Navigation Pill Strip */}
-                          {listForSwitcher.length > 1 && (
-                            <ScrollView
-                              horizontal
-                              showsHorizontalScrollIndicator={false}
-                              contentContainerStyle={{ gap: 6, paddingBottom: 6 }}
-                              style={{ marginBottom: 8 }}
+                          {/* Top Fixed Action Bar: CANCEL on left, SAVE on right */}
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                            <TouchableOpacity
+                              onPress={() => handleCancelInPlaceLogger()}
+                              activeOpacity={0.7}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 5,
+                                paddingVertical: 6,
+                                paddingHorizontal: 12,
+                                borderRadius: 99,
+                                backgroundColor: isDarkMode ? '#171822' : '#F3F4F6',
+                                borderWidth: 1,
+                                borderColor: isDarkMode ? '#262838' : theme.borderColor,
+                              }}
                             >
+                              <X size={13} color={theme.textSecondary} strokeWidth={2.4} />
+                              <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textSecondary, letterSpacing: 0.5 }}>
+                                CANCEL
+                              </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              onPress={() => handleSaveInPlace(targetEx.id)}
+                              activeOpacity={0.85}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 5,
+                                paddingVertical: 6,
+                                paddingHorizontal: 16,
+                                borderRadius: 99,
+                                backgroundColor: '#10B981',
+                              }}
+                            >
+                              <Check size={13} color="#000000" strokeWidth={3} />
+                              <Text style={{ fontSize: 11, fontWeight: '800', color: '#000000', letterSpacing: 0.5 }}>
+                                SAVE
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+
+                          {/* Top Workout Navigation Pill Wrap (All exercises visible on one page, zero scrolling) */}
+                          {listForSwitcher.length > 1 && (
+                            <View style={styles.loggerNavPillWrap}>
                               {listForSwitcher.map((item, index) => {
                                 const isSelected = isFromTemplate
                                   ? item.exerciseId === (inPlaceLoggingContext?.templateExerciseId || editingActiveExerciseId)
@@ -3145,12 +3183,24 @@ export default function SinglePageLandingScreen() {
                                   </TouchableOpacity>
                                 );
                               })}
-                            </ScrollView>
+                            </View>
                           )}
 
-                          {/* Header */}
-                          <View style={[styles.activeSessionHeader, { alignItems: 'flex-start' }]}>
-                            <View style={{ flex: 1, paddingRight: 8 }}>
+                          <ScrollView
+                            style={{ maxHeight: 440, marginVertical: 4 }}
+                            contentContainerStyle={{ paddingBottom: 8 }}
+                            showsVerticalScrollIndicator={true}
+                            nestedScrollEnabled={true}
+                            overScrollMode="never"
+                            bounces={false}
+                            keyboardShouldPersistTaps="handled"
+                            onTouchStart={() => setMainScrollEnabled(false)}
+                            onTouchEnd={() => setMainScrollEnabled(true)}
+                            onTouchCancel={() => setMainScrollEnabled(true)}
+                            onMomentumScrollEnd={() => setMainScrollEnabled(true)}
+                          >
+                            {/* Exercise Header & Details (Inside Scrollable Area) */}
+                            <View style={{ marginBottom: 8, paddingBottom: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.borderColor }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                                 <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor, height: 14, width: 3, borderRadius: 2 }]} />
                                 <Text style={[styles.activeSessionTitle, { color: theme.textPrimary, flexShrink: 1 }]} numberOfLines={1}>
@@ -3177,31 +3227,6 @@ export default function SinglePageLandingScreen() {
                                 ) : null}
                               </View>
                             </View>
-                            <TouchableOpacity
-                              onPress={() => {
-                                handleCancelInPlaceLogger();
-                              }}
-                              activeOpacity={0.6}
-                              style={{ padding: 6 }}
-                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            >
-                              <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
-                            </TouchableOpacity>
-                          </View>
-
-                          <ScrollView
-                            style={{ maxHeight: 400, marginVertical: 6 }}
-                            contentContainerStyle={{ paddingBottom: 8 }}
-                            showsVerticalScrollIndicator={true}
-                            nestedScrollEnabled={true}
-                            overScrollMode="never"
-                            bounces={false}
-                            keyboardShouldPersistTaps="handled"
-                            onTouchStart={() => setMainScrollEnabled(false)}
-                            onTouchEnd={() => setMainScrollEnabled(true)}
-                            onTouchCancel={() => setMainScrollEnabled(true)}
-                            onMomentumScrollEnd={() => setMainScrollEnabled(true)}
-                          >
                             {/* Best PR banner if available */}
                             {(() => {
                               const targetExId = targetEx.id;
@@ -3350,75 +3375,94 @@ export default function SinglePageLandingScreen() {
                               </View>
                             ))}
 
-                            {/* Add Set button */}
-                            <TouchableOpacity
-                              style={[
-                                styles.addSetBtn,
-                                { backgroundColor: theme.cardBg, borderColor: theme.borderColor, marginVertical: 10 }
-                              ]}
-                              onPress={() => handleAddSet(targetEx.id)}
-                              activeOpacity={0.75}
-                            >
-                              <Plus size={14} color={theme.textSecondary} strokeWidth={2.5} />
-                              <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>ADD SET</Text>
-                            </TouchableOpacity>
+                            {/* Compact Add Set & Note row */}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, marginBottom: 6 }}>
+                              <TouchableOpacity
+                                style={[
+                                  styles.addSetBtn,
+                                  {
+                                    flex: 1,
+                                    height: 38,
+                                    borderRadius: 99,
+                                    borderWidth: 1,
+                                    borderStyle: 'dashed',
+                                    borderColor: isDarkMode ? '#282A3A' : theme.borderColor,
+                                    backgroundColor: isDarkMode ? '#13141C' : '#F9FAFB',
+                                  }
+                                ]}
+                                onPress={() => handleAddSet(targetEx.id)}
+                                activeOpacity={0.75}
+                              >
+                                <Plus size={13} color={theme.textSecondary} strokeWidth={2.5} />
+                                <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>
+                                  ADD SET
+                                </Text>
+                              </TouchableOpacity>
 
-                            {/* Optional Note */}
-                            <View style={{ marginTop: 4, marginBottom: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.borderColor, paddingTop: 10 }}>
-                              <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary, marginBottom: 4, letterSpacing: 0.5 }}>
-                                EXERCISE NOTE
-                              </Text>
-                              <TextInput
-                                style={{
-                                  backgroundColor: theme.inputBg,
-                                  borderColor: theme.borderColor,
-                                  borderWidth: 1,
-                                  borderRadius: 8,
-                                  paddingHorizontal: 10,
-                                  paddingVertical: 8,
-                                  color: theme.textPrimary,
-                                  fontSize: 13,
-                                  minHeight: 44,
-                                  textAlignVertical: 'top',
-                                }}
-                                placeholder="Add an optional workout note..."
-                                placeholderTextColor={theme.inputPlaceholder}
-                                value={exerciseNote}
-                                onChangeText={setExerciseNote}
-                                multiline
-                                maxLength={150}
-                              />
+                              {!showNoteInput && (
+                                <TouchableOpacity
+                                  style={[
+                                    styles.addSetBtn,
+                                    {
+                                      paddingHorizontal: 16,
+                                      height: 38,
+                                      borderRadius: 99,
+                                      borderWidth: 1,
+                                      borderStyle: exerciseNote.trim() ? 'solid' : 'dashed',
+                                      borderColor: exerciseNote.trim() ? '#10B98160' : (isDarkMode ? '#282A3A' : theme.borderColor),
+                                      backgroundColor: exerciseNote.trim() ? (isDarkMode ? '#10B98115' : '#10B9810C') : (isDarkMode ? '#13141C' : '#F9FAFB'),
+                                    }
+                                  ]}
+                                  onPress={() => setShowNoteInput(true)}
+                                  activeOpacity={0.75}
+                                >
+                                  <Text style={[styles.addSetBtnText, { color: exerciseNote.trim() ? '#10B981' : theme.textSecondary }]}>
+                                    {exerciseNote.trim() ? 'NOTE ✓' : '+ NOTE'}
+                                  </Text>
+                                </TouchableOpacity>
+                              )}
                             </View>
+
+                            {/* Optional Note (Expands when needed) */}
+                            {showNoteInput && (
+                              <View style={{ marginTop: 6, marginBottom: 8 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                                  <Text style={{ fontSize: 10, fontWeight: '800', color: theme.textSecondary, letterSpacing: 0.6 }}>
+                                    EXERCISE NOTE
+                                  </Text>
+                                  {!exerciseNote.trim() && (
+                                    <TouchableOpacity
+                                      onPress={() => setShowNoteInput(false)}
+                                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                    >
+                                      <Text style={{ fontSize: 10, color: theme.textSecondary, fontWeight: '700', letterSpacing: 0.4 }}>HIDE</Text>
+                                    </TouchableOpacity>
+                                  )}
+                                </View>
+                                <TextInput
+                                  style={{
+                                    backgroundColor: isDarkMode ? '#13141C' : '#F9FAFB',
+                                    borderColor: isDarkMode ? '#282A3A' : theme.borderColor,
+                                    borderWidth: 1,
+                                    borderRadius: 12,
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 8,
+                                    color: theme.textPrimary,
+                                    fontSize: 12,
+                                    minHeight: 44,
+                                    textAlignVertical: 'top',
+                                  }}
+                                  placeholder="Add an optional workout note..."
+                                  placeholderTextColor={theme.inputPlaceholder}
+                                  value={exerciseNote}
+                                  onChangeText={setExerciseNote}
+                                  multiline
+                                  maxLength={150}
+                                  autoFocus={!exerciseNote}
+                                />
+                              </View>
+                            )}
                           </ScrollView>
-
-                          {/* Footer buttons */}
-                          <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
-                            <TouchableOpacity
-                              onPress={() => {
-                                handleCancelInPlaceLogger();
-                              }}
-                              style={[
-                                styles.finishSessionBtn,
-                                {
-                                  flex: 1,
-                                  backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
-                                  borderWidth: 1,
-                                  borderColor: theme.borderColor,
-                                }
-                              ]}
-                              activeOpacity={0.7}
-                            >
-                              <Text style={[styles.finishSessionBtnText, { color: theme.textSecondary }]}>CANCEL</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                              style={[styles.finishSessionBtn, { flex: 1, backgroundColor: '#10B981' }]}
-                              onPress={() => handleSaveInPlace(targetEx.id)}
-                              activeOpacity={0.8}
-                            >
-                              <Text style={styles.finishSessionBtnText}>SAVE</Text>
-                            </TouchableOpacity>
-                          </View>
                         </View>
                       );
                     })()
