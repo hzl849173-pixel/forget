@@ -2542,7 +2542,7 @@ export default function SinglePageLandingScreen() {
       }
     };
 
-    await ensureGoogleSignedIn(performSave);
+    await performSave();
   };
 
   const handleCancelSession = () => {
