@@ -198,3 +198,20 @@ Logging a workout should be extremely quick.
 
 The experience should be enjoyable enough that users prefer it over the Notes app.
 
+---
+
+## Mode Isolation & Terminology Rules
+
+The app has two primary logging modes (`loggingMode` in code):
+1. **Focus Mode (Post-Workout Mode)**: `loggingMode === 'post_workout'`
+2. **Live Session Mode (Live Mode)**: `loggingMode === 'live'`
+
+When the user specifies mode scope:
+- **"Focus Mode" / "In Focus Mode only"**:
+  Apply changes ONLY to Focus / Post-Workout mode (`loggingMode === 'post_workout'`). DO NOT alter or break Live Session behavior.
+- **"Live Session" / "In Live Session only"**:
+  Apply changes ONLY to Live Session mode (`loggingMode === 'live'`). DO NOT alter or break Focus Mode behavior.
+- **"Both Modes"**:
+  Apply the changes consistently to BOTH Focus Mode and Live Session Mode.
+
+

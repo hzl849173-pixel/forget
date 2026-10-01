@@ -397,6 +397,7 @@ export default function SinglePageLandingScreen() {
   const [progressInitialTab, setProgressInitialTab] = useState<'overview' | 'analytics' | 'milestones' | null>(null);
 
   const mainScrollRef = React.useRef<ScrollView>(null);
+  const modalLoggerScrollRef = React.useRef<ScrollView>(null);
   const templateLayouts = React.useRef<Record<string, number>>({});
   const templatesContainerY = React.useRef<number>(0);
   const [targetScrollTemplateId, setTargetScrollTemplateId] = useState<string | null>(null);
@@ -3820,16 +3821,6 @@ export default function SinglePageLandingScreen() {
                                 ]}
                                 activeOpacity={0.6}
                                 onPress={() => {
-                                  if (loggingMode === 'live') {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setSelectedModalMuscle(details.muscleGroup);
-                                    setActiveSets(item.sets.map((s) => ({ ...s })));
-                                    setExerciseNote(item.notes || '');
-                                    setShowNoteInput(!!item.notes);
-                                    setSameForAll(true);
-                                    setEditingModalExerciseId(item.exerciseId);
-                                    return;
-                                  }
                                   handleOpenInPlaceEdit(item.id || item.exerciseId, item.exerciseId);
                                 }}
                                 onLongPress={onDragStart}
@@ -4592,7 +4583,7 @@ export default function SinglePageLandingScreen() {
               ]}
             >
               <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.modalKeyboardContainer}
               >
                 {/* Workout List (Always mounted to preserve scroll position) */}
@@ -5219,13 +5210,15 @@ export default function SinglePageLandingScreen() {
                     return (
                       <View style={[StyleSheet.absoluteFill, { backgroundColor: isLiveLogger ? theme.cardBg : theme.background, zIndex: 50 }]}>
                         <ScrollView
+                          ref={modalLoggerScrollRef}
                           style={{ flex: 1 }}
                           contentContainerStyle={{
                             paddingHorizontal: 16,
                             paddingTop: insets.top > 0 ? insets.top + 16 : 24,
-                            paddingBottom: insets.bottom > 0 ? insets.bottom + 24 : 32,
+                            paddingBottom: (insets.bottom > 0 ? insets.bottom + 24 : 32) + (showNoteInput ? 120 : 0),
                           }}
                           keyboardShouldPersistTaps="handled"
+                          automaticallyAdjustKeyboardInsets={true}
                           showsVerticalScrollIndicator={false}
                         >
                           {/* Live Mode Top Header: Minimize on left, Rest Timer on right */}
@@ -5607,7 +5600,12 @@ export default function SinglePageLandingScreen() {
                                       backgroundColor: exerciseNote.trim() ? (isDarkMode ? '#10B98115' : '#10B9810C') : (isDarkMode ? '#13141C' : '#F9FAFB'),
                                     }
                                   ]}
-                                  onPress={() => setShowNoteInput(true)}
+                                  onPress={() => {
+                                    setShowNoteInput(true);
+                                    setTimeout(() => {
+                                      modalLoggerScrollRef.current?.scrollToEnd({ animated: true });
+                                    }, 100);
+                                  }}
                                   activeOpacity={0.75}
                                 >
                                   <Text style={[styles.addSetBtnText, { color: exerciseNote.trim() ? '#10B981' : theme.textSecondary }]}>
@@ -5650,6 +5648,11 @@ export default function SinglePageLandingScreen() {
                                   placeholderTextColor={theme.inputPlaceholder}
                                   value={exerciseNote}
                                   onChangeText={setExerciseNote}
+                                  onFocus={() => {
+                                    setTimeout(() => {
+                                      modalLoggerScrollRef.current?.scrollToEnd({ animated: true });
+                                    }, 150);
+                                  }}
                                   multiline
                                   maxLength={150}
                                   autoFocus={!exerciseNote}
@@ -6000,9 +6003,11 @@ export default function SinglePageLandingScreen() {
                       ]}
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setRestTimerDuration(sec);
-                        startRestTimer(sec);
                         setRestTimerVisible(false);
+                        setTimeout(() => {
+                          setRestTimerDuration(sec);
+                          startRestTimer(sec);
+                        }, 50);
                       }}
                       activeOpacity={0.7}
                     >
