@@ -5462,15 +5462,27 @@ export default function SinglePageLandingScreen() {
                 {restTimerRunning ? (
                   <>
                     <TouchableOpacity
-                      style={[styles.timerActionBtn, { backgroundColor: '#EF444420', paddingHorizontal: 16 }]}
+                      style={[
+                        styles.timerActionBtn,
+                        {
+                          backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.14)' : '#FEE2E2',
+                          borderColor: isDarkMode ? 'rgba(239, 68, 68, 0.28)' : '#FECACA',
+                        }
+                      ]}
                       onPress={stopRestTimer}
                       activeOpacity={0.7}
                     >
-                      <Text style={[styles.timerActionText, { color: '#EF4444' }]}>STOP</Text>
+                      <Text style={[styles.timerActionText, { color: isDarkMode ? '#F87171' : '#DC2626' }]}>STOP</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={[styles.timerActionBtn, { backgroundColor: '#10B98120', paddingHorizontal: 16 }]}
+                      style={[
+                        styles.timerActionBtn,
+                        {
+                          backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.14)' : '#DCFCE7',
+                          borderColor: isDarkMode ? 'rgba(16, 185, 129, 0.32)' : '#BBF7D0',
+                        }
+                      ]}
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         const newTarget = (restTimerSeconds > 0 ? restTimerSeconds : restTimerDuration) + 30;
@@ -5482,7 +5494,13 @@ export default function SinglePageLandingScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={[styles.timerActionBtn, { backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6', paddingHorizontal: 16 }]}
+                      style={[
+                        styles.timerActionBtn,
+                        {
+                          backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
+                          borderColor: theme.borderColor,
+                        }
+                      ]}
                       onPress={resetRestTimer}
                       activeOpacity={0.7}
                     >
@@ -5490,26 +5508,22 @@ export default function SinglePageLandingScreen() {
                     </TouchableOpacity>
                   </>
                 ) : (
-                  <>
-                    <TouchableOpacity
-                      style={[styles.timerActionBtn, { backgroundColor: '#10B98120', paddingHorizontal: 24 }]}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        startRestTimer(restTimerSeconds > 0 ? restTimerSeconds : restTimerDuration);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.timerActionText, { color: '#10B981' }]}>START</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.timerActionBtn, { backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6', paddingHorizontal: 24 }]}
-                      onPress={resetRestTimer}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.timerActionText, { color: theme.textSecondary }]}>RESET</Text>
-                    </TouchableOpacity>
-                  </>
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    paddingVertical: 6,
+                    paddingHorizontal: 12,
+                    borderRadius: 99,
+                    backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.08)' : '#ECFDF5',
+                    borderWidth: 1,
+                    borderColor: isDarkMode ? 'rgba(16, 185, 129, 0.2)' : '#A7F3D0',
+                  }}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#10B981' }} />
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: '#10B981', letterSpacing: 0.6 }}>
+                      TAP TIME TO START
+                    </Text>
+                  </View>
                 )}
               </View>
 
@@ -5522,24 +5536,27 @@ export default function SinglePageLandingScreen() {
                       style={[
                         styles.timerPresetBtn,
                         {
-                          backgroundColor: isSelected ? '#10B98120' : theme.background,
+                          backgroundColor: isSelected
+                            ? (isDarkMode ? 'rgba(16, 185, 129, 0.18)' : '#DCFCE7')
+                            : (isDarkMode ? '#1A1C24' : '#F3F4F6'),
                           borderColor: isSelected ? '#10B981' : theme.borderColor,
+                          borderWidth: isSelected ? 1.5 : 1,
                         }
                       ]}
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         setRestTimerDuration(sec);
-                        setRestTimerSeconds(sec);
-                        if (restTimerRunning) {
-                          startRestTimer(sec);
-                        }
+                        startRestTimer(sec);
                       }}
                       activeOpacity={0.7}
                     >
                       <Text
                         style={[
                           styles.timerPresetText,
-                          { color: isSelected ? '#10B981' : theme.textSecondary },
+                          {
+                            color: isSelected ? '#10B981' : theme.textPrimary,
+                            fontWeight: isSelected ? '800' : '600',
+                          },
                         ]}
                       >
                         {sec >= 60 ? `${sec / 60} min` : `${sec}s`}
@@ -8917,16 +8934,19 @@ const styles = StyleSheet.create({
   },
   timerActions: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+    gap: 8,
+    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timerActionBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 99,
+    borderWidth: 1,
   },
   timerActionText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
