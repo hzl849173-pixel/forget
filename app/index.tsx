@@ -5222,7 +5222,7 @@ export default function SinglePageLandingScreen() {
                           style={{ flex: 1 }}
                           contentContainerStyle={{
                             paddingHorizontal: 16,
-                            paddingTop: insets.top > 0 ? insets.top + 8 : 16,
+                            paddingTop: insets.top > 0 ? insets.top + 16 : 24,
                             paddingBottom: insets.bottom > 0 ? insets.bottom + 24 : 32,
                           }}
                           keyboardShouldPersistTaps="handled"
@@ -5230,7 +5230,7 @@ export default function SinglePageLandingScreen() {
                         >
                           {/* Live Mode Top Header: Minimize on left, Rest Timer on right */}
                           {isLiveLogger && (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                               <TouchableOpacity
                                 onPress={() => {
                                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -5263,9 +5263,9 @@ export default function SinglePageLandingScreen() {
                                 style={{
                                   flexDirection: 'row',
                                   alignItems: 'center',
-                                  gap: 5,
-                                  paddingVertical: 6,
-                                  paddingHorizontal: 12,
+                                  gap: 6,
+                                  paddingVertical: 8,
+                                  paddingHorizontal: 14,
                                   borderRadius: 99,
                                   backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : '#F3F4F6',
                                   borderWidth: 1,
@@ -5289,9 +5289,9 @@ export default function SinglePageLandingScreen() {
                                   style={{
                                     flexDirection: 'row',
                                     alignItems: 'center',
-                                    gap: 5,
-                                    paddingVertical: 6,
-                                    paddingHorizontal: 12,
+                                    gap: 6,
+                                    paddingVertical: 8,
+                                    paddingHorizontal: 14,
                                     borderRadius: 99,
                                     backgroundColor: isDarkMode ? '#10B98125' : '#10B98118',
                                     borderWidth: 1,
@@ -5313,9 +5313,9 @@ export default function SinglePageLandingScreen() {
                                   style={{
                                     flexDirection: 'row',
                                     alignItems: 'center',
-                                    gap: 5,
-                                    paddingVertical: 6,
-                                    paddingHorizontal: 12,
+                                    gap: 6,
+                                    paddingVertical: 8,
+                                    paddingHorizontal: 14,
                                     borderRadius: 99,
                                     backgroundColor: isDarkMode ? 'rgba(56, 189, 248, 0.08)' : '#F0F9FF',
                                     borderWidth: 1,
@@ -5333,7 +5333,7 @@ export default function SinglePageLandingScreen() {
 
                           {/* Selected Workouts Navigation Strip (Live Mode) */}
                           {isLiveLogger && activeSessionExercises.length > 1 && (
-                            <View style={[styles.loggerNavPillWrap, { marginTop: 0, marginBottom: 12 }]}>
+                            <View style={[styles.loggerNavPillWrap, { marginTop: 0, marginBottom: 22, gap: 8 }]}>
                               {activeSessionExercises.map((item, index) => {
                                 const isSelected = item.exerciseId === editingModalExerciseId;
                                 const exDetails = exercises.find((e) => e.id === item.exerciseId);
@@ -5355,10 +5355,13 @@ export default function SinglePageLandingScreen() {
                                           : (isDarkMode ? '#1E1E28' : '#F3F4F6'),
                                         borderColor: isSelected ? mColor : theme.borderColor,
                                         borderWidth: isSelected ? 1.5 : 1,
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 7,
+                                        borderRadius: 10,
                                       }
                                     ]}
                                   >
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                                       {hasCompletedSets ? (
                                         <Check size={11} color={isSelected ? mColor : '#10B981'} strokeWidth={3} />
                                       ) : (
@@ -5567,45 +5570,92 @@ export default function SinglePageLandingScreen() {
                               </View>
                             ))}
 
-                            {/* Add Set button */}
-                            <TouchableOpacity
-                              style={[
-                                styles.addSetBtn,
-                                { backgroundColor: theme.cardBg, borderColor: theme.borderColor, marginVertical: 10 }
-                              ]}
-                              onPress={() => handleAddSet(targetEx.id)}
-                              activeOpacity={0.75}
-                            >
-                              <Plus size={14} color={theme.textSecondary} strokeWidth={2.5} />
-                              <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>ADD SET</Text>
-                            </TouchableOpacity>
+                            {/* Action Buttons: Add Set & Collapsible Note */}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 8 }}>
+                              <TouchableOpacity
+                                style={[
+                                  styles.addSetBtn,
+                                  {
+                                    flex: 1,
+                                    height: 38,
+                                    borderRadius: 99,
+                                    borderWidth: 1,
+                                    borderColor: isDarkMode ? '#282A3A' : theme.borderColor,
+                                    backgroundColor: isDarkMode ? '#13141C' : '#F9FAFB',
+                                  }
+                                ]}
+                                onPress={() => handleAddSet(targetEx.id)}
+                                activeOpacity={0.75}
+                              >
+                                <Plus size={13} color={theme.textSecondary} strokeWidth={2.5} />
+                                <Text style={[styles.addSetBtnText, { color: theme.textSecondary }]}>
+                                  ADD SET
+                                </Text>
+                              </TouchableOpacity>
 
-                            {/* Optional Note */}
-                            <View style={{ marginTop: 4, marginBottom: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.borderColor, paddingTop: 10 }}>
-                              <Text style={{ fontSize: 10, fontWeight: '700', color: theme.textSecondary, marginBottom: 4, letterSpacing: 0.5 }}>
-                                EXERCISE NOTE
-                              </Text>
-                              <TextInput
-                                style={{
-                                  backgroundColor: theme.inputBg,
-                                  borderColor: theme.borderColor,
-                                  borderWidth: 1,
-                                  borderRadius: 8,
-                                  paddingHorizontal: 10,
-                                  paddingVertical: 8,
-                                  color: theme.textPrimary,
-                                  fontSize: 13,
-                                  minHeight: 44,
-                                  textAlignVertical: 'top',
-                                }}
-                                placeholder="Add an optional workout note..."
-                                placeholderTextColor={theme.inputPlaceholder}
-                                value={exerciseNote}
-                                onChangeText={setExerciseNote}
-                                multiline
-                                maxLength={150}
-                              />
+                              {!showNoteInput && (
+                                <TouchableOpacity
+                                  style={[
+                                    styles.addSetBtn,
+                                    {
+                                      paddingHorizontal: 16,
+                                      height: 38,
+                                      borderRadius: 99,
+                                      borderWidth: 1,
+                                      borderStyle: exerciseNote.trim() ? 'solid' : 'dashed',
+                                      borderColor: exerciseNote.trim() ? '#10B98160' : (isDarkMode ? '#282A3A' : theme.borderColor),
+                                      backgroundColor: exerciseNote.trim() ? (isDarkMode ? '#10B98115' : '#10B9810C') : (isDarkMode ? '#13141C' : '#F9FAFB'),
+                                    }
+                                  ]}
+                                  onPress={() => setShowNoteInput(true)}
+                                  activeOpacity={0.75}
+                                >
+                                  <Text style={[styles.addSetBtnText, { color: exerciseNote.trim() ? '#10B981' : theme.textSecondary }]}>
+                                    {exerciseNote.trim() ? 'NOTE ✓' : '+ NOTE'}
+                                  </Text>
+                                </TouchableOpacity>
+                              )}
                             </View>
+
+                            {/* Optional Note (Expands when needed) */}
+                            {showNoteInput && (
+                              <View style={{ marginTop: 4, marginBottom: 8 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                                  <Text style={{ fontSize: 10, fontWeight: '800', color: theme.textSecondary, letterSpacing: 0.6 }}>
+                                    EXERCISE NOTE
+                                  </Text>
+                                  {!exerciseNote.trim() && (
+                                    <TouchableOpacity
+                                      onPress={() => setShowNoteInput(false)}
+                                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                    >
+                                      <Text style={{ fontSize: 10, color: theme.textSecondary, fontWeight: '700', letterSpacing: 0.4 }}>HIDE</Text>
+                                    </TouchableOpacity>
+                                  )}
+                                </View>
+                                <TextInput
+                                  style={{
+                                    backgroundColor: isDarkMode ? '#13141C' : '#F9FAFB',
+                                    borderColor: isDarkMode ? '#282A3A' : theme.borderColor,
+                                    borderWidth: 1,
+                                    borderRadius: 12,
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 8,
+                                    color: theme.textPrimary,
+                                    fontSize: 12,
+                                    minHeight: 44,
+                                    textAlignVertical: 'top',
+                                  }}
+                                  placeholder="Add an optional workout note..."
+                                  placeholderTextColor={theme.inputPlaceholder}
+                                  value={exerciseNote}
+                                  onChangeText={setExerciseNote}
+                                  multiline
+                                  maxLength={150}
+                                  autoFocus={!exerciseNote}
+                                />
+                              </View>
+                            )}
                           </View>
 
                           {/* Footer buttons */}
@@ -5952,6 +6002,7 @@ export default function SinglePageLandingScreen() {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         setRestTimerDuration(sec);
                         startRestTimer(sec);
+                        setRestTimerVisible(false);
                       }}
                       activeOpacity={0.7}
                     >
