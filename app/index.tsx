@@ -4000,58 +4000,9 @@ export default function SinglePageLandingScreen() {
                   })()}
 
                   {/* Muscle Selector Cards Grid */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: 12 }}>
-                    <Text style={[styles.sectionHeader, { color: theme.textSecondary, marginTop: 0, marginBottom: 0 }]}>
-                      {loggingMode === 'live' ? 'SELECT WORKOUT LINEUP' : 'SELECT MUSCLE GROUP'}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={handleToggleModeFromHomepage}
-                      activeOpacity={0.7}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                        paddingVertical: 6,
-                        paddingHorizontal: 12,
-                        borderRadius: 99,
-                        backgroundColor: isDarkMode ? '#13141C' : '#F3F4F6',
-                        borderWidth: 1,
-                        borderColor: isDarkMode ? '#282A3A' : theme.borderColor,
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: isDarkMode ? 0.3 : 0.05,
-                        shadowRadius: 2,
-                        elevation: 1,
-                      }}
-                    >
-                      {/* Unified Mode Indicator Dot */}
-                      <View
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: 3,
-                          backgroundColor: loggingMode === 'live' ? '#10B981' : '#3B82F6',
-                        }}
-                      />
-                      <Text
-                        style={{
-                          fontSize: 10,
-                          fontWeight: '800',
-                          color: theme.textPrimary,
-                          letterSpacing: 0.6,
-                        }}
-                      >
-                        {loggingMode === 'live' ? 'LIVE SESSION' : 'FOCUS MODE'}
-                      </Text>
-                      {/* Subtle Swap Action Cue */}
-                      <RefreshCw
-                        size={10}
-                        color={theme.textSecondary}
-                        strokeWidth={2.5}
-                        style={{ opacity: 0.7, marginLeft: 1 }}
-                      />
-                    </TouchableOpacity>
-                  </View>
+                  <Text style={[styles.sectionHeader, { color: theme.textSecondary, marginTop: 16, marginBottom: 12 }]}>
+                    SELECT MUSCLE GROUP
+                  </Text>
                   <View style={styles.muscleGrid}>
                     {MUSCLE_GROUPS.map((muscle) => {
                       const muscleColor = categoryColors[muscle] || '#10B981';
@@ -4621,18 +4572,54 @@ export default function SinglePageLandingScreen() {
                 {/* Workout List (Always mounted to preserve scroll position) */}
                 <View style={{ flex: 1 }}>
                 {/* Modal Header */}
-                <View style={styles.modalHeaderMinimal}>
-                  <View style={styles.modalHeaderTitleCol}>
+                <View style={[styles.modalHeaderMinimal, { flexDirection: 'column', alignItems: 'stretch', gap: 6, paddingBottom: 10 }]}>
+                  {/* Top Row: Title + Add & Close */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text
-                      style={[styles.modalHeaderTitle, { color: theme.textPrimary }]}
+                      style={[styles.modalHeaderTitle, { color: theme.textPrimary, flex: 1, marginRight: 12 }]}
                       numberOfLines={1}
                     >
                       {cameFromReplaceTarget
                         ? `Replace: ${cameFromReplaceTarget.name}`
                         : (selectedSubGroup || selectedModalMuscle || '')}
                     </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setNewExerciseName(search.trim() || '');
+                          setAddExerciseVisible(true);
+                        }}
+                        activeOpacity={0.7}
+                        style={styles.modalAddExercisePill}
+                      >
+                        <Plus size={12} color="#10B981" strokeWidth={2.5} />
+                        <Text style={styles.modalAddExercisePillText}>
+                          ADD
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedModalMuscle(null);
+                          setSelectedSubGroup(null);
+                          setSelectedPickerExerciseIds(new Set());
+                          if (fromTemplateList) {
+                            setTemplateListVisible(true);
+                          }
+                          setCameFromActiveSessionPlus(false);
+                          setCameFromReplaceTarget(null);
+                        }}
+                        activeOpacity={0.7}
+                        style={styles.modalCloseIconButton}
+                      >
+                        <X size={20} color={theme.textSecondary} strokeWidth={2.2} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Sub-Row: Subtitle + Mode Toggle Button */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 28 }}>
                     <Text
-                      style={[styles.modalHeaderSubtitle, { color: theme.textSecondary }]}
+                      style={[styles.modalHeaderSubtitle, { color: theme.textSecondary, flex: 1, marginRight: 8, marginTop: 0 }]}
                       numberOfLines={1}
                     >
                       {cameFromReplaceTarget
@@ -4641,37 +4628,54 @@ export default function SinglePageLandingScreen() {
                         ? 'Select exercises to build your session'
                         : 'Select an exercise to log'}
                     </Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setNewExerciseName(search.trim() || '');
-                        setAddExerciseVisible(true);
-                      }}
-                      activeOpacity={0.7}
-                      style={styles.modalAddExercisePill}
-                    >
-                      <Plus size={12} color="#10B981" strokeWidth={2.5} />
-                      <Text style={styles.modalAddExercisePillText}>
-                        ADD
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelectedModalMuscle(null);
-                        setSelectedSubGroup(null);
-                        setSelectedPickerExerciseIds(new Set());
-                        if (fromTemplateList) {
-                          setTemplateListVisible(true);
-                        }
-                        setCameFromActiveSessionPlus(false);
-                        setCameFromReplaceTarget(null);
-                      }}
-                      activeOpacity={0.7}
-                      style={styles.modalCloseIconButton}
-                    >
-                      <X size={20} color={theme.textSecondary} strokeWidth={2.2} />
-                    </TouchableOpacity>
+                    {!cameFromReplaceTarget && (
+                      <TouchableOpacity
+                        onPress={handleToggleModeFromHomepage}
+                        activeOpacity={0.7}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                          paddingVertical: 5,
+                          paddingHorizontal: 10,
+                          borderRadius: 99,
+                          backgroundColor: isDarkMode ? '#13141C' : '#F3F4F6',
+                          borderWidth: 1,
+                          borderColor: isDarkMode ? '#282A3A' : theme.borderColor,
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: isDarkMode ? 0.3 : 0.05,
+                          shadowRadius: 2,
+                          elevation: 1,
+                        }}
+                      >
+                        {/* Unified Mode Indicator Dot */}
+                        <View
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: 3,
+                            backgroundColor: loggingMode === 'live' ? '#10B981' : '#3B82F6',
+                          }}
+                        />
+                        <Text
+                          style={{
+                            fontSize: 10,
+                            fontWeight: '800',
+                            color: theme.textPrimary,
+                            letterSpacing: 0.6,
+                          }}
+                        >
+                          {loggingMode === 'live' ? 'LIVE SESSION' : 'FOCUS MODE'}
+                        </Text>
+                        <RefreshCw
+                          size={10}
+                          color={theme.textSecondary}
+                          strokeWidth={2.5}
+                          style={{ opacity: 0.7, marginLeft: 1 }}
+                        />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
 
