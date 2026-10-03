@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,17 +22,6 @@ const categoryColors: Record<string, string> = {
 
 export default function TemplatesScreen() {
     const router = useRouter();
-    const [canScrollMore, setCanScrollMore] = useState(true);
-
-    const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-        const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 30;
-        if (isCloseToBottom && canScrollMore) {
-            setCanScrollMore(false);
-        } else if (!isCloseToBottom && !canScrollMore) {
-            setCanScrollMore(true);
-        }
-    };
 
     const getExerciseDetails = (id: string) => {
         return DEFAULT_EXERCISES.find((e) => e.id === id);
@@ -100,8 +89,6 @@ export default function TemplatesScreen() {
                     style={styles.scroll}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={true}
-                    onScroll={handleScroll}
-                    scrollEventThrottle={16}
                 >
                     {DEFAULT_TEMPLATES.map((tmpl) => {
                         // Gather unique muscles involved in this template
@@ -153,12 +140,6 @@ export default function TemplatesScreen() {
                         );
                     })}
                 </ScrollView>
-
-                {canScrollMore && (
-                    <View style={styles.moreHintRow} pointerEvents="none">
-                        <Text style={styles.moreHintText}>Scroll down for more ↓</Text>
-                    </View>
-                )}
 
                 <View style={styles.actions}>
                     <TouchableOpacity
@@ -223,18 +204,6 @@ const styles = StyleSheet.create({
         paddingVertical: 2,
     },
     muscleTagText: { fontSize: 10, fontWeight: '700', color: '#4B5563' },
-    moreHintRow: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingTop: 6,
-        paddingBottom: 2,
-    },
-    moreHintText: {
-        fontSize: 11,
-        fontWeight: '700',
-        letterSpacing: 0.3,
-        color: '#6B7280',
-    },
     actions: { paddingVertical: 10 },
     skipBtn: {
         height: 50,

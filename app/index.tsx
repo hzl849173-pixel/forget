@@ -746,24 +746,14 @@ export default function SinglePageLandingScreen() {
   const [hasSeenModeExplanation, setHasSeenModeExplanation] = useState(false);
 
   const handleSetLoggingMode = async (mode: 'post_workout' | 'live') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLoggingMode(mode);
-    setHasSeenModeExplanation(true);
-    await AsyncStorage.setItem('@workout_logging_mode', mode);
-    await AsyncStorage.setItem('@has_seen_mode_explanation', 'true');
-  };
-
-  const handleToggleModeFromHomepage = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (!hasSeenModeExplanation) {
       setWorkflowModalVisible(true);
       setHasSeenModeExplanation(true);
       await AsyncStorage.setItem('@has_seen_mode_explanation', 'true');
-      return;
     }
-    const nextMode = loggingMode === 'live' ? 'post_workout' : 'live';
-    setLoggingMode(nextMode);
-    await AsyncStorage.setItem('@workout_logging_mode', nextMode);
+    setLoggingMode(mode);
+    await AsyncStorage.setItem('@workout_logging_mode', mode);
   };
 
   React.useEffect(() => {
@@ -3915,92 +3905,11 @@ export default function SinglePageLandingScreen() {
                 </Card>
               )}
 
-              {/* Quick Start Templates and Muscle Selector (hidden during active Live session) */}
+              {/* Muscle Selector (hidden during active Live session) */}
               {!(loggingMode === 'live' && (activeSessionExercises.length > 0 || editingActiveExerciseId !== null)) && (
                 <>
-                  <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>TEMPLATES</Text>
-                  {(() => {
-                    const defaultOrder = ['tmpl-push', 'tmpl-pull', 'tmpl-legs', 'tmpl-upper', 'tmpl-full'];
-                    const sortedQuickTemplates = [...templates]
-                      .sort((a, b) => {
-                        const usageA = a.usageCount || 0;
-                        const usageB = b.usageCount || 0;
-                        if (usageB !== usageA) return usageB - usageA;
-
-                        const idxA = defaultOrder.indexOf(a.id);
-                        const idxB = defaultOrder.indexOf(b.id);
-                        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                        if (idxA !== -1) return -1;
-                        if (idxB !== -1) return 1;
-
-                        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-                      })
-                      .slice(0, 5);
-
-                    if (sortedQuickTemplates.length === 0) {
-                      return (
-                        <Card style={[styles.weeklyCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, padding: 16, alignItems: 'center', marginBottom: 16 }]}>
-                          <Text style={{ color: theme.textSecondary, fontSize: 13 }}>No templates created yet.</Text>
-                        </Card>
-                      );
-                    }
-
-                    return (
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingHorizontal: 16, gap: 10, paddingBottom: 8 }}
-                        style={{ marginHorizontal: -16, marginBottom: 16 }}
-                      >
-                        {sortedQuickTemplates.map((tmpl) => {
-                          const sessionMuscles: MuscleGroup[] = [];
-                          tmpl.exercises.forEach((logEx) => {
-                            const details = exercises.find((e) => e.id === logEx.exerciseId);
-                            if (details) sessionMuscles.push(details.muscleGroup);
-                          });
-                          const primaryMuscle = sessionMuscles[0] || 'Chest';
-                          const muscleColor = categoryColors[primaryMuscle] || '#10B981';
-
-                          return (
-                            <TouchableOpacity
-                              key={tmpl.id}
-                              onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                setTargetScrollTemplateId(tmpl.id);
-                                setHighlightedTemplateId(tmpl.id);
-                                setActiveSegment('templates');
-                              }}
-                              activeOpacity={0.8}
-                              style={{
-                                backgroundColor: theme.cardBg,
-                                borderWidth: 1,
-                                borderColor: theme.borderColor,
-                                borderLeftWidth: 4,
-                                borderLeftColor: muscleColor,
-                                paddingVertical: 14,
-                                paddingHorizontal: 18,
-                                borderRadius: 12,
-                                minWidth: 120,
-                                justifyContent: 'center',
-                                shadowColor: '#000000',
-                                shadowOffset: { width: 0, height: 1 },
-                                shadowOpacity: isDarkMode ? 0 : 0.05,
-                                shadowRadius: 2,
-                                elevation: 1,
-                              }}
-                            >
-                              <Text style={{ color: theme.textPrimary, fontSize: 15, fontWeight: '700' }}>
-                                {tmpl.name}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </ScrollView>
-                    );
-                  })()}
-
                   {/* Muscle Selector Cards Grid */}
-                  <Text style={[styles.sectionHeader, { color: theme.textSecondary, marginTop: 16, marginBottom: 12 }]}>
+                  <Text style={[styles.sectionHeader, { color: theme.textSecondary, marginTop: 4, marginBottom: 12 }]}>
                     SELECT MUSCLE GROUP
                   </Text>
                   <View style={styles.muscleGrid}>
@@ -4616,67 +4525,17 @@ export default function SinglePageLandingScreen() {
                     </View>
                   </View>
 
-                  {/* Sub-Row: Subtitle + Mode Toggle Button */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 28 }}>
-                    <Text
-                      style={[styles.modalHeaderSubtitle, { color: theme.textSecondary, flex: 1, marginRight: 8, marginTop: 0 }]}
-                      numberOfLines={1}
-                    >
-                      {cameFromReplaceTarget
-                        ? 'Select replacement workout'
-                        : loggingMode === 'live'
-                        ? 'Select exercises to build your session'
-                        : 'Select an exercise to log'}
-                    </Text>
-                    {!cameFromReplaceTarget && (
-                      <TouchableOpacity
-                        onPress={handleToggleModeFromHomepage}
-                        activeOpacity={0.7}
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 6,
-                          paddingVertical: 5,
-                          paddingHorizontal: 10,
-                          borderRadius: 99,
-                          backgroundColor: isDarkMode ? '#13141C' : '#F3F4F6',
-                          borderWidth: 1,
-                          borderColor: isDarkMode ? '#282A3A' : theme.borderColor,
-                          shadowColor: '#000',
-                          shadowOffset: { width: 0, height: 1 },
-                          shadowOpacity: isDarkMode ? 0.3 : 0.05,
-                          shadowRadius: 2,
-                          elevation: 1,
-                        }}
-                      >
-                        {/* Unified Mode Indicator Dot */}
-                        <View
-                          style={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: 3,
-                            backgroundColor: loggingMode === 'live' ? '#10B981' : '#3B82F6',
-                          }}
-                        />
-                        <Text
-                          style={{
-                            fontSize: 10,
-                            fontWeight: '800',
-                            color: theme.textPrimary,
-                            letterSpacing: 0.6,
-                          }}
-                        >
-                          {loggingMode === 'live' ? 'LIVE SESSION' : 'FOCUS MODE'}
-                        </Text>
-                        <RefreshCw
-                          size={10}
-                          color={theme.textSecondary}
-                          strokeWidth={2.5}
-                          style={{ opacity: 0.7, marginLeft: 1 }}
-                        />
-                      </TouchableOpacity>
-                    )}
-                  </View>
+                  {/* Subtitle */}
+                  <Text
+                    style={[styles.modalHeaderSubtitle, { color: theme.textSecondary, marginTop: 0 }]}
+                    numberOfLines={1}
+                  >
+                    {cameFromReplaceTarget
+                      ? 'Select replacement workout'
+                      : loggingMode === 'live'
+                      ? 'Select exercises to build your session'
+                      : 'Select an exercise to log'}
+                  </Text>
                 </View>
 
                 {/* Top Horizontal Muscle Switcher with Smooth Centering & Edge Fades */}
@@ -4760,6 +4619,116 @@ export default function SinglePageLandingScreen() {
                     autoCorrect={false}
                   />
                 </View>
+
+                {/* Mode Selector Button (Focus Mode / Live Session) */}
+                {!cameFromReplaceTarget && (
+                  <View style={{ paddingHorizontal: 24, marginBottom: 14 }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: isDarkMode ? '#13141C' : '#F3F4F6',
+                        borderRadius: 14,
+                        padding: 4,
+                        borderWidth: 1,
+                        borderColor: isDarkMode ? '#222533' : theme.borderColor,
+                        gap: 6,
+                      }}
+                    >
+                      {/* Focus Mode Button */}
+                      <TouchableOpacity
+                        onPress={() => {
+                          if (loggingMode !== 'post_workout') {
+                            handleSetLoggingMode('post_workout');
+                          }
+                        }}
+                        activeOpacity={0.7}
+                        style={{
+                          flex: 1,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 7,
+                          paddingVertical: 10,
+                          borderRadius: 11,
+                          backgroundColor: loggingMode === 'post_workout'
+                            ? (isDarkMode ? '#1D4ED8' : '#2563EB')
+                            : 'transparent',
+                          shadowColor: loggingMode === 'post_workout' ? '#2563EB' : 'transparent',
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: loggingMode === 'post_workout' ? 0.35 : 0,
+                          shadowRadius: 4,
+                          elevation: loggingMode === 'post_workout' ? 2 : 0,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: 4,
+                            backgroundColor: loggingMode === 'post_workout' ? '#93C5FD' : '#6B7280',
+                          }}
+                        />
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: loggingMode === 'post_workout' ? '800' : '600',
+                            color: loggingMode === 'post_workout' ? '#FFFFFF' : theme.textSecondary,
+                            letterSpacing: 0.5,
+                          }}
+                        >
+                          FOCUS MODE
+                        </Text>
+                      </TouchableOpacity>
+
+                      {/* Live Session Button */}
+                      <TouchableOpacity
+                        onPress={() => {
+                          if (loggingMode !== 'live') {
+                            handleSetLoggingMode('live');
+                          }
+                        }}
+                        activeOpacity={0.7}
+                        style={{
+                          flex: 1,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 7,
+                          paddingVertical: 10,
+                          borderRadius: 11,
+                          backgroundColor: loggingMode === 'live'
+                            ? '#10B981'
+                            : 'transparent',
+                          shadowColor: loggingMode === 'live' ? '#10B981' : 'transparent',
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: loggingMode === 'live' ? 0.35 : 0,
+                          shadowRadius: 4,
+                          elevation: loggingMode === 'live' ? 2 : 0,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: 4,
+                            backgroundColor: loggingMode === 'live' ? '#A7F3D0' : '#6B7280',
+                          }}
+                        />
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: loggingMode === 'live' ? '800' : '600',
+                            color: loggingMode === 'live' ? '#FFFFFF' : theme.textSecondary,
+                            letterSpacing: 0.5,
+                          }}
+                        >
+                          LIVE SESSION
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
 
                 {/* Exercises List */}
                 <SectionList
