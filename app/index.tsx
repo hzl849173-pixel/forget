@@ -4730,14 +4730,19 @@ export default function SinglePageLandingScreen() {
                   key={selectedModalMuscle || 'all'}
                   sections={exerciseSections}
                   keyExtractor={(item) => item.id}
-                  contentContainerStyle={styles.modalListContent}
+                  contentContainerStyle={[
+                    styles.modalListContent,
+                    {
+                      paddingBottom: (insets.bottom > 0 ? insets.bottom : 16) + 110,
+                    },
+                  ]}
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                   stickySectionHeadersEnabled={false}
-                  initialNumToRender={15}
-                  maxToRenderPerBatch={15}
-                  windowSize={5}
-                  removeClippedSubviews={Platform.OS === 'android'}
+                  initialNumToRender={20}
+                  maxToRenderPerBatch={20}
+                  windowSize={11}
+                  removeClippedSubviews={false}
                   renderSectionHeader={({ section }) => (
                     <View style={styles.modalSectionHeader}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
