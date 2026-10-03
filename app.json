@@ -3,9 +3,7 @@
     "name": "Forget",
     "slug": "forget",
     "version": "1.1.0",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.1.0",
     "updates": {
       "url": "https://u.expo.dev/b0ad99fc-ad17-473a-963a-24de6c57674d",
       "enabled": true,
