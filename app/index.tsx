@@ -3050,9 +3050,13 @@ export default function SinglePageLandingScreen() {
           {/* Landing Header */}
           <View style={styles.header}>
             <View style={styles.headerRow}>
-              <View style={{ flex: 1, paddingRight: 8 }}>
-                <Text style={[styles.headerSlogan, { color: theme.textSecondary }]}>WE REMEMBER SO YOU CAN</Text>
-                <Text style={[styles.headerBrand, { color: theme.textPrimary }]}>FORGET</Text>
+              <View style={{ flexShrink: 1, marginRight: 10, justifyContent: 'center' }}>
+                <Text style={[styles.headerSlogan, { color: theme.textSecondary }]} numberOfLines={1} ellipsizeMode="clip">
+                  WE REMEMBER SO YOU CAN
+                </Text>
+                <Text style={[styles.headerBrand, { color: theme.textPrimary }]} numberOfLines={1}>
+                  FORGET
+                </Text>
               </View>
               {/* Header Action Controls */}
               <View style={styles.headerActionContainer}>
@@ -4006,18 +4010,46 @@ export default function SinglePageLandingScreen() {
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 5,
-                        paddingVertical: 5,
-                        paddingHorizontal: 11,
+                        gap: 6,
+                        paddingVertical: 6,
+                        paddingHorizontal: 12,
                         borderRadius: 99,
-                        backgroundColor: loggingMode === 'live' ? (isDarkMode ? '#10B98118' : '#10B98110') : (isDarkMode ? '#13141C' : '#F3F4F6'),
+                        backgroundColor: isDarkMode ? '#13141C' : '#F3F4F6',
                         borderWidth: 1,
-                        borderColor: loggingMode === 'live' ? '#10B981' : (isDarkMode ? '#282A3A' : theme.borderColor),
+                        borderColor: isDarkMode ? '#282A3A' : theme.borderColor,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: isDarkMode ? 0.3 : 0.05,
+                        shadowRadius: 2,
+                        elevation: 1,
                       }}
                     >
-                      <Text style={{ fontSize: 10, fontWeight: '800', color: loggingMode === 'live' ? '#10B981' : theme.textSecondary, letterSpacing: 0.5 }}>
-                        {loggingMode === 'live' ? 'LIVE SESSION (IN GYM)' : 'FOCUS (RECOMMENDED)'}
+                      {/* Unified Mode Indicator Dot */}
+                      <View
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: 3,
+                          backgroundColor: loggingMode === 'live' ? '#10B981' : '#3B82F6',
+                        }}
+                      />
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          fontWeight: '800',
+                          color: theme.textPrimary,
+                          letterSpacing: 0.6,
+                        }}
+                      >
+                        {loggingMode === 'live' ? 'LIVE SESSION' : 'FOCUS MODE'}
                       </Text>
+                      {/* Subtle Swap Action Cue */}
+                      <RefreshCw
+                        size={10}
+                        color={theme.textSecondary}
+                        strokeWidth={2.5}
+                        style={{ opacity: 0.7, marginLeft: 1 }}
+                      />
                     </TouchableOpacity>
                   </View>
                   <View style={styles.muscleGrid}>
@@ -6156,8 +6188,8 @@ export default function SinglePageLandingScreen() {
                 >
                   <Text style={{ fontSize: 11.5, color: theme.textSecondary, lineHeight: 17 }}>
                     {loggingMode === 'post_workout'
-                      ? 'Phone-free training. Finish your workout without distractions, then log everything in under 30 seconds.'
-                      : 'Track sets live in the gym. Log as you go with active exercise lineups and automatic rest timers between sets.'}
+                      ? 'Pick one exercise at a time and enter all your weights and reps completely.'
+                      : 'Select multiple exercises first to prepare your whole workout, then go through them.'}
                   </Text>
                 </View>
 
@@ -7977,8 +8009,8 @@ export default function SinglePageLandingScreen() {
                   >
                     <Text style={{ fontSize: 11.5, color: theme.textSecondary, lineHeight: 17 }}>
                       {loggingMode === 'post_workout'
-                        ? 'Phone-free training. Finish your workout without distractions, then log everything in under 30 seconds.'
-                        : 'Track sets live in the gym. Log as you go with active exercise lineups and automatic rest timers between sets.'}
+                        ? 'Pick one exercise at a time and enter all your weights and reps completely.'
+                        : 'Select multiple exercises first to prepare your whole workout, then go through them.'}
                     </Text>
                   </View>
                 </View>
