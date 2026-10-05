@@ -119,7 +119,7 @@ export default function WeightScreen() {
             weightKg,
             goal: p?.goal || ('' as any),
         });
-        router.replace('/onboarding/signin');
+        router.replace('/onboarding/mode');
     };
 
     return (
@@ -267,6 +267,7 @@ export default function WeightScreen() {
                         <View style={styles.progressDots}>
                             <View style={styles.dot} />
                             <View style={[styles.dot, styles.activeDot]} />
+                            <View style={styles.dot} />
                             <View style={styles.dot} />
                             <View style={styles.dot} />
                         </View>

@@ -723,6 +723,31 @@ export default function SinglePageLandingScreen() {
   const [editingActiveExerciseId, setEditingActiveExerciseId] = useState<string | null>(null);
   const [editingTemplateExerciseId, setEditingTemplateExerciseId] = useState<string | null>(null);
   const [editingModalExerciseId, setEditingModalExerciseId] = useState<string | null>(null);
+  const liveModalLoggerAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (editingModalExerciseId !== null) {
+      liveModalLoggerAnim.setValue(0);
+      Animated.spring(liveModalLoggerAnim, {
+        toValue: 1,
+        damping: 26,
+        stiffness: 260,
+        mass: 0.8,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [editingModalExerciseId !== null]);
+
+  const dismissLiveModalLogger = (onComplete?: () => void) => {
+    Animated.timing(liveModalLoggerAnim, {
+      toValue: 0,
+      duration: 250,
+      easing: Easing.bezier(0.32, 1, 0.23, 1),
+      useNativeDriver: true,
+    }).start(() => {
+      onComplete?.();
+    });
+  };
   const [inPlaceLoggingContext, setInPlaceLoggingContext] = useState<{
     source: 'workout_list' | 'template_list' | 'active_session';
     returnModalMuscle?: MuscleGroup | null;
@@ -2168,14 +2193,18 @@ export default function SinglePageLandingScreen() {
         setEditingModalExerciseId(nextEx.exerciseId);
         return;
       }
-      setEditingModalExerciseId(null);
-      setSelectedModalMuscle(null);
-      setSelectedSubGroup(null);
-      setActiveSegment('log');
+      dismissLiveModalLogger(() => {
+        setEditingModalExerciseId(null);
+        setSelectedModalMuscle(null);
+        setSelectedSubGroup(null);
+        setActiveSegment('log');
+      });
       return;
     }
 
-    setEditingModalExerciseId(null);
+    dismissLiveModalLogger(() => {
+      setEditingModalExerciseId(null);
+    });
   };
 
   const handleSwitchModalExercise = (targetExId: string) => {
@@ -2246,12 +2275,14 @@ export default function SinglePageLandingScreen() {
       await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
     }
 
-    setEditingModalExerciseId(null);
-    setSelectedModalMuscle(null);
-    setSelectedSubGroup(null);
-    setActiveSegment('log');
+    dismissLiveModalLogger(async () => {
+      setEditingModalExerciseId(null);
+      setSelectedModalMuscle(null);
+      setSelectedSubGroup(null);
+      setActiveSegment('log');
 
-    await handleFinishWorkoutDay();
+      await handleFinishWorkoutDay();
+    });
   };
 
 
@@ -3879,20 +3910,18 @@ export default function SinglePageLandingScreen() {
                             borderRadius: 10,
                           }
                         ]}
-                        onPress={async () => {
+                        onPress={() => {
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          await ensureGoogleSignedIn(async () => {
-                            const suggestedTitle = suggestWorkoutTitle(activeSessionExercises);
-                            setIsSavingActiveSessionAsTemplate(true);
-                            const exercisesToSave = activeSessionExercises.map((le) => ({
-                              id: le.id || generateId(),
-                              exerciseId: le.exerciseId,
-                              sets: le.sets.map((s) => ({ ...s })),
-                            }));
-                            setTemplateExercises(exercisesToSave);
-                            setTemplateName(suggestedTitle);
-                            setTemplateModalVisible(true);
-                          });
+                          const suggestedTitle = suggestWorkoutTitle(activeSessionExercises);
+                          setIsSavingActiveSessionAsTemplate(true);
+                          const exercisesToSave = activeSessionExercises.map((le) => ({
+                            id: le.id || generateId(),
+                            exerciseId: le.exerciseId,
+                            sets: le.sets.map((s) => ({ ...s })),
+                          }));
+                          setTemplateExercises(exercisesToSave);
+                          setTemplateName(suggestedTitle);
+                          setTemplateModalVisible(true);
                         }}
                         activeOpacity={0.7}
                       >
@@ -4131,13 +4160,11 @@ export default function SinglePageLandingScreen() {
                   )}
                 </View>
                 <TouchableOpacity
-                  onPress={async () => {
-                    await ensureGoogleSignedIn(async () => {
-                      setTemplateName('');
-                      setTemplateExercises([]);
-                      setIsSavingActiveSessionAsTemplate(false);
-                      setTemplateModalVisible(true);
-                    });
+                  onPress={() => {
+                    setTemplateName('');
+                    setTemplateExercises([]);
+                    setIsSavingActiveSessionAsTemplate(false);
+                    setTemplateModalVisible(true);
                   }}
                   activeOpacity={0.7}
                   style={{
@@ -4622,17 +4649,17 @@ export default function SinglePageLandingScreen() {
 
                 {/* Mode Selector Button (Focus Mode / Live Session) */}
                 {!cameFromReplaceTarget && (
-                  <View style={{ paddingHorizontal: 24, marginBottom: 14 }}>
+                  <View style={{ paddingHorizontal: 24, marginBottom: 12 }}>
                     <View
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        backgroundColor: isDarkMode ? '#13141C' : '#F3F4F6',
-                        borderRadius: 14,
-                        padding: 4,
+                        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.04)' : '#F3F4F6',
+                        borderRadius: 10,
+                        padding: 3,
                         borderWidth: 1,
-                        borderColor: isDarkMode ? '#222533' : theme.borderColor,
-                        gap: 6,
+                        borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : theme.borderColor,
+                        gap: 4,
                       }}
                     >
                       {/* Focus Mode Button */}
@@ -4648,33 +4675,32 @@ export default function SinglePageLandingScreen() {
                           flexDirection: 'row',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: 7,
-                          paddingVertical: 10,
-                          borderRadius: 11,
+                          gap: 6,
+                          paddingVertical: 6,
+                          borderRadius: 7,
                           backgroundColor: loggingMode === 'post_workout'
-                            ? (isDarkMode ? '#1D4ED8' : '#2563EB')
+                            ? (isDarkMode ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF')
                             : 'transparent',
-                          shadowColor: loggingMode === 'post_workout' ? '#2563EB' : 'transparent',
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: loggingMode === 'post_workout' ? 0.35 : 0,
-                          shadowRadius: 4,
-                          elevation: loggingMode === 'post_workout' ? 2 : 0,
+                          borderWidth: 1,
+                          borderColor: loggingMode === 'post_workout'
+                            ? (isDarkMode ? 'rgba(59, 130, 246, 0.4)' : '#BFDBFE')
+                            : 'transparent',
                         }}
                       >
                         <View
                           style={{
-                            width: 7,
-                            height: 7,
-                            borderRadius: 4,
-                            backgroundColor: loggingMode === 'post_workout' ? '#93C5FD' : '#6B7280',
+                            width: 5,
+                            height: 5,
+                            borderRadius: 2.5,
+                            backgroundColor: loggingMode === 'post_workout' ? (isDarkMode ? '#60A5FA' : '#2563EB') : 'transparent',
                           }}
                         />
                         <Text
                           style={{
-                            fontSize: 12,
-                            fontWeight: loggingMode === 'post_workout' ? '800' : '600',
-                            color: loggingMode === 'post_workout' ? '#FFFFFF' : theme.textSecondary,
-                            letterSpacing: 0.5,
+                            fontSize: 11,
+                            fontWeight: loggingMode === 'post_workout' ? '700' : '600',
+                            color: loggingMode === 'post_workout' ? (isDarkMode ? '#93C5FD' : '#1D4ED8') : theme.textSecondary,
+                            letterSpacing: 0.4,
                           }}
                         >
                           FOCUS MODE
@@ -4694,33 +4720,32 @@ export default function SinglePageLandingScreen() {
                           flexDirection: 'row',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: 7,
-                          paddingVertical: 10,
-                          borderRadius: 11,
+                          gap: 6,
+                          paddingVertical: 6,
+                          borderRadius: 7,
                           backgroundColor: loggingMode === 'live'
-                            ? '#10B981'
+                            ? (isDarkMode ? 'rgba(16, 185, 129, 0.16)' : '#ECFDF5')
                             : 'transparent',
-                          shadowColor: loggingMode === 'live' ? '#10B981' : 'transparent',
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: loggingMode === 'live' ? 0.35 : 0,
-                          shadowRadius: 4,
-                          elevation: loggingMode === 'live' ? 2 : 0,
+                          borderWidth: 1,
+                          borderColor: loggingMode === 'live'
+                            ? (isDarkMode ? 'rgba(16, 185, 129, 0.4)' : '#A7F3D0')
+                            : 'transparent',
                         }}
                       >
                         <View
                           style={{
-                            width: 7,
-                            height: 7,
-                            borderRadius: 4,
-                            backgroundColor: loggingMode === 'live' ? '#A7F3D0' : '#6B7280',
+                            width: 5,
+                            height: 5,
+                            borderRadius: 2.5,
+                            backgroundColor: loggingMode === 'live' ? '#10B981' : 'transparent',
                           }}
                         />
                         <Text
                           style={{
-                            fontSize: 12,
-                            fontWeight: loggingMode === 'live' ? '800' : '600',
-                            color: loggingMode === 'live' ? '#FFFFFF' : theme.textSecondary,
-                            letterSpacing: 0.5,
+                            fontSize: 11,
+                            fontWeight: loggingMode === 'live' ? '700' : '600',
+                            color: loggingMode === 'live' ? (isDarkMode ? '#6EE7B7' : '#059669') : theme.textSecondary,
+                            letterSpacing: 0.4,
                           }}
                         >
                           LIVE SESSION
@@ -5218,7 +5243,27 @@ export default function SinglePageLandingScreen() {
                       : { style: [styles.activeSessionCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }] };
 
                     return (
-                      <View style={[StyleSheet.absoluteFill, { backgroundColor: isLiveLogger ? theme.cardBg : theme.background, zIndex: 50 }]}>
+                      <Animated.View
+                        style={[
+                          StyleSheet.absoluteFill,
+                          {
+                            backgroundColor: isLiveLogger ? theme.cardBg : theme.background,
+                            zIndex: 50,
+                            transform: [
+                              {
+                                translateY: liveModalLoggerAnim.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [650, 0],
+                                }),
+                              },
+                            ],
+                            opacity: liveModalLoggerAnim.interpolate({
+                              inputRange: [0, 0.25, 1],
+                              outputRange: [0, 1, 1],
+                            }),
+                          },
+                        ]}
+                      >
                         <ScrollView
                           ref={modalLoggerScrollRef}
                           style={{ flex: 1 }}
@@ -5257,10 +5302,12 @@ export default function SinglePageLandingScreen() {
                                     setActiveSessionExercises(updated);
                                     AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
                                   }
-                                  setEditingModalExerciseId(null);
-                                  setSelectedModalMuscle(null);
-                                  setSelectedSubGroup(null);
-                                  setActiveSegment('log');
+                                  dismissLiveModalLogger(() => {
+                                    setEditingModalExerciseId(null);
+                                    setSelectedModalMuscle(null);
+                                    setSelectedSubGroup(null);
+                                    setActiveSegment('log');
+                                  });
                                 }}
                                 activeOpacity={0.7}
                                 style={{
@@ -5716,7 +5763,9 @@ export default function SinglePageLandingScreen() {
                               <TouchableOpacity
                                 onPress={() => {
                                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                  setEditingModalExerciseId(null);
+                                  dismissLiveModalLogger(() => {
+                                    setEditingModalExerciseId(null);
+                                  });
                                 }}
                                 style={[
                                   styles.finishSessionBtn,
@@ -5743,7 +5792,7 @@ export default function SinglePageLandingScreen() {
                           )}
                         </ContentWrapper>
                       </ScrollView>
-                      </View>
+                      </Animated.View>
                     );
                   })()
                 )}
@@ -5847,34 +5896,99 @@ export default function SinglePageLandingScreen() {
         <Modal
           visible={addExerciseVisible}
           transparent={true}
-          animationType="none"
+          animationType="fade"
           onRequestClose={() => setAddExerciseVisible(false)}
         >
-          <View style={styles.addExerciseOverlay}>
-            <View style={[styles.addExerciseCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-              <Text style={[styles.addExerciseTitle, { color: theme.textPrimary }]}>ADD WORKOUT</Text>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.addExerciseOverlay}
+          >
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setAddExerciseVisible(false)}
+            />
+            <View style={[styles.addExerciseCard, { backgroundColor: isDarkMode ? '#161822' : '#FFFFFF', borderColor: isDarkMode ? 'rgba(255,255,255,0.08)' : theme.borderColor }]}>
+              {/* Category pill badge */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    paddingVertical: 4,
+                    paddingHorizontal: 10,
+                    borderRadius: 99,
+                    backgroundColor: `${categoryColors[selectedModalMuscle || ''] || '#10B981'}15`,
+                    borderWidth: 1,
+                    borderColor: `${categoryColors[selectedModalMuscle || ''] || '#10B981'}30`,
+                  }}
+                >
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: categoryColors[selectedModalMuscle || ''] || '#10B981' }} />
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: categoryColors[selectedModalMuscle || ''] || '#10B981', letterSpacing: 0.6 }}>
+                    {selectedModalMuscle?.toUpperCase() || 'CUSTOM'}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={[styles.addExerciseTitle, { color: theme.textPrimary }]}>Create Exercise</Text>
               <Text style={[styles.addExerciseSubtitle, { color: theme.textSecondary }]}>
-                {selectedModalMuscle?.toUpperCase()}
+                Add a custom workout to track in this category
               </Text>
-              <TextInput
-                style={[styles.addExerciseInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
-                placeholder="Workout name"
-                placeholderTextColor={theme.inputPlaceholder}
-                value={newExerciseName}
-                onChangeText={setNewExerciseName}
-                autoFocus={true}
-                autoCorrect={false}
-              />
+
+              <View style={{ position: 'relative', marginBottom: 18 }}>
+                <TextInput
+                  style={[
+                    styles.addExerciseInput,
+                    {
+                      backgroundColor: isDarkMode ? '#0F1017' : '#F9FAFB',
+                      borderColor: newExerciseName.trim() ? '#10B981' : (isDarkMode ? '#222533' : theme.borderColor),
+                      color: theme.textPrimary,
+                      marginBottom: 0,
+                    }
+                  ]}
+                  placeholder="e.g. Incline Dumbbell Press"
+                  placeholderTextColor={theme.inputPlaceholder}
+                  value={newExerciseName}
+                  onChangeText={setNewExerciseName}
+                  autoFocus={true}
+                  autoCorrect={false}
+                />
+                {newExerciseName.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setNewExerciseName('')}
+                    style={{ position: 'absolute', right: 12, top: 14 }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <X size={16} color={theme.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+
               <View style={styles.addExerciseActions}>
                 <TouchableOpacity
-                  style={[styles.addExerciseCancelBtn, { borderColor: theme.borderColor }]}
-                  onPress={() => setAddExerciseVisible(false)}
+                  style={[
+                    styles.addExerciseCancelBtn,
+                    {
+                      borderColor: 'transparent',
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : '#F3F4F6',
+                    }
+                  ]}
+                  onPress={() => {
+                    setNewExerciseName('');
+                    setAddExerciseVisible(false);
+                  }}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.addExerciseCancelText, { color: theme.textSecondary }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.addExerciseConfirmBtn, { backgroundColor: newExerciseName.trim() ? '#10B981' : theme.borderColor }]}
+                  style={[
+                    styles.addExerciseConfirmBtn,
+                    {
+                      backgroundColor: newExerciseName.trim() ? '#10B981' : (isDarkMode ? '#1E202B' : '#E5E7EB'),
+                      opacity: newExerciseName.trim() ? 1 : 0.5,
+                    }
+                  ]}
                   onPress={async () => {
                     const name = newExerciseName.trim();
                     if (!name || !selectedModalMuscle) return;
@@ -5892,11 +6006,13 @@ export default function SinglePageLandingScreen() {
                   activeOpacity={0.8}
                   disabled={!newExerciseName.trim()}
                 >
-                  <Text style={styles.addExerciseConfirmText}>Add</Text>
+                  <Text style={[styles.addExerciseConfirmText, { color: newExerciseName.trim() ? '#000000' : theme.textSecondary }]}>
+                    Add Exercise
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Rest Timer Modal */}
@@ -6550,7 +6666,7 @@ export default function SinglePageLandingScreen() {
         <Modal
           visible={expandedExerciseId !== null}
           transparent={true}
-          animationType="none"
+          animationType="fade"
           onRequestClose={() => {
             if (fromTemplateList) {
               handleTemplateListBackFromLogger();
@@ -6974,48 +7090,103 @@ export default function SinglePageLandingScreen() {
         <Modal
           visible={templateModalVisible}
           transparent={true}
-          animationType="none"
+          animationType="fade"
           onRequestClose={handleCancelSaveTemplate}
         >
-          <View style={styles.timerOverlay}>
-            <View style={[styles.timerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
-              <TouchableOpacity
-                style={styles.timerCloseBtn}
-                onPress={handleCancelSaveTemplate}
-                activeOpacity={0.7}
-              >
-                <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
-              </TouchableOpacity>
-              <Text style={[styles.prAlertTitle, { color: theme.textPrimary }]}>SAVE AS TEMPLATE</Text>
-              <Text style={[styles.addExerciseSubtitle, { color: theme.textSecondary }]}>Name your template</Text>
-              <TextInput
-                style={[styles.addExerciseInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
-                placeholder="Template name"
-                placeholderTextColor={theme.inputPlaceholder}
-                value={templateName}
-                onChangeText={setTemplateName}
-                autoFocus={true}
-                autoCorrect={false}
-              />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.addExerciseOverlay}
+          >
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={handleCancelSaveTemplate}
+            />
+            <View style={[styles.addExerciseCard, { backgroundColor: isDarkMode ? '#161822' : '#FFFFFF', borderColor: isDarkMode ? 'rgba(255,255,255,0.08)' : theme.borderColor }]}>
+              {/* Icon badge */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <View
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 22,
+                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: 1,
+                    borderColor: 'rgba(16, 185, 129, 0.25)',
+                  }}
+                >
+                  <Dumbbell size={20} color="#10B981" strokeWidth={2.4} />
+                </View>
+              </View>
+
+              <Text style={[styles.addExerciseTitle, { color: theme.textPrimary }]}>Save as Template</Text>
+              <Text style={[styles.addExerciseSubtitle, { color: theme.textSecondary }]}>
+                {isSavingActiveSessionAsTemplate ? 'Save today’s routine to quickly load next time' : 'Name your routine template'}
+              </Text>
+
+              <View style={{ position: 'relative', marginBottom: 18 }}>
+                <TextInput
+                  style={[
+                    styles.addExerciseInput,
+                    {
+                      backgroundColor: isDarkMode ? '#0F1017' : '#F9FAFB',
+                      borderColor: templateName.trim() ? '#10B981' : (isDarkMode ? '#222533' : theme.borderColor),
+                      color: theme.textPrimary,
+                      marginBottom: 0,
+                    }
+                  ]}
+                  placeholder="e.g. Chest & Triceps Blast"
+                  placeholderTextColor={theme.inputPlaceholder}
+                  value={templateName}
+                  onChangeText={setTemplateName}
+                  autoFocus={true}
+                  autoCorrect={false}
+                />
+                {templateName.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setTemplateName('')}
+                    style={{ position: 'absolute', right: 12, top: 14 }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <X size={16} color={theme.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+
               <View style={styles.addExerciseActions}>
                 <TouchableOpacity
-                  style={[styles.addExerciseCancelBtn, { borderColor: theme.borderColor }]}
+                  style={[
+                    styles.addExerciseCancelBtn,
+                    {
+                      borderColor: 'transparent',
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : '#F3F4F6',
+                    }
+                  ]}
                   onPress={handleCancelSaveTemplate}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.addExerciseCancelText, { color: theme.textSecondary }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.addExerciseConfirmBtn, { backgroundColor: templateName.trim() ? '#10B981' : theme.borderColor }]}
+                  style={[
+                    styles.addExerciseConfirmBtn,
+                    {
+                      backgroundColor: templateName.trim() ? '#10B981' : (isDarkMode ? '#1E202B' : '#E5E7EB'),
+                      opacity: templateName.trim() ? 1 : 0.5,
+                    }
+                  ]}
                   onPress={handleConfirmSaveTemplate}
                   activeOpacity={0.8}
                   disabled={!templateName.trim()}
                 >
-                  <Text style={styles.addExerciseConfirmText}>Save</Text>
+                  <Text style={[styles.addExerciseConfirmText, { color: templateName.trim() ? '#000000' : theme.textSecondary }]}>
+                    Save Template
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Template Exercise List Overlay */}
@@ -10062,49 +10233,49 @@ const styles = StyleSheet.create({
   },
   addExerciseOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   addExerciseCard: {
     width: '100%',
-    maxWidth: 320,
-    borderRadius: 24,
+    maxWidth: 340,
+    borderRadius: 22,
     borderWidth: 1,
-    padding: 28,
+    padding: 22,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 12,
   },
   addExerciseTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
-  addExerciseSubtitle: {
-    fontSize: 11,
+    fontSize: 17,
     fontWeight: '700',
     textAlign: 'center',
+    letterSpacing: -0.2,
+  },
+  addExerciseSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
     marginTop: 4,
-    marginBottom: 20,
-    letterSpacing: 0.8,
+    marginBottom: 18,
+    letterSpacing: 0.1,
   },
   addExerciseInput: {
-    height: 46,
+    height: 48,
     borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: 1.5,
     paddingHorizontal: 16,
     fontSize: 15,
     fontWeight: '600',
-    marginBottom: 20,
+    marginBottom: 18,
   },
   addExerciseActions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   addExerciseCancelBtn: {
     flex: 1,
@@ -10115,19 +10286,19 @@ const styles = StyleSheet.create({
   },
   addExerciseCancelText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   addExerciseConfirmBtn: {
-    flex: 1,
+    flex: 1.2,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
   },
   addExerciseConfirmText: {
     fontSize: 14,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    color: '#000000',
+    letterSpacing: 0.3,
   },
   modalOverlay: {
     flex: 1,

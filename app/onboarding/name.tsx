@@ -11,14 +11,6 @@ type GoalOption = {
     subtitle: string;
 };
 
-type ModeOption = {
-    value: 'post_workout' | 'live';
-    title: string;
-    subtitle: string;
-    badge: string;
-    dotColor: string;
-};
-
 const GOALS: GoalOption[] = [
     { value: 'Lean & Aesthetic', title: 'Lean & Aesthetic', subtitle: 'Look lean, feel sharp' },
     { value: 'Strong & Powerful', title: 'Strong & Powerful', subtitle: 'Build raw power & strength' },
@@ -26,41 +18,19 @@ const GOALS: GoalOption[] = [
     { value: 'Improve Overall Health', title: 'Improve Overall Health', subtitle: 'Mobility, stamina & wellbeing' },
 ];
 
-const MODES: ModeOption[] = [
-    {
-        value: 'post_workout',
-        title: 'Focus Mode',
-        subtitle: 'Log all completed exercises & sets in under 30s after your workout.',
-        badge: 'FASTEST (UNDER 30S)',
-        dotColor: '#2563EB',
-    },
-    {
-        value: 'live',
-        title: 'Live Session',
-        subtitle: 'Track sets, repetitions, and rest timers live while training in the gym.',
-        badge: 'REAL-TIME TRACKING',
-        dotColor: '#10B981',
-    },
-];
-
 export default function NameScreen() {
     const router = useRouter();
     const [name, setName] = useState('');
     const [selectedGoal, setSelectedGoal] = useState<FitnessGoal | null>(null);
-    const [selectedMode, setSelectedMode] = useState<'post_workout' | 'live' | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         let mounted = true;
         (async () => {
             const p = await loadLocalProfile();
-            const savedMode = await AsyncStorage.getItem('@workout_logging_mode');
             if (!mounted) return;
             if (p?.name) setName(p.name);
             if (p?.goal) setSelectedGoal(p.goal);
-            if (savedMode === 'live' || savedMode === 'post_workout') {
-                setSelectedMode(savedMode);
-            }
             setLoading(false);
         })();
         return () => {
@@ -68,10 +38,10 @@ export default function NameScreen() {
         };
     }, []);
 
-    const canContinue = name.trim().length > 0 && selectedGoal !== null && selectedMode !== null;
+    const canContinue = name.trim().length > 0 && selectedGoal !== null;
 
     const handleNext = async () => {
-        if (!canContinue || !selectedGoal || !selectedMode) return;
+        if (!canContinue || !selectedGoal) return;
         const p = await loadLocalProfile();
         await saveLocalProfile({
             name: name.trim(),
@@ -79,8 +49,6 @@ export default function NameScreen() {
             weightKg: p?.weightKg || 0,
             goal: selectedGoal,
         });
-        await AsyncStorage.setItem('@workout_logging_mode', selectedMode);
-        await AsyncStorage.setItem('@has_seen_mode_explanation', 'true');
         router.replace('/onboarding/weight');
     };
 
@@ -145,72 +113,6 @@ export default function NameScreen() {
                                 })}
                             </View>
                         </View>
-
-                        {/* Logging Mode selector */}
-                        <View style={styles.goalSection}>
-                            <Text style={styles.sectionLabel}>HOW DO YOU PREFER TO LOG WORKOUTS?</Text>
-                            <View style={styles.goalList}>
-                                {MODES.map((m) => {
-                                    const isSelected = m.value === selectedMode;
-                                    return (
-                                        <TouchableOpacity
-                                            key={m.value}
-                                            activeOpacity={0.75}
-                                            onPress={() => setSelectedMode(m.value)}
-                                            style={[
-                                                styles.goalCard,
-                                                isSelected && {
-                                                    borderColor: m.dotColor,
-                                                    backgroundColor: `${m.dotColor}10`,
-                                                },
-                                            ]}
-                                        >
-                                            <View style={styles.goalCardTop}>
-                                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                                    <View
-                                                        style={{
-                                                            width: 8,
-                                                            height: 8,
-                                                            borderRadius: 4,
-                                                            backgroundColor: m.dotColor,
-                                                        }}
-                                                    />
-                                                    <Text style={[styles.goalTitle, isSelected && { color: m.dotColor }]}>
-                                                        {m.title}
-                                                    </Text>
-                                                </View>
-                                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                                    <View
-                                                        style={{
-                                                            paddingHorizontal: 8,
-                                                            paddingVertical: 2,
-                                                            borderRadius: 6,
-                                                            backgroundColor: isSelected ? `${m.dotColor}25` : '#E5E7EB',
-                                                        }}
-                                                    >
-                                                        <Text
-                                                            style={{
-                                                                fontSize: 9,
-                                                                fontWeight: '800',
-                                                                color: isSelected ? m.dotColor : '#6B7280',
-                                                                letterSpacing: 0.4,
-                                                            }}
-                                                        >
-                                                            {m.badge}
-                                                        </Text>
-                                                    </View>
-                                                    {isSelected && <Text style={[styles.goalCheck, { color: m.dotColor }]}>✓</Text>}
-                                                </View>
-                                            </View>
-                                            <Text style={[styles.goalSubtitle, isSelected && { color: '#374151' }]}>
-                                                {m.subtitle}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </View>
-                        </View>
-
                         <TouchableOpacity
                             style={[styles.primaryBtn, (!canContinue || loading) && styles.primaryBtnDisabled]}
                             onPress={handleNext}
@@ -224,6 +126,7 @@ export default function NameScreen() {
                     <View style={styles.footer}>
                         <View style={styles.progressDots}>
                             <View style={[styles.dot, styles.activeDot]} />
+                            <View style={styles.dot} />
                             <View style={styles.dot} />
                             <View style={styles.dot} />
                             <View style={styles.dot} />

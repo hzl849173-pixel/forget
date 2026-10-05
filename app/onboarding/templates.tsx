@@ -156,6 +156,7 @@ export default function TemplatesScreen() {
                         <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={styles.dot} />
+                        <View style={styles.dot} />
                         <View style={[styles.dot, styles.activeDot]} />
                     </View>
                 </View>

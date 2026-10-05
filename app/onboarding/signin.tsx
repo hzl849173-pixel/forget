@@ -42,7 +42,7 @@ export default function SignInScreen() {
             router.replace('/');
             return;
         }
-        router.replace('/onboarding/weight');
+        router.replace('/onboarding/mode');
     };
 
     const handleSkip = async () => {
@@ -156,6 +156,7 @@ export default function SignInScreen() {
 
                 <View style={styles.footer}>
                     <View style={styles.progressDots}>
+                        <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={[styles.dot, styles.activeDot]} />
