@@ -723,31 +723,6 @@ export default function SinglePageLandingScreen() {
   const [editingActiveExerciseId, setEditingActiveExerciseId] = useState<string | null>(null);
   const [editingTemplateExerciseId, setEditingTemplateExerciseId] = useState<string | null>(null);
   const [editingModalExerciseId, setEditingModalExerciseId] = useState<string | null>(null);
-  const liveModalLoggerAnim = React.useRef(new Animated.Value(0)).current;
-
-  React.useEffect(() => {
-    if (editingModalExerciseId !== null) {
-      liveModalLoggerAnim.setValue(0);
-      Animated.spring(liveModalLoggerAnim, {
-        toValue: 1,
-        damping: 26,
-        stiffness: 260,
-        mass: 0.8,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [editingModalExerciseId !== null]);
-
-  const dismissLiveModalLogger = (onComplete?: () => void) => {
-    Animated.timing(liveModalLoggerAnim, {
-      toValue: 0,
-      duration: 250,
-      easing: Easing.bezier(0.32, 1, 0.23, 1),
-      useNativeDriver: true,
-    }).start(() => {
-      onComplete?.();
-    });
-  };
   const [inPlaceLoggingContext, setInPlaceLoggingContext] = useState<{
     source: 'workout_list' | 'template_list' | 'active_session';
     returnModalMuscle?: MuscleGroup | null;
@@ -2193,18 +2168,14 @@ export default function SinglePageLandingScreen() {
         setEditingModalExerciseId(nextEx.exerciseId);
         return;
       }
-      dismissLiveModalLogger(() => {
-        setEditingModalExerciseId(null);
-        setSelectedModalMuscle(null);
-        setSelectedSubGroup(null);
-        setActiveSegment('log');
-      });
+      setEditingModalExerciseId(null);
+      setSelectedModalMuscle(null);
+      setSelectedSubGroup(null);
+      setActiveSegment('log');
       return;
     }
 
-    dismissLiveModalLogger(() => {
-      setEditingModalExerciseId(null);
-    });
+    setEditingModalExerciseId(null);
   };
 
   const handleSwitchModalExercise = (targetExId: string) => {
@@ -2275,14 +2246,12 @@ export default function SinglePageLandingScreen() {
       await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
     }
 
-    dismissLiveModalLogger(async () => {
-      setEditingModalExerciseId(null);
-      setSelectedModalMuscle(null);
-      setSelectedSubGroup(null);
-      setActiveSegment('log');
+    setEditingModalExerciseId(null);
+    setSelectedModalMuscle(null);
+    setSelectedSubGroup(null);
+    setActiveSegment('log');
 
-      await handleFinishWorkoutDay();
-    });
+    await handleFinishWorkoutDay();
   };
 
 
@@ -5243,27 +5212,7 @@ export default function SinglePageLandingScreen() {
                       : { style: [styles.activeSessionCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }] };
 
                     return (
-                      <Animated.View
-                        style={[
-                          StyleSheet.absoluteFill,
-                          {
-                            backgroundColor: isLiveLogger ? theme.cardBg : theme.background,
-                            zIndex: 50,
-                            transform: [
-                              {
-                                translateY: liveModalLoggerAnim.interpolate({
-                                  inputRange: [0, 1],
-                                  outputRange: [650, 0],
-                                }),
-                              },
-                            ],
-                            opacity: liveModalLoggerAnim.interpolate({
-                              inputRange: [0, 0.25, 1],
-                              outputRange: [0, 1, 1],
-                            }),
-                          },
-                        ]}
-                      >
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: isLiveLogger ? theme.cardBg : theme.background, zIndex: 50 }]}>
                         <ScrollView
                           ref={modalLoggerScrollRef}
                           style={{ flex: 1 }}
@@ -5302,12 +5251,10 @@ export default function SinglePageLandingScreen() {
                                     setActiveSessionExercises(updated);
                                     AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
                                   }
-                                  dismissLiveModalLogger(() => {
-                                    setEditingModalExerciseId(null);
-                                    setSelectedModalMuscle(null);
-                                    setSelectedSubGroup(null);
-                                    setActiveSegment('log');
-                                  });
+                                  setEditingModalExerciseId(null);
+                                  setSelectedModalMuscle(null);
+                                  setSelectedSubGroup(null);
+                                  setActiveSegment('log');
                                 }}
                                 activeOpacity={0.7}
                                 style={{
@@ -5763,9 +5710,7 @@ export default function SinglePageLandingScreen() {
                               <TouchableOpacity
                                 onPress={() => {
                                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                  dismissLiveModalLogger(() => {
-                                    setEditingModalExerciseId(null);
-                                  });
+                                  setEditingModalExerciseId(null);
                                 }}
                                 style={[
                                   styles.finishSessionBtn,
@@ -5792,7 +5737,7 @@ export default function SinglePageLandingScreen() {
                           )}
                         </ContentWrapper>
                       </ScrollView>
-                      </Animated.View>
+                      </View>
                     );
                   })()
                 )}
@@ -6666,7 +6611,7 @@ export default function SinglePageLandingScreen() {
         <Modal
           visible={expandedExerciseId !== null}
           transparent={true}
-          animationType="fade"
+          animationType="none"
           onRequestClose={() => {
             if (fromTemplateList) {
               handleTemplateListBackFromLogger();
