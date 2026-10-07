@@ -2,8 +2,8 @@
   "expo": {
     "name": "Forget",
     "slug": "forget",
-    "version": "1.1.0",
-    "runtimeVersion": "1.1.0",
+    "version": "1.1.1",
+    "runtimeVersion": "1.1.1",
     "updates": {
       "url": "https://u.expo.dev/b0ad99fc-ad17-473a-963a-24de6c57674d",
       "enabled": true,

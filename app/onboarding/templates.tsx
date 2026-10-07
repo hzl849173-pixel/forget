@@ -73,7 +73,7 @@ export default function TemplatesScreen() {
     return (
         <SafeAreaView style={styles.safe}>
             <View style={styles.screen}>
-                <TouchableOpacity onPress={() => router.replace('/onboarding/signin')} activeOpacity={0.7} style={styles.backBtn}>
+                <TouchableOpacity onPress={() => router.replace('/onboarding/mode')} activeOpacity={0.7} style={styles.backBtn}>
                     <Text style={styles.backText}>{'< Back'}</Text>
                 </TouchableOpacity>
 
@@ -153,7 +153,6 @@ export default function TemplatesScreen() {
 
                 <View style={styles.footer}>
                     <View style={styles.progressDots}>
-                        <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={styles.dot} />

@@ -15,8 +15,7 @@ type ModeOption = {
     value: 'post_workout' | 'live';
     title: string;
     tag: string;
-    whatYouDo: string;
-    whoItsFor: string;
+    description: string;
     dotColor: string;
 };
 
@@ -24,17 +23,15 @@ const MODES: ModeOption[] = [
     {
         value: 'post_workout',
         title: 'Focus Mode',
-        tag: 'LOG AFTER YOU FINISH',
-        whatYouDo: 'Finish your entire workout first, then log all your weights and reps in under 30 seconds before leaving.',
-        whoItsFor: 'Lifters who keep their phone in their pocket/bag and want zero screen time while training.',
+        tag: 'LOG AFTER WORKOUT',
+        description: 'Finish your workout first, then log all weights and reps in under 30 seconds. Zero screen time while lifting.',
         dotColor: '#2563EB',
     },
     {
         value: 'live',
         title: 'Live Session',
-        tag: 'TRACK DURING YOUR WORKOUT',
-        whatYouDo: 'Add multiple exercises to an active session, log your sets and reps as you train, and run built-in rest timers.',
-        whoItsFor: 'Lifters who keep an active routine open in the gym to track exercises and time their rests.',
+        tag: 'TRACK AS YOU TRAIN',
+        description: 'Log sets as you go, manage active exercises, and use built-in rest timers between sets.',
         dotColor: '#10B981',
     },
 ];
@@ -63,7 +60,7 @@ export default function ModeScreen() {
         if (!selectedMode) return;
         await AsyncStorage.setItem('@workout_logging_mode', selectedMode);
         await AsyncStorage.setItem('@has_seen_mode_explanation', 'true');
-        router.replace('/onboarding/signin');
+        router.replace('/onboarding/templates');
     };
 
     const handleBack = () => {
@@ -129,15 +126,7 @@ export default function ModeScreen() {
                                     </View>
                                 </View>
 
-                                <View style={styles.sectionBlock}>
-                                    <Text style={styles.sectionLabel}>What you do</Text>
-                                    <Text style={styles.sectionText}>{m.whatYouDo}</Text>
-                                </View>
-
-                                <View style={[styles.sectionBlock, { marginTop: 10 }]}>
-                                    <Text style={styles.sectionLabel}>Who it&apos;s for</Text>
-                                    <Text style={styles.sectionText}>{m.whoItsFor}</Text>
-                                </View>
+                                <Text style={styles.modeDescription}>{m.description}</Text>
 
                                 {isSelected && (
                                     <View style={styles.selectedCheckRow}>
@@ -149,6 +138,12 @@ export default function ModeScreen() {
                             </TouchableOpacity>
                         );
                     })}
+                </View>
+
+                <View style={styles.reassuranceBox}>
+                    <Text style={styles.reassuranceText}>
+                        You can switch between Focus and Live anytime right from the search bar.
+                    </Text>
                 </View>
 
                 <TouchableOpacity
@@ -165,7 +160,6 @@ export default function ModeScreen() {
                         <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={[styles.dot, styles.activeDot]} />
-                        <View style={styles.dot} />
                         <View style={styles.dot} />
                     </View>
                 </View>
@@ -258,19 +252,29 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         letterSpacing: 0.4,
     },
-    sectionBlock: {
-        gap: 2,
-    },
-    sectionLabel: {
-        fontSize: 11,
-        fontWeight: '800',
-        color: '#111827',
-        letterSpacing: 0.2,
-    },
-    sectionText: {
+    modeDescription: {
         fontSize: 13,
         fontWeight: '500',
         color: '#4B5563',
+        lineHeight: 19,
+        marginTop: 2,
+        paddingRight: 24,
+    },
+    reassuranceBox: {
+        marginTop: 18,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 14,
+        backgroundColor: '#F9FAFB',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        alignItems: 'center',
+    },
+    reassuranceText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#6B7280',
+        textAlign: 'center',
         lineHeight: 18,
     },
     selectedCheckRow: {
