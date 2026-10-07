@@ -4476,8 +4476,151 @@ export default function SinglePageLandingScreen() {
               >
                 {/* Workout List (Always mounted to preserve scroll position) */}
                 <View style={{ flex: 1 }}>
-                {/* Exercises List */}
-                <SectionList
+                  {/* Fixed Header, Muscle Switcher & Search Bar */}
+                  <View style={{ backgroundColor: theme.background }}>
+                    {/* Modal Header */}
+                    <View style={[styles.modalHeaderMinimal, { flexDirection: 'column', alignItems: 'stretch', gap: 6, paddingBottom: 10 }]}>
+                      {/* Top Row: Title + Add & Close */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text
+                          style={[styles.modalHeaderTitle, { color: theme.textPrimary, flex: 1, marginRight: 12 }]}
+                          numberOfLines={1}
+                        >
+                          {cameFromReplaceTarget
+                            ? `Replace: ${cameFromReplaceTarget.name}`
+                            : (selectedSubGroup || selectedModalMuscle || '')}
+                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <TouchableOpacity
+                            onPress={() => {
+                              setNewExerciseName(search.trim() || '');
+                              setAddExerciseVisible(true);
+                            }}
+                            activeOpacity={0.7}
+                            style={styles.modalAddExercisePill}
+                          >
+                            <Plus size={12} color="#10B981" strokeWidth={2.5} />
+                            <Text style={styles.modalAddExercisePillText}>
+                              ADD
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => {
+                              setSelectedModalMuscle(null);
+                              setSelectedSubGroup(null);
+                              setSelectedPickerExerciseIds(new Set());
+                              if (fromTemplateList) {
+                                setTemplateListVisible(true);
+                              }
+                              setCameFromActiveSessionPlus(false);
+                              setCameFromReplaceTarget(null);
+                            }}
+                            activeOpacity={0.7}
+                            style={styles.modalCloseIconButton}
+                          >
+                            <X size={20} color={theme.textSecondary} strokeWidth={2.2} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      {/* Subtitle */}
+                      <Text
+                        style={[styles.modalHeaderSubtitle, { color: theme.textSecondary, marginTop: 0 }]}
+                        numberOfLines={1}
+                      >
+                        {cameFromReplaceTarget
+                          ? 'Select replacement workout'
+                          : loggingMode === 'live'
+                          ? 'Select exercises to build your session'
+                          : 'Select an exercise to log'}
+                      </Text>
+                    </View>
+
+                    {/* Top Horizontal Muscle Switcher with Smooth Centering & Edge Fades */}
+                    <View style={styles.modalSwitcherRow}>
+                      <View style={styles.switcherLeftFade} pointerEvents="none">
+                        <Svg height="100%" width="100%">
+                          <Defs>
+                            <SvgGradient id="fadeLeft" x1="0" y1="0" x2="1" y2="0">
+                              <Stop offset="0" stopColor={theme.background} stopOpacity="1" />
+                              <Stop offset="1" stopColor={theme.background} stopOpacity="0" />
+                            </SvgGradient>
+                          </Defs>
+                          <Rect x="0" y="0" width="100%" height="100%" fill="url(#fadeLeft)" />
+                        </Svg>
+                      </View>
+                      <View style={styles.switcherRightFade} pointerEvents="none">
+                        <Svg height="100%" width="100%">
+                          <Defs>
+                            <SvgGradient id="fadeRight" x1="0" y1="0" x2="1" y2="0">
+                              <Stop offset="0" stopColor={theme.background} stopOpacity="1" />
+                              <Stop offset="1" stopColor={theme.background} stopOpacity="0" />
+                            </SvgGradient>
+                          </Defs>
+                          <Rect x="0" y="0" width="100%" height="100%" fill="url(#fadeRight)" />
+                        </Svg>
+                      </View>
+
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.modalSwitcherScroll}
+                        keyboardShouldPersistTaps="handled"
+                      >
+                        {ALL_MUSCLE_GROUPS.map((m) => {
+                          const isActive = selectedModalMuscle === m;
+                          const activeColor = categoryColors[m] || '#10B981';
+
+                          return (
+                            <TouchableOpacity
+                              key={m}
+                              style={[
+                                styles.modalSwitcherPill,
+                                { backgroundColor: theme.cardBg, borderColor: theme.borderColor },
+                                isActive && {
+                                  borderColor: activeColor,
+                                  backgroundColor: `${activeColor}20`,
+                                },
+                              ]}
+                              onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setSelectedModalMuscle(m);
+                                setSelectedSubGroup(null);
+                                setSearch('');
+                                setExpandedExerciseId(null);
+                                setSortedExerciseList(sortExercisesForMuscle(m));
+                              }}
+                              activeOpacity={0.8}
+                            >
+                              <Text
+                                style={[
+                                  styles.modalSwitcherPillText,
+                                  { color: isActive ? activeColor : theme.textSecondary },
+                                ]}
+                              >
+                                {m.toUpperCase()}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+
+                    {/* Search filter input inside modal */}
+                    <View style={styles.searchContainer}>
+                      <TextInput
+                        style={[styles.searchInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
+                        placeholder="Search workouts..."
+                        placeholderTextColor={theme.inputPlaceholder}
+                        value={search}
+                        onChangeText={setSearch}
+                        autoCorrect={false}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Exercises List */}
+                  <SectionList
                   key={selectedModalMuscle || 'all'}
                   sections={exerciseSections}
                   keyExtractor={(item) => item.id}
@@ -4495,150 +4638,8 @@ export default function SinglePageLandingScreen() {
                   windowSize={11}
                   removeClippedSubviews={false}
                   ListHeaderComponent={
-                    <View style={{ marginHorizontal: -24 }}>
-                      {/* Modal Header */}
-                      <View style={[styles.modalHeaderMinimal, { flexDirection: 'column', alignItems: 'stretch', gap: 6, paddingBottom: 10 }]}>
-                        {/* Top Row: Title + Add & Close */}
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Text
-                            style={[styles.modalHeaderTitle, { color: theme.textPrimary, flex: 1, marginRight: 12 }]}
-                            numberOfLines={1}
-                          >
-                            {cameFromReplaceTarget
-                              ? `Replace: ${cameFromReplaceTarget.name}`
-                              : (selectedSubGroup || selectedModalMuscle || '')}
-                          </Text>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                            <TouchableOpacity
-                              onPress={() => {
-                                setNewExerciseName(search.trim() || '');
-                                setAddExerciseVisible(true);
-                              }}
-                              activeOpacity={0.7}
-                              style={styles.modalAddExercisePill}
-                            >
-                              <Plus size={12} color="#10B981" strokeWidth={2.5} />
-                              <Text style={styles.modalAddExercisePillText}>
-                                ADD
-                              </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              onPress={() => {
-                                setSelectedModalMuscle(null);
-                                setSelectedSubGroup(null);
-                                setSelectedPickerExerciseIds(new Set());
-                                if (fromTemplateList) {
-                                  setTemplateListVisible(true);
-                                }
-                                setCameFromActiveSessionPlus(false);
-                                setCameFromReplaceTarget(null);
-                              }}
-                              activeOpacity={0.7}
-                              style={styles.modalCloseIconButton}
-                            >
-                              <X size={20} color={theme.textSecondary} strokeWidth={2.2} />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-
-                        {/* Subtitle */}
-                        <Text
-                          style={[styles.modalHeaderSubtitle, { color: theme.textSecondary, marginTop: 0 }]}
-                          numberOfLines={1}
-                        >
-                          {cameFromReplaceTarget
-                            ? 'Select replacement workout'
-                            : loggingMode === 'live'
-                            ? 'Select exercises to build your session'
-                            : 'Select an exercise to log'}
-                        </Text>
-                      </View>
-
-                      {/* Top Horizontal Muscle Switcher with Smooth Centering & Edge Fades */}
-                      <View style={styles.modalSwitcherRow}>
-                        <View style={styles.switcherLeftFade} pointerEvents="none">
-                          <Svg height="100%" width="100%">
-                            <Defs>
-                              <SvgGradient id="fadeLeft" x1="0" y1="0" x2="1" y2="0">
-                                <Stop offset="0" stopColor={theme.background} stopOpacity="1" />
-                                <Stop offset="1" stopColor={theme.background} stopOpacity="0" />
-                              </SvgGradient>
-                            </Defs>
-                            <Rect x="0" y="0" width="100%" height="100%" fill="url(#fadeLeft)" />
-                          </Svg>
-                        </View>
-                        <View style={styles.switcherRightFade} pointerEvents="none">
-                          <Svg height="100%" width="100%">
-                            <Defs>
-                              <SvgGradient id="fadeRight" x1="0" y1="0" x2="1" y2="0">
-                                <Stop offset="0" stopColor={theme.background} stopOpacity="1" />
-                                <Stop offset="1" stopColor={theme.background} stopOpacity="0" />
-                              </SvgGradient>
-                            </Defs>
-                            <Rect x="0" y="0" width="100%" height="100%" fill="url(#fadeRight)" />
-                          </Svg>
-                        </View>
-
-                        <ScrollView
-                          horizontal
-                          showsHorizontalScrollIndicator={false}
-                          contentContainerStyle={styles.modalSwitcherScroll}
-                          keyboardShouldPersistTaps="handled"
-                        >
-                          {ALL_MUSCLE_GROUPS.map((m) => {
-                            const isActive = selectedModalMuscle === m;
-                            const activeColor = categoryColors[m] || '#10B981';
-
-                            return (
-                              <TouchableOpacity
-                                key={m}
-                                style={[
-                                  styles.modalSwitcherPill,
-                                  { backgroundColor: theme.cardBg, borderColor: theme.borderColor },
-                                  isActive && {
-                                    borderColor: activeColor,
-                                    backgroundColor: `${activeColor}20`,
-                                  },
-                                ]}
-                                onPress={() => {
-                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                  setSelectedModalMuscle(m);
-                                  setSelectedSubGroup(null);
-                                  setSearch('');
-                                  setExpandedExerciseId(null);
-                                  setSortedExerciseList(sortExercisesForMuscle(m));
-                                }}
-                                activeOpacity={0.8}
-                              >
-                                <Text
-                                  style={[
-                                    styles.modalSwitcherPillText,
-                                    { color: isActive ? activeColor : theme.textSecondary },
-                                  ]}
-                                >
-                                  {m.toUpperCase()}
-                                </Text>
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </ScrollView>
-                      </View>
-
-                      {/* Search filter input inside modal */}
-                      <View style={styles.searchContainer}>
-                        <TextInput
-                          style={[styles.searchInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
-                          placeholder="Search workouts..."
-                          placeholderTextColor={theme.inputPlaceholder}
-                          value={search}
-                          onChangeText={setSearch}
-                          autoCorrect={false}
-                        />
-                      </View>
-
-                      {/* Mode Selector Button (Focus Mode / Live Session) */}
-                      {!cameFromReplaceTarget && (
-                        <View style={{ paddingHorizontal: 24, marginBottom: 12, alignItems: 'center' }}>
+                    !cameFromReplaceTarget ? (
+                      <View style={{ marginBottom: 12, alignItems: 'center' }}>
                           <View
                             style={{
                               flexDirection: 'row',
@@ -4745,8 +4746,7 @@ export default function SinglePageLandingScreen() {
                             </TouchableOpacity>
                           </View>
                         </View>
-                      )}
-                    </View>
+                    ) : null
                   }
                   renderSectionHeader={({ section }) => (
                     <View style={styles.modalSectionHeader}>
