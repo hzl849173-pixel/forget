@@ -14,6 +14,7 @@ import {
   Play,
   Plus,
   RefreshCw,
+  Search,
   Star,
   Timer,
   Trash2,
@@ -4608,14 +4609,166 @@ export default function SinglePageLandingScreen() {
 
                     {/* Search filter input inside modal */}
                     <View style={styles.searchContainer}>
-                      <TextInput
-                        style={[styles.searchInput, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }]}
-                        placeholder="Search workouts..."
-                        placeholderTextColor={theme.inputPlaceholder}
-                        value={search}
-                        onChangeText={setSearch}
-                        autoCorrect={false}
-                      />
+                      <View
+                        style={[
+                          styles.searchBarWrapper,
+                          {
+                            backgroundColor: theme.inputBg,
+                            borderColor: theme.inputBorder,
+                          },
+                        ]}
+                      >
+                        <Search
+                          size={18}
+                          color={theme.inputPlaceholder || (isDarkMode ? '#6B7280' : '#9CA3AF')}
+                          strokeWidth={2}
+                          style={{ marginRight: 8 }}
+                        />
+                        <TextInput
+                          style={[styles.searchInputInline, { color: theme.textPrimary }]}
+                          placeholder="Search workouts..."
+                          placeholderTextColor={theme.inputPlaceholder}
+                          value={search}
+                          onChangeText={setSearch}
+                          autoCorrect={false}
+                        />
+
+                        {!cameFromReplaceTarget && (
+                          <>
+                            <View
+                              style={{
+                                width: 1,
+                                height: 22,
+                                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : '#E5E7EB',
+                                marginHorizontal: 8,
+                              }}
+                            />
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6',
+                                borderRadius: 20,
+                                padding: 3,
+                                borderWidth: 1,
+                                borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : '#E5E7EB',
+                              }}
+                            >
+                              {/* Focus Mode Button */}
+                              <TouchableOpacity
+                                onPress={() => {
+                                  if (loggingMode !== 'post_workout') {
+                                    handleSetLoggingMode('post_workout');
+                                  }
+                                }}
+                                activeOpacity={0.7}
+                                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 5,
+                                  paddingVertical: 4,
+                                  paddingHorizontal: 9,
+                                  borderRadius: 16,
+                                  backgroundColor:
+                                    loggingMode === 'post_workout'
+                                      ? isDarkMode
+                                        ? 'rgba(59, 130, 246, 0.22)'
+                                        : '#DBEAFE'
+                                      : 'transparent',
+                                }}
+                              >
+                                <View
+                                  style={{
+                                    width: 5,
+                                    height: 5,
+                                    borderRadius: 2.5,
+                                    backgroundColor:
+                                      loggingMode === 'post_workout'
+                                        ? isDarkMode
+                                          ? '#60A5FA'
+                                          : '#2563EB'
+                                        : isDarkMode
+                                        ? '#6B7280'
+                                        : '#9CA3AF',
+                                  }}
+                                />
+                                <Text
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: loggingMode === 'post_workout' ? '700' : '600',
+                                    color:
+                                      loggingMode === 'post_workout'
+                                        ? isDarkMode
+                                          ? '#93C5FD'
+                                          : '#1D4ED8'
+                                        : isDarkMode
+                                        ? '#9CA3AF'
+                                        : '#6B7280',
+                                  }}
+                                >
+                                  Focus
+                                </Text>
+                              </TouchableOpacity>
+
+                              {/* Live Session Button */}
+                              <TouchableOpacity
+                                onPress={() => {
+                                  if (loggingMode !== 'live') {
+                                    handleSetLoggingMode('live');
+                                  }
+                                }}
+                                activeOpacity={0.7}
+                                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 5,
+                                  paddingVertical: 4,
+                                  paddingHorizontal: 9,
+                                  borderRadius: 16,
+                                  backgroundColor:
+                                    loggingMode === 'live'
+                                      ? isDarkMode
+                                        ? 'rgba(16, 185, 129, 0.22)'
+                                        : '#D1FAE5'
+                                      : 'transparent',
+                                }}
+                              >
+                                <View
+                                  style={{
+                                    width: 5,
+                                    height: 5,
+                                    borderRadius: 2.5,
+                                    backgroundColor:
+                                      loggingMode === 'live'
+                                        ? '#10B981'
+                                        : isDarkMode
+                                        ? '#6B7280'
+                                        : '#9CA3AF',
+                                  }}
+                                />
+                                <Text
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: loggingMode === 'live' ? '700' : '600',
+                                    color:
+                                      loggingMode === 'live'
+                                        ? isDarkMode
+                                          ? '#6EE7B7'
+                                          : '#047857'
+                                        : isDarkMode
+                                        ? '#9CA3AF'
+                                        : '#6B7280',
+                                  }}
+                                >
+                                  Live
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                          </>
+                        )}
+                      </View>
                     </View>
                   </View>
 
@@ -4637,117 +4790,7 @@ export default function SinglePageLandingScreen() {
                   maxToRenderPerBatch={20}
                   windowSize={11}
                   removeClippedSubviews={false}
-                  ListHeaderComponent={
-                    !cameFromReplaceTarget ? (
-                      <View style={{ marginBottom: 12, alignItems: 'center' }}>
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              alignSelf: 'center',
-                              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6',
-                              borderRadius: 20,
-                              padding: 3,
-                              borderWidth: 1,
-                              borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : theme.borderColor,
-                              gap: 4,
-                            }}
-                          >
-                            {/* Focus Mode Button */}
-                            <TouchableOpacity
-                              onPress={() => {
-                                if (loggingMode !== 'post_workout') {
-                                  handleSetLoggingMode('post_workout');
-                                }
-                              }}
-                              activeOpacity={0.7}
-                              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 5,
-                                paddingVertical: 4,
-                                paddingHorizontal: 11,
-                                borderRadius: 16,
-                                backgroundColor: loggingMode === 'post_workout'
-                                  ? (isDarkMode ? 'rgba(59, 130, 246, 0.22)' : '#DBEAFE')
-                                  : (isDarkMode ? 'rgba(59, 130, 246, 0.06)' : 'rgba(59, 130, 246, 0.08)'),
-                                borderWidth: 1,
-                                borderColor: loggingMode === 'post_workout'
-                                  ? (isDarkMode ? 'rgba(59, 130, 246, 0.5)' : '#93C5FD')
-                                  : (isDarkMode ? 'rgba(59, 130, 246, 0.18)' : 'rgba(59, 130, 246, 0.2)'),
-                              }}
-                            >
-                              <View
-                                style={{
-                                  width: 4.5,
-                                  height: 4.5,
-                                  borderRadius: 2.25,
-                                  backgroundColor: loggingMode === 'post_workout' ? (isDarkMode ? '#60A5FA' : '#2563EB') : (isDarkMode ? '#3B82F690' : '#2563EB90'),
-                                }}
-                              />
-                              <Text
-                                style={{
-                                  fontSize: 10,
-                                  fontWeight: loggingMode === 'post_workout' ? '800' : '700',
-                                  color: loggingMode === 'post_workout' ? (isDarkMode ? '#93C5FD' : '#1D4ED8') : (isDarkMode ? '#BFDBFE' : '#2563EB'),
-                                  letterSpacing: 0.3,
-                                }}
-                              >
-                                FOCUS MODE
-                              </Text>
-                            </TouchableOpacity>
-
-                            {/* Live Session Button */}
-                            <TouchableOpacity
-                              onPress={() => {
-                                if (loggingMode !== 'live') {
-                                  handleSetLoggingMode('live');
-                                }
-                              }}
-                              activeOpacity={0.7}
-                              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 5,
-                                paddingVertical: 4,
-                                paddingHorizontal: 11,
-                                borderRadius: 16,
-                                backgroundColor: loggingMode === 'live'
-                                  ? (isDarkMode ? 'rgba(16, 185, 129, 0.22)' : '#D1FAE5')
-                                  : (isDarkMode ? 'rgba(16, 185, 129, 0.06)' : 'rgba(16, 185, 129, 0.08)'),
-                                borderWidth: 1,
-                                borderColor: loggingMode === 'live'
-                                  ? (isDarkMode ? 'rgba(16, 185, 129, 0.5)' : '#6EE7B7')
-                                  : (isDarkMode ? 'rgba(16, 185, 129, 0.18)' : 'rgba(16, 185, 129, 0.2)'),
-                              }}
-                            >
-                              <View
-                                style={{
-                                  width: 4.5,
-                                  height: 4.5,
-                                  borderRadius: 2.25,
-                                  backgroundColor: loggingMode === 'live' ? '#10B981' : (isDarkMode ? '#10B98190' : '#05966990'),
-                                }}
-                              />
-                              <Text
-                                style={{
-                                  fontSize: 10,
-                                  fontWeight: loggingMode === 'live' ? '800' : '700',
-                                  color: loggingMode === 'live' ? (isDarkMode ? '#6EE7B7' : '#047857') : (isDarkMode ? '#A7F3D0' : '#059669'),
-                                  letterSpacing: 0.3,
-                                }}
-                              >
-                                LIVE SESSION
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                    ) : null
-                  }
+                  ListHeaderComponent={null}
                   renderSectionHeader={({ section }) => (
                     <View style={styles.modalSectionHeader}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -9256,6 +9299,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginTop: 16,
     marginBottom: 12,
+  },
+  searchBarWrapper: {
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  searchInputInline: {
+    flex: 1,
+    height: '100%',
+    fontSize: 14,
+    fontWeight: '500',
+    paddingVertical: 0,
+    paddingHorizontal: 0,
   },
   searchInput: {
     height: 46,
