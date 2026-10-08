@@ -656,7 +656,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const defaultIds = new Set(DEFAULT_TEMPLATES.map((dt) => dt.id));
     const userTemplates = templates.filter((t) => !defaultIds.has(t.id));
     const defaultTemplates = templates.filter((t) => defaultIds.has(t.id));
-    const newTemplates = [...userTemplates, newTemplate, ...defaultTemplates];
+    const newTemplates = [newTemplate, ...userTemplates, ...defaultTemplates];
     setTemplates(newTemplates);
     await AsyncStorage.setItem(STORAGE_KEYS.TEMPLATES, JSON.stringify(newTemplates));
     return newTemplate;

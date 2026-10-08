@@ -10,6 +10,7 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { setOnboardingCompleted } from '@/lib/profile/profileStorage';
 
 type ModeOption = {
     value: 'post_workout' | 'live';
@@ -60,7 +61,8 @@ export default function ModeScreen() {
         if (!selectedMode) return;
         await AsyncStorage.setItem('@workout_logging_mode', selectedMode);
         await AsyncStorage.setItem('@has_seen_mode_explanation', 'true');
-        router.replace('/onboarding/templates');
+        await setOnboardingCompleted();
+        router.replace('/');
     };
 
     const handleBack = () => {
@@ -152,7 +154,7 @@ export default function ModeScreen() {
                     disabled={!selectedMode || loading}
                     activeOpacity={0.8}
                 >
-                    <Text style={styles.primaryBtnText}>NEXT</Text>
+                    <Text style={styles.primaryBtnText}>GET STARTED</Text>
                 </TouchableOpacity>
 
                 <View style={styles.footer}>
@@ -160,7 +162,6 @@ export default function ModeScreen() {
                         <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={[styles.dot, styles.activeDot]} />
-                        <View style={styles.dot} />
                     </View>
                 </View>
             </ScrollView>

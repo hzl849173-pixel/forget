@@ -46,12 +46,8 @@ export default function SignInScreen() {
     };
 
     const handleSkip = async () => {
-        const isDone = await isOnboardingCompleted();
-        if (isDone) {
-            router.replace('/');
-            return;
-        }
-        router.replace('/onboarding/templates');
+        await setOnboardingCompleted();
+        router.replace('/');
     };
 
     const handleContinueWithGoogle = async () => {
@@ -97,12 +93,8 @@ export default function SignInScreen() {
                 }
             }
 
-            const isDone = await isOnboardingCompleted();
-            if (isDone) {
-                router.replace('/');
-            } else {
-                router.replace('/onboarding/templates');
-            }
+            await setOnboardingCompleted();
+            router.replace('/');
         } catch (e: any) {
             Alert.alert(
                 'Google Sign-In',

@@ -1996,7 +1996,33 @@ export default function SinglePageLandingScreen() {
   };
 
   const handleSaveInPlace = async (targetExId: string) => {
-    const validSets = activeSets.filter((s) => s.reps > 0);
+    const isFromTemplate = inPlaceLoggingContext?.source === 'template_list' || sessionStartedFromTemplate || !!sessionTemplateId;
+
+    if (!isFromTemplate) {
+      if (activeSets.length === 0) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        showCustomAlert(
+          'Add Sets',
+          'Please add at least one set with weight and repetitions before saving.',
+          [{ text: 'OK' }],
+          <Flame size={28} color="#EF4444" />
+        );
+        return;
+      }
+
+      if (activeSets.some((s) => s.reps <= 0)) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        showCustomAlert(
+          'Invalid Reps',
+          'Please ensure all sets have at least 1 repetition before saving.',
+          [{ text: 'OK' }],
+          <Flame size={28} color="#EF4444" />
+        );
+        return;
+      }
+    }
+
+    const validSets = isFromTemplate ? activeSets.filter((s) => s.reps > 0) : activeSets;
 
     if (validSets.length === 0) {
       await handleCancelInPlaceLogger();
@@ -2175,7 +2201,33 @@ export default function SinglePageLandingScreen() {
   const handleSaveModalExercise = async () => {
     if (!editingModalExerciseId) return;
 
-    const validSets = activeSets.filter((s) => s.reps > 0);
+    const isFromTemplate = fromTemplateList || sessionStartedFromTemplate || !!sessionTemplateId;
+
+    if (!isFromTemplate) {
+      if (activeSets.length === 0) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        showCustomAlert(
+          'Add Sets',
+          'Please add at least one set with weight and repetitions before saving.',
+          [{ text: 'OK' }],
+          <Flame size={28} color="#EF4444" />
+        );
+        return;
+      }
+
+      if (activeSets.some((s) => s.reps <= 0)) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        showCustomAlert(
+          'Invalid Reps',
+          'Please ensure all sets have at least 1 repetition before saving.',
+          [{ text: 'OK' }],
+          <Flame size={28} color="#EF4444" />
+        );
+        return;
+      }
+    }
+
+    const validSets = isFromTemplate ? activeSets.filter((s) => s.reps > 0) : activeSets;
     if (validSets.length === 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       showCustomAlert('Add Sets', 'Please add at least one set with repetitions before saving.', [{ text: 'OK' }]);
@@ -2529,6 +2581,32 @@ export default function SinglePageLandingScreen() {
         <Dumbbell size={28} color="#3B82F6" />
       );
       return;
+    }
+
+    if (!sessionStartedFromTemplate && !sessionTemplateId) {
+      const hasEmptySets = activeSessionExercises.some((ex) => ex.sets.length === 0);
+      if (hasEmptySets) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        showCustomAlert(
+          'Add Sets',
+          'Please add at least one set with weight and repetitions before saving.',
+          [{ text: 'OK' }],
+          <Flame size={28} color="#EF4444" />
+        );
+        return;
+      }
+
+      const hasInvalidReps = activeSessionExercises.some((ex) => ex.sets.some((s) => s.reps <= 0));
+      if (hasInvalidReps) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        showCustomAlert(
+          'Invalid Reps',
+          'Please ensure all sets have at least 1 repetition before saving.',
+          [{ text: 'OK' }],
+          <Flame size={28} color="#EF4444" />
+        );
+        return;
+      }
     }
 
     const suggestedTitle = suggestWorkoutTitle(activeSessionExercises);
@@ -4251,11 +4329,11 @@ export default function SinglePageLandingScreen() {
                     if (!isDefaultA && isDefaultB) return -1;
                     if (isDefaultA && !isDefaultB) return 1;
 
-                    // 2. Both are user-added templates: 1st added on top, 2nd added below 1st (chronological ascending)
+                    // 2. Both are user-added templates: newest created on top (descending)
                     if (!isDefaultA && !isDefaultB) {
                       const timeA = new Date(a.createdAt || 0).getTime();
                       const timeB = new Date(b.createdAt || 0).getTime();
-                      if (timeA !== timeB) return timeA - timeB;
+                      if (timeA !== timeB) return timeB - timeA;
                       return 0;
                     }
 

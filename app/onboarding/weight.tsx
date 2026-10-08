@@ -268,7 +268,6 @@ export default function WeightScreen() {
                             <View style={styles.dot} />
                             <View style={[styles.dot, styles.activeDot]} />
                             <View style={styles.dot} />
-                            <View style={styles.dot} />
                         </View>
                     </View>
                 </ScrollView>
