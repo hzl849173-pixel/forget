@@ -129,6 +129,7 @@ import { MuscleBadge } from '@/components/ui/muscle-badge';
 import { ProgressGrid } from '@/components/ui/progress-grid';
 import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, INSTRUMENT_COLORS, MUSCLE_GROUPS, ALL_MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS, getMovementPatternGroup, getMovementFamilyIds } from '@/constants/exercises';
 import { getExerciseImage } from '@/constants/equipmentImages';
+import { getExerciseIllustration } from '@/constants/exerciseImages';
 import { useWorkoutAnalytics } from '@/hooks/use-workout-analytics';
 import { Exercise, LoggedExercise, PersonalRecord, useWorkout, WorkoutSession, WorkoutSet, WorkoutTemplate } from '@/hooks/use-workout-storage';
 import DragList from 'react-native-draglist';
@@ -4902,7 +4903,30 @@ export default function SinglePageLandingScreen() {
                             </View>
                           )}
 
-                          <View style={[styles.activeSessionItemAccent, { backgroundColor: itemColor }]} />
+                          <View style={[styles.activeSessionItemAccent, { backgroundColor: itemColor, height: getExerciseIllustration(item.id) ? 36 : 28 }]} />
+
+                          {(() => {
+                            const illustration = getExerciseIllustration(item.id);
+                            if (!illustration) return null;
+                            return (
+                              <View
+                                style={[
+                                  styles.modalExerciseThumbContainer,
+                                  {
+                                    backgroundColor: '#FFFFFF',
+                                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.06)',
+                                  },
+                                ]}
+                              >
+                                <Image
+                                  source={illustration}
+                                  style={styles.modalExerciseThumb}
+                                  contentFit="contain"
+                                  cachePolicy="memory-disk"
+                                />
+                              </View>
+                            );
+                          })()}
 
                           <View style={{ flex: 1, marginRight: 8 }}>
                             <Text
@@ -10175,6 +10199,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.1,
+  },
+  modalExerciseThumbContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    borderWidth: 1,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  modalExerciseThumb: {
+    width: '100%',
+    height: '100%',
   },
   modalExerciseActions: {
     flexDirection: 'row',
