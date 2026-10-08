@@ -17,8 +17,9 @@ Every generated image **must** strictly match the established art direction:
 2. **Muscle Activation (Crucial)**:
    - The primary target muscle(s) **must be highlighted in glowing vibrant red-orange** (`#FF4500` / `#FF5722`), showing clear muscle fiber striations.
    - Secondary / passive muscles remain in neutral silver-gray.
-3. **Equipment**:
-   - Realistic gym equipment in dark charcoal, metallic silver, or black (benches, barbells, dumbbells, cable pulleys, machines).
+3. **Equipment & High-Contrast Framing (Critical)**:
+   - Realistic gym equipment featuring **bold matte black frames, black weight stacks, and dark charcoal accents** with chrome/silver hardware.
+   - **Avoid all-gray equipment**: Especially for cable machines and towers, do **not** render the entire frame in silver/gray. Use matte black upright columns, black pulleys, and dark weight stacks so the equipment creates strong, crisp contrast against both the light-gray mannequin and the soft gray background.
 4. **Background & Lighting**:
    - **Soft studio light-gray ambient gradient** (center `~#F6F6F6` down to edges/corners `~#F1F1F1` / `RGB ~241, 241, 241`).
    - Clean, soft ground contact shadow underneath the equipment/figure.
@@ -108,5 +109,5 @@ Once Chest is finalized, generate images for the other major categories in [`con
 ## 6. Standard Image Prompt Template
 
 ```text
-A 3D anatomical fitness illustration of an athletic male figure performing [EXERCISE_NAME] on [EQUIPMENT_NAME], strictly matching clean medical fitness 3D art direction. Clean light-gray athletic mannequin figure with glowing red-orange highlighted [TARGET_MUSCLE] muscles with visible striations. Equipment rendered in dark charcoal and metallic silver. Soft studio light-gray ambient gradient background (#F1F1F1 at edges), subtle ground contact shadow, 3/4 isometric perspective, square 1:1, minimalist premium design.
+A 3D anatomical fitness illustration of an athletic male figure performing [EXERCISE_NAME] on [EQUIPMENT_NAME], strictly matching clean medical fitness 3D art direction. Clean light-gray athletic mannequin figure with glowing red-orange highlighted [TARGET_MUSCLE] muscles with visible striations. Equipment featuring bold matte black structural frames, black weight stacks, and chrome accents for punchy contrast. Soft studio light-gray ambient gradient background (#F1F1F1 at edges), subtle ground contact shadow, 3/4 isometric perspective, square 1:1, minimalist premium design, no all-gray equipment.
 ```
