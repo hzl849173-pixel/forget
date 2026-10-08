@@ -3406,19 +3406,7 @@ export default function SinglePageLandingScreen() {
                             </View>
                           )}
 
-                          <ScrollView
-                            style={{ maxHeight: 440, marginVertical: 4 }}
-                            contentContainerStyle={{ paddingBottom: 8 }}
-                            showsVerticalScrollIndicator={true}
-                            nestedScrollEnabled={true}
-                            overScrollMode="never"
-                            bounces={false}
-                            keyboardShouldPersistTaps="handled"
-                            onTouchStart={() => setMainScrollEnabled(false)}
-                            onTouchEnd={() => setMainScrollEnabled(true)}
-                            onTouchCancel={() => setMainScrollEnabled(true)}
-                            onMomentumScrollEnd={() => setMainScrollEnabled(true)}
-                          >
+                          <View style={{ marginVertical: 4, paddingBottom: 8 }}>
                             {/* Exercise Header & Details (Inside Scrollable Area) */}
                             <View style={{ marginBottom: 8, paddingBottom: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.borderColor }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -3739,7 +3727,7 @@ export default function SinglePageLandingScreen() {
                                 />
                               </View>
                             )}
-                          </ScrollView>
+                          </View>
                         </View>
                       );
                     })()
