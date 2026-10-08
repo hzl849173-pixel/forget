@@ -4913,7 +4913,7 @@ export default function SinglePageLandingScreen() {
                                 style={[
                                   styles.modalExerciseThumbContainer,
                                   {
-                                    backgroundColor: '#FFFFFF',
+                                    backgroundColor: '#F1F2F4',
                                     borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.06)',
                                   },
                                 ]}
