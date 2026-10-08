@@ -404,7 +404,6 @@ export default function SinglePageLandingScreen() {
   const templatesContainerY = React.useRef<number>(0);
   const [targetScrollTemplateId, setTargetScrollTemplateId] = useState<string | null>(null);
   const [highlightedTemplateId, setHighlightedTemplateId] = useState<string | null>(null);
-  const tabOpacity = React.useRef(new Animated.Value(1)).current;
 
   // Profile Modal states
   const router = useRouter();
@@ -694,6 +693,7 @@ export default function SinglePageLandingScreen() {
   const [templateListExercises, setTemplateListExercises] = useState<LoggedExercise[]>([]);
   const [fromTemplateList, setFromTemplateList] = useState(false);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [isCreatingNewTemplate, setIsCreatingNewTemplate] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedTemplateExerciseIds, setSelectedTemplateExerciseIds] = useState<Set<string>>(new Set());
   const [templateLogSelectVisible, setTemplateLogSelectVisible] = useState(false);
@@ -1413,21 +1413,6 @@ export default function SinglePageLandingScreen() {
     }
   }, [highlightedTemplateId]);
 
-  const isFirstTabRender = React.useRef(true);
-  React.useEffect(() => {
-    if (isFirstTabRender.current) {
-      isFirstTabRender.current = false;
-      return;
-    }
-    tabOpacity.setValue(0);
-    Animated.timing(tabOpacity, {
-      toValue: 1,
-      duration: 150,
-      useNativeDriver: true,
-    }).start();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSegment]);
-
   const handleShowWorkoutDaysInfo = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     showCustomAlert(
@@ -1504,6 +1489,86 @@ export default function SinglePageLandingScreen() {
     setSameForAll(true);
     setSortedExerciseList(sortExercisesForMuscle(targetMuscle));
   };
+
+  const handleCloseModalMuscle = () => {
+    if (exerciseToDelete !== null) {
+      setExerciseToDelete(null);
+      return;
+    }
+    if (editingModalExerciseId) {
+      if (loggingMode === 'live') {
+        const setsToSave = activeSets.map((s) => ({
+          ...s,
+          isCompleted: s.weight > 0 && s.reps > 0 ? true : s.isCompleted,
+        }));
+        const existingIdx = activeSessionExercises.findIndex((le) => le.exerciseId === editingModalExerciseId);
+        let updated: LoggedExercise[];
+        if (existingIdx !== -1) {
+          updated = activeSessionExercises.map((le, idx) =>
+            idx === existingIdx ? { ...le, sets: setsToSave, notes: exerciseNote.trim() || undefined } : le
+          );
+        } else {
+          updated = [
+            ...activeSessionExercises,
+            { id: generateId(), exerciseId: editingModalExerciseId, sets: setsToSave, notes: exerciseNote.trim() || undefined },
+          ];
+        }
+        setActiveSessionExercises(updated);
+        AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+      }
+      setEditingModalExerciseId(null);
+      return;
+    }
+    if (isCreatingNewTemplate) {
+      setIsCreatingNewTemplate(false);
+      setSelectedModalMuscle(null);
+      setSelectedSubGroup(null);
+      setSelectedPickerExerciseIds(new Set());
+      setTemplateListVisible(false);
+      setFromTemplateList(false);
+      setTemplateListExercises([]);
+      setActiveTemplateId(null);
+      setActiveSegment('templates');
+      setCameFromActiveSessionPlus(false);
+      setCameFromReplaceTarget(null);
+      return;
+    }
+    setSelectedModalMuscle(null);
+    setSelectedSubGroup(null);
+    setSelectedPickerExerciseIds(new Set());
+    if (fromTemplateList) {
+      setTemplateListVisible(true);
+    }
+    setCameFromActiveSessionPlus(false);
+    setCameFromReplaceTarget(null);
+  };
+
+  React.useEffect(() => {
+    if (!profileModalVisible && selectedModalMuscle === null) return;
+    const backAction = () => {
+      if (profileModalVisible) {
+        handleCloseProfile();
+        return true;
+      }
+      if (selectedModalMuscle !== null) {
+        handleCloseModalMuscle();
+        return true;
+      }
+      return false;
+    };
+    const backSub = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => backSub.remove();
+  }, [
+    profileModalVisible,
+    selectedModalMuscle,
+    exerciseToDelete,
+    editingModalExerciseId,
+    loggingMode,
+    activeSets,
+    activeSessionExercises,
+    exerciseNote,
+    fromTemplateList,
+  ]);
 
   const getReplacementOptionsForExercise = (currentExerciseId: string, muscleGroup: MuscleGroup) => {
     const activeExIds = new Set(
@@ -2658,6 +2723,7 @@ export default function SinglePageLandingScreen() {
     setTemplateName('');
     setTemplateExercises([]);
     setIsSavingActiveSessionAsTemplate(false);
+    setIsCreatingNewTemplate(false);
   };
 
   const handleConfirmSaveTemplate = async () => {
@@ -2701,6 +2767,7 @@ export default function SinglePageLandingScreen() {
       setFromTemplateList(false);
 
       setIsSavingActiveSessionAsTemplate(false);
+      setIsCreatingNewTemplate(false);
 
       if (detectedPrs.length > 0) {
         setNewPrsDetected(detectedPrs);
@@ -2710,14 +2777,22 @@ export default function SinglePageLandingScreen() {
       const newTmpl = await saveTemplate(templateName, templateExercises);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      // Open the new template immediately in the Template Details modal
-      setTemplateListExercises([]);
-      setActiveTemplateId(newTmpl.id);
-      setTemplateListVisible(false);
-      setFromTemplateList(true);
+      if (templateExercises.length === 0) {
+        setIsCreatingNewTemplate(true);
+        setTemplateListExercises([]);
+        setActiveTemplateId(newTmpl.id);
+        setTemplateListVisible(false);
+        setFromTemplateList(true);
 
-      // Instantly pop open the exercise selector to add workouts to this template
-      handleSelectMuscleCard(getMostFrequentMuscleGroup(templateExercises));
+        // Instantly pop open the exercise selector to add workouts to this template
+        handleSelectMuscleCard(getMostFrequentMuscleGroup(templateExercises));
+      } else {
+        setIsCreatingNewTemplate(false);
+        setTemplateListExercises([]);
+        setActiveTemplateId(null);
+        setTemplateListVisible(false);
+        setFromTemplateList(false);
+      }
     }
 
     setTemplateModalVisible(false);
@@ -3025,12 +3100,13 @@ export default function SinglePageLandingScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar style="dark" />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.inner}
-      >
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.inner}
+        >
         <ScrollView
           ref={mainScrollRef}
           nestedScrollEnabled={true}
@@ -3134,6 +3210,7 @@ export default function SinglePageLandingScreen() {
                     if (replacingActiveId) setReplacingActiveId(null);
                     if (editingActiveExerciseId) setEditingActiveExerciseId(null);
                     setMainScrollEnabled(true);
+                    mainScrollRef.current?.scrollTo({ y: 0, animated: false });
                     setActiveSegment(seg.key as any);
                   }}
                   activeOpacity={0.8}
@@ -3147,7 +3224,7 @@ export default function SinglePageLandingScreen() {
           </ScrollView>
 
           {/* Segment Switch Logic */}
-          <Animated.View style={{ opacity: tabOpacity }}>
+          <View>
             {activeSegment === 'log' ? (
             <>
               {/* Active Session Status Card */}
@@ -4090,9 +4167,10 @@ export default function SinglePageLandingScreen() {
 
               {/* Consistency Graph */}
               <TouchableOpacity
-                activeOpacity={0.7}
+                activeOpacity={0.85}
                 onPress={() => {
                   setProgressInitialTab('analytics');
+                  mainScrollRef.current?.scrollTo({ y: 0, animated: false });
                   setActiveSegment('progress');
                 }}
               >
@@ -4123,6 +4201,7 @@ export default function SinglePageLandingScreen() {
                     setTemplateName('');
                     setTemplateExercises([]);
                     setIsSavingActiveSessionAsTemplate(false);
+                    setIsCreatingNewTemplate(true);
                     setTemplateModalVisible(true);
                   }}
                   activeOpacity={0.7}
@@ -4165,6 +4244,22 @@ export default function SinglePageLandingScreen() {
 
                   const defaultOrder = ['tmpl-push', 'tmpl-pull', 'tmpl-legs', 'tmpl-upper', 'tmpl-full'];
                   const sortedList = [...templates].sort((a, b) => {
+                    const isDefaultA = defaultOrder.includes(a.id);
+                    const isDefaultB = defaultOrder.includes(b.id);
+
+                    // 1. User-added (custom) templates come before pre-added (default) templates
+                    if (!isDefaultA && isDefaultB) return -1;
+                    if (isDefaultA && !isDefaultB) return 1;
+
+                    // 2. Both are user-added templates: 1st added on top, 2nd added below 1st (chronological ascending)
+                    if (!isDefaultA && !isDefaultB) {
+                      const timeA = new Date(a.createdAt || 0).getTime();
+                      const timeB = new Date(b.createdAt || 0).getTime();
+                      if (timeA !== timeB) return timeA - timeB;
+                      return 0;
+                    }
+
+                    // 3. Both are pre-added templates:
                     if (targetName) {
                       const matchA = a.name.toLowerCase() === targetName;
                       const matchB = b.name.toLowerCase() === targetName;
@@ -4176,7 +4271,7 @@ export default function SinglePageLandingScreen() {
                     if (idxA !== -1 && idxB !== -1) return idxA - idxB;
                     if (idxA !== -1) return -1;
                     if (idxB !== -1) return 1;
-                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                    return 0;
                   });
                   return sortedList.map((tmpl) => {
                     const sortedExercises = sortTemplateExercises(tmpl.exercises);
@@ -4400,66 +4495,25 @@ export default function SinglePageLandingScreen() {
               }}
             />
           )}
-          </Animated.View>
+          </View>
         </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
 
-        {/* Muscle Workout list popup modal */}
-        <Modal
-          visible={selectedModalMuscle !== null}
-          animationType="none"
-          presentationStyle="overFullScreen"
-          statusBarTranslucent={true}
-          onRequestClose={() => {
-            if (exerciseToDelete !== null) {
-              setExerciseToDelete(null);
-              return;
-            }
-            if (editingModalExerciseId) {
-              if (loggingMode === 'live') {
-                const setsToSave = activeSets.map((s) => ({
-                  ...s,
-                  isCompleted: s.weight > 0 && s.reps > 0 ? true : s.isCompleted,
-                }));
-                const existingIdx = activeSessionExercises.findIndex((le) => le.exerciseId === editingModalExerciseId);
-                let updated: LoggedExercise[];
-                if (existingIdx !== -1) {
-                  updated = activeSessionExercises.map((le, idx) =>
-                    idx === existingIdx ? { ...le, sets: setsToSave, notes: exerciseNote.trim() || undefined } : le
-                  );
-                } else {
-                  updated = [
-                    ...activeSessionExercises,
-                    { id: generateId(), exerciseId: editingModalExerciseId, sets: setsToSave, notes: exerciseNote.trim() || undefined },
-                  ];
-                }
-                setActiveSessionExercises(updated);
-                AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
-              }
-              setEditingModalExerciseId(null);
-              return;
-            }
-            setSelectedModalMuscle(null);
-            setSelectedSubGroup(null);
-            setSelectedPickerExerciseIds(new Set());
-            if (fromTemplateList) {
-              setTemplateListVisible(true);
-            }
-            setCameFromActiveSessionPlus(false);
-            setCameFromReplaceTarget(null);
-          }}
+    {/* Muscle Workout list popup overlay */}
+    {selectedModalMuscle !== null && (
+      <View style={[StyleSheet.absoluteFill, styles.modalContainer, { backgroundColor: theme.background, zIndex: 500, elevation: 500 }]}>
+        <View
+          style={[
+            styles.modalInnerContainer,
+            {
+              paddingTop: insets.top,
+              paddingBottom: insets.bottom,
+              paddingLeft: insets.left,
+              paddingRight: insets.right,
+            },
+          ]}
         >
-          <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
-            <View
-              style={[
-                styles.modalInnerContainer,
-                {
-                  paddingTop: insets.top,
-                  paddingBottom: insets.bottom,
-                  paddingLeft: insets.left,
-                  paddingRight: insets.right,
-                },
-              ]}
-            >
               <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.modalKeyboardContainer}
@@ -4495,16 +4549,7 @@ export default function SinglePageLandingScreen() {
                             </Text>
                           </TouchableOpacity>
                           <TouchableOpacity
-                            onPress={() => {
-                              setSelectedModalMuscle(null);
-                              setSelectedSubGroup(null);
-                              setSelectedPickerExerciseIds(new Set());
-                              if (fromTemplateList) {
-                                setTemplateListVisible(true);
-                              }
-                              setCameFromActiveSessionPlus(false);
-                              setCameFromReplaceTarget(null);
-                            }}
+                            onPress={handleCloseModalMuscle}
                             activeOpacity={0.7}
                             style={styles.modalCloseIconButton}
                           >
@@ -5207,15 +5252,30 @@ export default function SinglePageLandingScreen() {
                           });
                         });
 
+                        const updatedList = newExercises.length > 0 ? [...templateListExercises, ...newExercises] : templateListExercises;
                         if (newExercises.length > 0) {
-                          const updatedList = [...templateListExercises, ...newExercises];
                           setTemplateListExercises(updatedList);
+                        }
+
+                        if (activeTemplateId) {
+                          await updateTemplate(activeTemplateId, updatedList);
                         }
 
                         setSelectedModalMuscle(null);
                         setSelectedSubGroup(null);
                         setSelectedPickerExerciseIds(new Set());
-                        setTemplateListVisible(true);
+
+                        if (isCreatingNewTemplate) {
+                          setIsCreatingNewTemplate(false);
+                          setTemplateListVisible(false);
+                          setFromTemplateList(false);
+                          setTemplateListExercises([]);
+                          setActiveTemplateId(null);
+                          setActiveSegment('templates');
+                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        } else {
+                          setTemplateListVisible(true);
+                        }
                       }}
                       disabled={selectedPickerExerciseIds.size === 0}
                       activeOpacity={0.8}
@@ -5896,7 +5956,7 @@ export default function SinglePageLandingScreen() {
               </View>
             )}
           </View>
-        </Modal>
+        )}
 
         {/* Add Exercise Modal */}
         <Modal
@@ -7818,14 +7878,8 @@ export default function SinglePageLandingScreen() {
         </Modal>
 
         {/* Profile Full Screen */}
-        <Modal
-          visible={profileModalVisible}
-          transparent={true}
-          animationType="none"
-          statusBarTranslucent={true}
-          onRequestClose={() => handleCloseProfile()}
-        >
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'transparent' }]}>
+        {profileModalVisible && (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'transparent', zIndex: 1000, elevation: 1000 }]} pointerEvents="box-none">
             <Animated.View
               style={{
                 flex: 1,
@@ -8267,10 +8321,9 @@ export default function SinglePageLandingScreen() {
                 </View>
               </ScrollView>
             </Animated.View>
-        </View>
-      </Modal>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          </View>
+        )}
+    </View>
   );
 }
 
