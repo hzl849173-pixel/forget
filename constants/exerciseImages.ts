@@ -15,6 +15,7 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'smith-incline-press': require('../assets/exercises/smith-incline-press.jpg'),
   'pec-deck': require('../assets/exercises/pec-deck.jpg'),
   'push-ups': require('../assets/exercises/push-ups.jpg'),
+  'incline-pushup': require('../assets/exercises/incline-pushup.jpg'),
 };
 
 export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -52,7 +53,7 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   // Bodyweight Chest
   'push-ups': IMAGES['push-ups'],
   'weighted-pushups': IMAGES['push-ups'],
-  'incline-pushup': IMAGES['db-incline-press'],
+  'incline-pushup': IMAGES['incline-pushup'],
   'decline-pushup': IMAGES['db-decline-press'],
   'chest-dips': IMAGES['bb-decline-press'],
 };
