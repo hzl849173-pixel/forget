@@ -4,11 +4,11 @@
  * ============================================================================
  * Visual Rules for Generated Exercise Assets:
  * - Background: Uniform, diffuse, seamless soft light-gray (#F4F4F4) studio ambient
- *   like `ez-bar-skull-crusher.jpg`.
+ *   like `bb-incline-press.jpg`.
  *   [STRICT BAN]: NO radial spotlight, NO circular bright halo, NO vignette/dark corners
  *   (as seen in `single-arm-pushdown.jpg`).
  * - Equipment: Harmonious shades of matte aluminum, brushed steel, and graphite charcoal
- *   like `smith-incline-press.jpg`.
+ *   like `bb-incline-press.jpg`.
  *   [STRICT BAN]: NO solid jet-black monoliths or overpowering black blocks
  *   (as seen in `cable-crossover.jpg`).
  * - Target Muscle: Glowing vibrant red-orange (#FF4500) with striations on silver-gray mannequin.

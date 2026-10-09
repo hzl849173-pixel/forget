@@ -10,14 +10,14 @@ In the exercise picker sheet, each exercise row features a compact thumbnail ill
 
 Every generated image **must** strictly match the established visual benchmarks:
 
-1. **Background & Lighting (Gold Standard: `ez-bar-skull-crusher.jpg`)**:
+1. **Background & Lighting (Gold Standard: `bb-incline-press.jpg`)**:
    - **Uniform, flat, seamless soft light-gray studio backdrop** (`~#F2F2F2` to `#F4F4F4`, `RGB ~242, 242, 242`).
    - Pure, diffuse ambient studio illumination across the entire canvas.
    - Clean, subtle ground contact shadow directly under the equipment and figure.
    - **STRICT ANTI-PATTERN (Fix `single-arm-pushdown.jpg`)**:
      - **NO** radial spotlight, **NO** bright circular halo behind the mannequin, **NO** vignette, and **NO** dark shaded corners. The backdrop must remain completely uniform and flat.
 
-2. **Equipment & Material Contrast (Gold Standard: `smith-incline-press.jpg`)**:
+2. **Equipment & Material Contrast (Gold Standard: `bb-incline-press.jpg`)**:
    - Harmonious, balanced shades: matte aluminum / light-to-medium steel gray frames, brushed silver hardware/bars, dark graphite/charcoal accents, and dark gray weight plates/padding.
    - **STRICT ANTI-PATTERN (Fix `cable-crossover.jpg`)**:
      - **NO** stark pitch-black / jet-black monolithic frames. Black must **not** overpower or dominate the scene. The contrast must remain subtle and balanced so the anatomical mannequin and glowing muscles remain the primary visual focus.

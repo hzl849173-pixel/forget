@@ -5,19 +5,19 @@
  * Every AI agent generating exercise illustrations for Workout Journal MUST
  * strictly adhere to the following visual benchmarks and guidelines:
  *
- * 1. BACKGROUND & LIGHTING (Gold Standard: `ez-bar-skull-crusher.jpg`):
+ * 1. BACKGROUND & LIGHTING (Gold Standard: `bb-incline-press.jpg`):
  *    - MUST use an even, diffuse, seamless soft light-gray studio backdrop
  *      (~#F2F2F2 to #F4F4F4, RGB ~242, 242, 242).
- *    - Ambient, uniform lighting across the whole canvas.
+ *    - Pure ambient, uniform, luminous lighting across the whole canvas.
  *    - Subtle floor contact shadow directly beneath the lifter/bench.
  *    - STRICT NEGATIVE RULE (Avoid `single-arm-pushdown.jpg` flaw):
  *      NO radial spotlight, NO circular bright halo behind the figure,
  *      NO vignette, NO dark shaded corners.
  *
- * 2. EQUIPMENT CONTRAST & MATERIAL TONES (Gold Standard: `smith-incline-press.jpg`):
+ * 2. EQUIPMENT CONTRAST & MATERIAL TONES (Gold Standard: `bb-incline-press.jpg`):
  *    - Equipment frames, bars, and plates must use harmonious, balanced shades:
  *      matte aluminum/silver frames, brushed steel guides, dark graphite/charcoal
- *      accents, and medium-gray/slate weight stacks.
+ *      accents, and medium-to-dark gray plates and padding.
  *    - STRICT NEGATIVE RULE (Avoid `cable-crossover.jpg` flaw):
  *      NO solid jet-black monoliths, NO stark pitch-black silhouettes. The black
  *      must never overpower or dominate the scene. The lifter and highlighted
