@@ -96,18 +96,58 @@ These exercises currently share stand-in images and need their own dedicated ren
 11. **`chest-dip-machine`**:
     - Seated or kneeling on an assisted dip machine, pressing down on dip bars.
 
-### Priority 2: Next Muscle Groups
-Once Chest is finalized, generate images for the other major categories in [`constants/exercises.ts`](file:///c:/Users/Haisal/Documents/workout-journal/constants/exercises.ts):
-- **Back** (Pull-ups, Lat Pulldown, Barbell Row, Seated Cable Row, Deadlift, etc.)
-- **Shoulders** (Overhead Press, Dumbbell Lateral Raise, Face Pull, Rear Delt Fly, etc.)
-- **Biceps & Triceps** (Barbell Curl, Hammer Curl, Tricep Pushdown, Skull Crushers, Dips)
-- **Legs** (Squat, Leg Press, Romanian Deadlift, Leg Extension, Hamstring Curl, Calf Raise)
-- **Abs** (Plank, Cable Crunch, Hanging Leg Raise, Ab Wheel)
+### Phase 1 Completed: Chest (All Core Variations Live)
+- All primary Barbell, Dumbbell, Cable, Machine, and Bodyweight chest exercises generated, compressed (~9–15 KB), and mapped in [`constants/exerciseImages.ts`](file:///c:/Users/Haisal/Documents/workout-journal/constants/exerciseImages.ts).
+
+### Phase 2 Completed: Triceps (100% Exact Distinct Movements Live)
+Every triceps exercise now has its distinct, exact biomechanical movement and equipment render:
+1. `rope-pushdown.jpg` (Cable rope attachment flared at bottom)
+2. `straight-bar-pushdown.jpg` (Overhand pronated cable straight bar)
+3. `cable-vbar-pushdown.jpg` (Angled V-bar attachment)
+4. `single-arm-pushdown.jpg` (Single D-handle unilateral pushdown)
+5. `rev-grip-pushdown.jpg` (Underhand supinated grip palms up)
+6. `skull-crushers.jpg` (Flat bench straight barbell skull crusher)
+7. `ez-bar-skull-crusher.jpg` (Flat bench wavy zig-zag EZ-bar)
+8. `db-skull-crushers.jpg` (Flat bench two independent dumbbells neutral grip)
+9. `overhead-db-extension.jpg` (Seated single dumbbell overhead extension)
+10. `two-arm-db-overhead-ext.jpg` (Seated, both hands cupped under top plate of single dumbbell overhead)
+11. `bb-overhead-ext.jpg` (Seated straight barbell overhead extension)
+12. `ez-bar-french-press.jpg` (Seated wavy EZ-bar overhead extension)
+13. `close-grip-bench.jpg` (Barbell close-grip flat bench press)
+14. `bench-dips.jpg` (Bodyweight dips off flat gym bench)
+15. `weighted-dips.jpg` (Parallel dip bars with weight plate suspended on dip belt)
+16. `db-kickbacks.jpg` (Bent-over dumbbell tricep kickback)
+17. `cable-kickback.jpg` (Low-pulley single cable tricep kickback)
+18. `cable-overhead-ext.jpg` (High cable forward overhead extension)
+19. `cable-rope-overhead.jpg` (Split-stance forward overhead cable rope extension)
+20. `diamond-pushups.jpg` (Floor push-up with index fingers and thumbs touching in diamond)
+21. `close-grip-pushups.jpg` (Floor push-up with hands shoulder-width and elbows pinned to ribcage)
+22. `tricep-dip-machine.jpg` (Seated selectorized dip machine)
+
+---
+
+## 5. Phase 3: Biceps Queue (Active)
+Exact movement requirements for each bicep exercise:
+1. `bb-curl.jpg` **[Completed - 9.2 KB]**: Standing straight barbell curl, underhand supinated grip, biceps glowing.
+2. `ez-bar-curl.jpg` **[Completed - 8.7 KB]**: Standing wavy zig-zag EZ-bar curl, semi-supinated grip, biceps glowing.
+3. `db-bicep-curl.jpg` **[Completed - 9.5 KB]**: Standing dumbbell curls, palms fully supinated facing upward at top.
+4. `db-hammer-curl.jpg` **[Completed - 9.4 KB]**: Standing neutral hammer grip (palms facing inward towards each other, thumbs up), brachialis and forearms glowing.
+5. `incline-db-curl.jpg` **[Completed - 11.8 KB]**: Seated on a 45-degree incline bench, arms hanging straight down back, curling dumbbells with deep stretch.
+6. `concentration-curl.jpg` **[Completed - 10.7 KB]**: Seated on flat bench, elbow braced firmly against inner thigh, single dumbbell curling towards face.
+7. `spider-curl.jpg` **[Completed - 11.8 KB]**: Mannequin lying prone chest-down on an incline bench, arms hanging vertically downward, curling dumbbells without elbow sway.
+8. `ez-bar-preacher-curl.jpg` **[Completed - 13.4 KB]**: Seated at preacher bench with upper arms braced on pad, curling wavy EZ-bar.
+9. `db-preacher-curl.jpg` **[Completed - 11.9 KB]**: Seated at a 45-degree preacher bench with upper arm flat against slanted pad, curling single dumbbell.
+10. `cable-bicep-curl.jpg` **[Completed - 11.9 KB]**: Standing facing low pulley cable tower with straight bar attachment, curling upwards.
+11. `dual-cable-bicep-curl.jpg` **[Completed - 15.4 KB]**: Standing between dual high cable towers, front-double-biceps contraction pose.
+12. `crossbody-hammer.jpg` **[Completed - 8.9 KB]**: Standing neutral hammer grip curling diagonally across chest towards opposite collarbone.
+13. `cable-rope-curl`: Standing low cable with rope attachment, neutral hammer grip curling upward.
+14. `chin-ups`: Hanging from pull-up bar with underhand supinated grip (palms facing user), pulling chin over bar, biceps glowing.
 
 ---
 
 ## 6. Standard Image Prompt Template
 
 ```text
-A 3D anatomical fitness illustration of an athletic male figure performing [EXERCISE_NAME] on [EQUIPMENT_NAME], strictly matching clean medical fitness 3D art direction. Clean light-gray athletic mannequin figure with glowing red-orange highlighted [TARGET_MUSCLE] muscles with visible striations. Equipment featuring bold matte black structural frames, black weight stacks, and chrome accents for punchy contrast. Soft studio light-gray ambient gradient background (#F1F1F1 at edges), subtle ground contact shadow, 3/4 isometric perspective, square 1:1, minimalist premium design, no all-gray equipment.
+Minimalist 3D fitness exercise illustration of [EXERCISE_NAME]. An athletic male anatomical mannequin figure with a smooth silver-gray monochrome skin tone is [PRECISE_POSTURE_AND_EQUIPMENT]. [EXACT_GRIP_AND_BIOMECHANICS]. The [TARGET_MUSCLE] muscles are highlighted in vibrant glowing neon red-orange (#FF4500) with detailed muscle striations. Matte black gym equipment ([EQUIPMENT_DETAILS]), soft studio light-gray gradient background (#F6F6F6 to #F1F1F1), subtle floor contact shadow, clean 3/4 isometric perspective, 1:1 square framing. No clothing, hairless, faceless, premium modern aesthetic.
 ```
+

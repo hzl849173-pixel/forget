@@ -50,6 +50,29 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'straight-bar-pushdown': require('../assets/exercises/straight-bar-pushdown.jpg'),
   'cable-vbar-pushdown': require('../assets/exercises/cable-vbar-pushdown.jpg'),
   'single-arm-pushdown': require('../assets/exercises/single-arm-pushdown.jpg'),
+  'rev-grip-pushdown': require('../assets/exercises/rev-grip-pushdown.jpg'),
+  'ez-bar-skull-crusher': require('../assets/exercises/ez-bar-skull-crusher.jpg'),
+  'bb-overhead-ext': require('../assets/exercises/bb-overhead-ext.jpg'),
+  'ez-bar-french-press': require('../assets/exercises/ez-bar-french-press.jpg'),
+  'db-skull-crushers': require('../assets/exercises/db-skull-crushers.jpg'),
+  'two-arm-db-overhead-ext': require('../assets/exercises/two-arm-db-overhead-ext.jpg'),
+  'cable-rope-overhead': require('../assets/exercises/cable-rope-overhead.jpg'),
+  'cable-kickback': require('../assets/exercises/cable-kickback.jpg'),
+  'weighted-dips': require('../assets/exercises/weighted-dips.jpg'),
+  'close-grip-pushups': require('../assets/exercises/close-grip-pushups.jpg'),
+  // Biceps
+  'bb-curl': require('../assets/exercises/bb-curl.jpg'),
+  'ez-bar-curl': require('../assets/exercises/ez-bar-curl.jpg'),
+  'db-bicep-curl': require('../assets/exercises/db-bicep-curl.jpg'),
+  'db-hammer-curl': require('../assets/exercises/db-hammer-curl.jpg'),
+  'incline-db-curl': require('../assets/exercises/incline-db-curl.jpg'),
+  'concentration-curl': require('../assets/exercises/concentration-curl.jpg'),
+  'spider-curl': require('../assets/exercises/spider-curl.jpg'),
+  'ez-bar-preacher-curl': require('../assets/exercises/ez-bar-preacher-curl.jpg'),
+  'db-preacher-curl': require('../assets/exercises/db-preacher-curl.jpg'),
+  'cable-bicep-curl': require('../assets/exercises/cable-bicep-curl.jpg'),
+  'dual-cable-bicep-curl': require('../assets/exercises/dual-cable-bicep-curl.jpg'),
+  'crossbody-hammer': require('../assets/exercises/crossbody-hammer.jpg'),
 };
 
 export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -97,42 +120,59 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'cable-vbar-pushdown': IMAGES['cable-vbar-pushdown'],
   'straight-bar-pushdown': IMAGES['straight-bar-pushdown'],
   'single-arm-pushdown': IMAGES['single-arm-pushdown'],
-  'rev-grip-pushdown': IMAGES['rope-pushdown'],
+  'rev-grip-pushdown': IMAGES['rev-grip-pushdown'],
 
   // Triceps Skull Crushers & Lying Extensions
   'skull-crushers': IMAGES['skull-crushers'],
-  'ez-bar-skull-crusher': IMAGES['skull-crushers'],
-  'db-skull-crushers': IMAGES['skull-crushers'],
-  'lying-db-ext': IMAGES['skull-crushers'],
+  'ez-bar-skull-crusher': IMAGES['ez-bar-skull-crusher'],
+  'db-skull-crushers': IMAGES['db-skull-crushers'],
+  'lying-db-ext': IMAGES['db-skull-crushers'],
 
   // Triceps Overhead Extensions
   'overhead-db-extension': IMAGES['overhead-db-extension'],
-  'two-arm-db-overhead-ext': IMAGES['overhead-db-extension'],
-  'bb-overhead-ext': IMAGES['overhead-db-extension'],
-  'ez-bar-french-press': IMAGES['overhead-db-extension'],
+  'two-arm-db-overhead-ext': IMAGES['two-arm-db-overhead-ext'],
+  'bb-overhead-ext': IMAGES['bb-overhead-ext'],
+  'ez-bar-french-press': IMAGES['ez-bar-french-press'],
 
   // Triceps Close Grip Bench
   'close-grip-bench': IMAGES['close-grip-bench'],
 
   // Triceps Dips
   'bench-dips': IMAGES['bench-dips'],
-  'weighted-dips': IMAGES['bench-dips'],
+  'weighted-dips': IMAGES['weighted-dips'],
 
   // Triceps Kickbacks
   'db-kickbacks': IMAGES['db-kickbacks'],
-  'cable-one-arm-kickback': IMAGES['db-kickbacks'],
-  'cable-kickback': IMAGES['db-kickbacks'],
+  'cable-one-arm-kickback': IMAGES['cable-kickback'],
+  'cable-kickback': IMAGES['cable-kickback'],
 
   // Triceps Cable Overhead Extensions
   'cable-overhead-ext': IMAGES['cable-overhead-ext'],
-  'cable-rope-overhead': IMAGES['cable-overhead-ext'],
+  'cable-rope-overhead': IMAGES['cable-rope-overhead'],
 
   // Triceps Push-ups
   'diamond-pushups': IMAGES['diamond-pushups'],
-  'close-grip-pushups': IMAGES['diamond-pushups'],
+  'close-grip-pushups': IMAGES['close-grip-pushups'],
 
   // Triceps Machine Dips
   'tricep-dip-machine': IMAGES['tricep-dip-machine'],
+
+  // Biceps
+  'bb-curl': IMAGES['bb-curl'],
+  'ez-bar-curl': IMAGES['ez-bar-curl'],
+  'db-bicep-curl': IMAGES['db-bicep-curl'],
+  'db-hammer-curl': IMAGES['db-hammer-curl'],
+  'incline-db-curl': IMAGES['incline-db-curl'],
+  'concentration-curl': IMAGES['concentration-curl'],
+  'spider-curl': IMAGES['spider-curl'],
+  'spider-curl-bb': IMAGES['spider-curl'],
+  'ez-bar-preacher-curl': IMAGES['ez-bar-preacher-curl'],
+  'machine-preacher-curl': IMAGES['ez-bar-preacher-curl'],
+  'db-preacher-curl': IMAGES['db-preacher-curl'],
+  'cable-bicep-curl': IMAGES['cable-bicep-curl'],
+  'dual-cable-bicep-curl': IMAGES['dual-cable-bicep-curl'],
+  'crossbody-hammer': IMAGES['crossbody-hammer'],
+  'incline-hammer-curl': IMAGES['db-hammer-curl'],
 };
 
 export function getExerciseIllustration(exerciseId: string): ImageSourcePropType | null {
