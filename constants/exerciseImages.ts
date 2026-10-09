@@ -94,6 +94,9 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'cable-rope-curl': require('../assets/exercises/cable-rope-curl.jpg'),
   'bayesian-cable-curl': require('../assets/exercises/bayesian-cable-curl.jpg'),
   'machine-preacher-curl': require('../assets/exercises/machine-preacher-curl.jpg'),
+  'spider-curl-bb': require('../assets/exercises/spider-curl-bb.jpg'),
+  'incline-hammer-curl': require('../assets/exercises/incline-hammer-curl.jpg'),
+  'rev-db-curl': require('../assets/exercises/rev-db-curl.jpg'),
 };
 
 export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -186,17 +189,18 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'incline-db-curl': IMAGES['incline-db-curl'],
   'concentration-curl': IMAGES['concentration-curl'],
   'spider-curl': IMAGES['spider-curl'],
-  'spider-curl-bb': IMAGES['spider-curl'],
+  'spider-curl-bb': IMAGES['spider-curl-bb'],
   'ez-bar-preacher-curl': IMAGES['ez-bar-preacher-curl'],
   'machine-preacher-curl': IMAGES['machine-preacher-curl'],
   'db-preacher-curl': IMAGES['db-preacher-curl'],
   'cable-bicep-curl': IMAGES['cable-bicep-curl'],
   'dual-cable-bicep-curl': IMAGES['dual-cable-bicep-curl'],
   'crossbody-hammer': IMAGES['crossbody-hammer'],
-  'incline-hammer-curl': IMAGES['db-hammer-curl'],
+  'incline-hammer-curl': IMAGES['incline-hammer-curl'],
   'cable-rope-curl': IMAGES['cable-rope-curl'],
   'cable-hammer-curl': IMAGES['cable-rope-curl'],
   'bayesian-cable-curl': IMAGES['bayesian-cable-curl'],
+  'rev-db-curl': IMAGES['rev-db-curl'],
 };
 
 export function getExerciseIllustration(exerciseId: string): ImageSourcePropType | null {

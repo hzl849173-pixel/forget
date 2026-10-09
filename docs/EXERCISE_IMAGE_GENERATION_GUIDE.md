@@ -151,9 +151,9 @@ Exact movement requirements for each bicep exercise:
 13. `cable-rope-curl.jpg` **[Completed - 11.6 KB]**: Standing low cable with rope attachment, neutral hammer grip curling upward.
 14. `bayesian-cable-curl.jpg` **[Completed - 9.8 KB]**: Standing facing away from low cable tower, arm extended behind torso, curling forward.
 15. `machine-preacher-curl.jpg` **[Completed - 11.9 KB]**: Seated at selectorized preacher curl machine, arms on pad, curling machine handles.
-16. `spider-curl-bb`: Prone chest-down on incline bench, curling straight barbell vertically downward.
-17. `incline-hammer-curl`: Seated on 45-degree incline bench, neutral hammer grip curling dumbbells.
-18. `rev-db-curl`: Standing neutral/overhand pronated reverse dumbbell curl (forearms glowing).
+16. `spider-curl-bb.jpg` **[Completed - 10.1 KB]**: Prone chest-down on incline bench, curling straight barbell vertically downward.
+17. `incline-hammer-curl.jpg` **[Completed - 11.2 KB]**: Seated on 45-degree incline bench, neutral hammer grip curling dumbbells.
+18. `rev-db-curl.jpg` **[Completed - 7.7 KB]**: Standing neutral/overhand pronated reverse dumbbell curl (forearms glowing).
 19. `rev-bb-curl`: Standing overhand pronated reverse straight barbell curl.
 20. `rev-ez-bar-curl`: Standing overhand pronated reverse wavy EZ-bar curl.
 21. `cable-reverse-curl`: Standing low cable straight bar with overhand pronated grip.
