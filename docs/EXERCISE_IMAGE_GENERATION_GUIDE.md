@@ -154,10 +154,21 @@ Exact movement requirements for each bicep exercise:
 16. `spider-curl-bb.jpg` **[Completed - 10.1 KB]**: Prone chest-down on incline bench, curling straight barbell vertically downward.
 17. `incline-hammer-curl.jpg` **[Completed - 11.2 KB]**: Seated on 45-degree incline bench, neutral hammer grip curling dumbbells.
 18. `rev-db-curl.jpg` **[Completed - 7.7 KB]**: Standing neutral/overhand pronated reverse dumbbell curl (forearms glowing).
-19. `rev-bb-curl`: Standing overhand pronated reverse straight barbell curl.
-20. `rev-ez-bar-curl`: Standing overhand pronated reverse wavy EZ-bar curl.
-21. `cable-reverse-curl`: Standing low cable straight bar with overhand pronated grip.
+19. `rev-bb-curl.jpg` **[Completed - 8.5 KB]**: Standing overhand pronated reverse straight barbell curl.
+20. `rev-ez-bar-curl.jpg` **[Completed - 8.1 KB]**: Standing overhand pronated reverse wavy EZ-bar curl.
+21. `cable-reverse-curl.jpg` **[Completed - 10.8 KB]**: Standing low cable straight bar with overhand pronated grip.
 
+### Phase 3 Completed: Biceps (100% Distinct Variations Live)
+- All 21 Biceps movements generated, compressed (7–15 KB), and mapped in `constants/exerciseImages.ts`.
+
+---
+
+## 5. Phase 4: Shoulders Queue & Autonomous Chained Timer Directive
+When the active quota timer (`task-89`) triggers at **1:48 AM**, the agent will:
+1. Generate the next batch of shoulder movement illustrations (`bb-overhead-press`, `seated-bb-shoulder-press`, `db-shoulder-press`, `arnold-press`, `db-lateral-raise`, etc.).
+2. Compress each render to ~10–15 KB using `scripts/compress-exercise-image.ps1`.
+3. Register them in `constants/exerciseImages.ts`.
+4. **Autonomous Timer Chaining Rule (User Directive)**: Upon exhausting quota during the 1:48 AM run, immediately parse the reset delay from the API response and schedule the NEXT automated timer (~6:35 AM) to keep the pipeline executing completely hands-free until all exercises are done.
 
 ---
 

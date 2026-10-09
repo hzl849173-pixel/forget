@@ -97,6 +97,9 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'spider-curl-bb': require('../assets/exercises/spider-curl-bb.jpg'),
   'incline-hammer-curl': require('../assets/exercises/incline-hammer-curl.jpg'),
   'rev-db-curl': require('../assets/exercises/rev-db-curl.jpg'),
+  'rev-bb-curl': require('../assets/exercises/rev-bb-curl.jpg'),
+  'rev-ez-bar-curl': require('../assets/exercises/rev-ez-bar-curl.jpg'),
+  'cable-reverse-curl': require('../assets/exercises/cable-reverse-curl.jpg'),
 };
 
 export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -201,6 +204,9 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'cable-hammer-curl': IMAGES['cable-rope-curl'],
   'bayesian-cable-curl': IMAGES['bayesian-cable-curl'],
   'rev-db-curl': IMAGES['rev-db-curl'],
+  'rev-bb-curl': IMAGES['rev-bb-curl'],
+  'rev-ez-bar-curl': IMAGES['rev-ez-bar-curl'],
+  'cable-reverse-curl': IMAGES['cable-reverse-curl'],
 };
 
 export function getExerciseIllustration(exerciseId: string): ImageSourcePropType | null {
