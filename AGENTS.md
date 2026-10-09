@@ -214,4 +214,20 @@ When the user specifies mode scope:
 - **"Both Modes"**:
   Apply the changes consistently to BOTH Focus Mode and Live Session Mode.
 
+---
+
+## Exercise Image Generation & Strict Uniformity Rules
+
+When generating or updating exercise illustration assets:
+1. **Background & Studio Lighting (Gold Standard: `ez-bar-skull-crusher.jpg`)**:
+   - Uniform, flat, seamless soft light-gray studio backdrop (`#F4F4F4` / `#F2F2F2`).
+   - Diffuse, ambient illumination with subtle contact shadow under equipment/lifter.
+   - **STRICT PROHIBITION**: NO radial spotlight, NO circular bright halo behind figure, NO vignette/dark corners (anti-pattern: `single-arm-pushdown.jpg`).
+2. **Equipment Material Tones & Contrast (Gold Standard: `smith-incline-press.jpg`)**:
+   - Harmonious, balanced shades: matte aluminum / light-to-medium steel gray frames, brushed silver hardware, dark graphite/charcoal accents, and dark gray plates.
+   - **STRICT PROHIBITION**: NO stark jet-black monoliths or overpowering black blocks (anti-pattern: `cable-crossover.jpg`). The mannequin and glowing muscle must always be the visual centerpiece.
+3. **Reference Docs & Implementation**:
+   - See detailed master prompt and negative directives in [`constants/exercises.ts`](file:///c:/Users/Haisal/Documents/workout-journal/constants/exercises.ts), [`constants/exerciseImages.ts`](file:///c:/Users/Haisal/Documents/workout-journal/constants/exerciseImages.ts), and [`docs/EXERCISE_IMAGE_GENERATION_GUIDE.md`](file:///c:/Users/Haisal/Documents/workout-journal/docs/EXERCISE_IMAGE_GENERATION_GUIDE.md).
+
+
 

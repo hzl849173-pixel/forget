@@ -6,27 +6,35 @@ In the exercise picker sheet, each exercise row features a compact thumbnail ill
 
 ---
 
-## 2. Visual Style & Art Direction
+## 2. Visual Style & Strict Uniformity Benchmarks
 
-Every generated image **must** strictly match the established art direction:
+Every generated image **must** strictly match the established visual benchmarks:
 
-1. **Subject / Figure**:
+1. **Background & Lighting (Gold Standard: `ez-bar-skull-crusher.jpg`)**:
+   - **Uniform, flat, seamless soft light-gray studio backdrop** (`~#F2F2F2` to `#F4F4F4`, `RGB ~242, 242, 242`).
+   - Pure, diffuse ambient studio illumination across the entire canvas.
+   - Clean, subtle ground contact shadow directly under the equipment and figure.
+   - **STRICT ANTI-PATTERN (Fix `single-arm-pushdown.jpg`)**:
+     - **NO** radial spotlight, **NO** bright circular halo behind the mannequin, **NO** vignette, and **NO** dark shaded corners. The backdrop must remain completely uniform and flat.
+
+2. **Equipment & Material Contrast (Gold Standard: `smith-incline-press.jpg`)**:
+   - Harmonious, balanced shades: matte aluminum / light-to-medium steel gray frames, brushed silver hardware/bars, dark graphite/charcoal accents, and dark gray weight plates/padding.
+   - **STRICT ANTI-PATTERN (Fix `cable-crossover.jpg`)**:
+     - **NO** stark pitch-black / jet-black monolithic frames. Black must **not** overpower or dominate the scene. The contrast must remain subtle and balanced so the anatomical mannequin and glowing muscles remain the primary visual focus.
+
+3. **Subject / Figure**:
    - Athletic male anatomical mannequin figure.
    - Monochrome silver/light-gray skin tone.
    - Neutral anatomy, no hair, no facial expression, no clothes.
-2. **Muscle Activation (Crucial)**:
-   - The primary target muscle(s) **must be highlighted in glowing vibrant red-orange** (`#FF4500` / `#FF5722`), showing clear muscle fiber striations.
+
+4. **Muscle Activation (Crucial)**:
+   - The primary target muscle(s) **must be highlighted in glowing vibrant neon red-orange** (`#FF4500` / `#FF5722`), showing clear muscle fiber striations.
    - Secondary / passive muscles remain in neutral silver-gray.
-3. **Equipment & High-Contrast Framing (Critical)**:
-   - Realistic gym equipment featuring **bold matte black frames, black weight stacks, and dark charcoal accents** with chrome/silver hardware.
-   - **Avoid all-gray equipment**: Especially for cable machines and towers, do **not** render the entire frame in silver/gray. Use matte black upright columns, black pulleys, and dark weight stacks so the equipment creates strong, crisp contrast against both the light-gray mannequin and the soft gray background.
-4. **Background & Lighting**:
-   - **Soft studio light-gray ambient gradient** (center `~#F6F6F6` down to edges/corners `~#F1F1F1` / `RGB ~241, 241, 241`).
-   - Clean, soft ground contact shadow underneath the equipment/figure.
-   - **NOT** stark flat pure `#FFFFFF` white, and **NOT** dark/moody.
+
 5. **Composition & Camera**:
-   - Aspect ratio: `1:1` square.
-   - 3/4 isometric perspective that clearly displays both the equipment setup and the highlighted muscle group.
+   - Aspect ratio: `1:1` square (300 × 300 px target).
+   - 3/4 isometric perspective, centered, consistent camera distance (~75–80% frame fill).
+
 
 ---
 
@@ -140,14 +148,27 @@ Exact movement requirements for each bicep exercise:
 10. `cable-bicep-curl.jpg` **[Completed - 11.9 KB]**: Standing facing low pulley cable tower with straight bar attachment, curling upwards.
 11. `dual-cable-bicep-curl.jpg` **[Completed - 15.4 KB]**: Standing between dual high cable towers, front-double-biceps contraction pose.
 12. `crossbody-hammer.jpg` **[Completed - 8.9 KB]**: Standing neutral hammer grip curling diagonally across chest towards opposite collarbone.
-13. `cable-rope-curl`: Standing low cable with rope attachment, neutral hammer grip curling upward.
-14. `chin-ups`: Hanging from pull-up bar with underhand supinated grip (palms facing user), pulling chin over bar, biceps glowing.
+13. `cable-rope-curl.jpg` **[Completed - 11.6 KB]**: Standing low cable with rope attachment, neutral hammer grip curling upward.
+14. `bayesian-cable-curl.jpg` **[Completed - 9.8 KB]**: Standing facing away from low cable tower, arm extended behind torso, curling forward.
+15. `machine-preacher-curl.jpg` **[Completed - 11.9 KB]**: Seated at selectorized preacher curl machine, arms on pad, curling machine handles.
+16. `spider-curl-bb`: Prone chest-down on incline bench, curling straight barbell vertically downward.
+17. `incline-hammer-curl`: Seated on 45-degree incline bench, neutral hammer grip curling dumbbells.
+18. `rev-db-curl`: Standing neutral/overhand pronated reverse dumbbell curl (forearms glowing).
+19. `rev-bb-curl`: Standing overhand pronated reverse straight barbell curl.
+20. `rev-ez-bar-curl`: Standing overhand pronated reverse wavy EZ-bar curl.
+21. `cable-reverse-curl`: Standing low cable straight bar with overhand pronated grip.
+
 
 ---
 
 ## 6. Standard Image Prompt Template
 
 ```text
-Minimalist 3D fitness exercise illustration of [EXERCISE_NAME]. An athletic male anatomical mannequin figure with a smooth silver-gray monochrome skin tone is [PRECISE_POSTURE_AND_EQUIPMENT]. [EXACT_GRIP_AND_BIOMECHANICS]. The [TARGET_MUSCLE] muscles are highlighted in vibrant glowing neon red-orange (#FF4500) with detailed muscle striations. Matte black gym equipment ([EQUIPMENT_DETAILS]), soft studio light-gray gradient background (#F6F6F6 to #F1F1F1), subtle floor contact shadow, clean 3/4 isometric perspective, 1:1 square framing. No clothing, hairless, faceless, premium modern aesthetic.
+Minimalist 3D fitness exercise illustration of [EXERCISE_NAME]. An athletic male anatomical mannequin figure with a smooth silver-gray monochrome skin tone is [PRECISE_POSTURE_AND_EQUIPMENT]. [EXACT_GRIP_AND_BIOMECHANICS]. Target [TARGET_MUSCLE] muscles highlighted in vibrant glowing neon red-orange (#FF4500) with visible muscle striations. Gym equipment rendered in balanced matte aluminum, brushed steel, and dark graphite charcoal tones (no solid jet-black monoliths). Uniform diffuse light-gray studio background (#F4F4F4), no spotlight, no radial halo, no vignette, subtle floor contact shadow, clean 3/4 isometric perspective, 1:1 square framing. Faceless, hairless, clothes-free, premium modern aesthetic.
 ```
+
+### Negative Prompt Directives (Crucial to Enforce Uniformity)
+* **Lighting/Background**: `spotlight, radial vignette, circular halo, dark corners, moody lighting, colored background, dramatic lighting, lens flare`.
+* **Equipment**: `solid jet black silhouette, heavy black block, pitch black monolith, overpowering high contrast black frame`.
+
 

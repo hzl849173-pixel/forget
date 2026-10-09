@@ -1,3 +1,50 @@
+/**
+ * ============================================================================
+ * EXERCISE IMAGE GENERATION & STRICT VISUAL UNIFORMITY RULES
+ * ============================================================================
+ * Every AI agent generating exercise illustrations for Workout Journal MUST
+ * strictly adhere to the following visual benchmarks and guidelines:
+ *
+ * 1. BACKGROUND & LIGHTING (Gold Standard: `ez-bar-skull-crusher.jpg`):
+ *    - MUST use an even, diffuse, seamless soft light-gray studio backdrop
+ *      (~#F2F2F2 to #F4F4F4, RGB ~242, 242, 242).
+ *    - Ambient, uniform lighting across the whole canvas.
+ *    - Subtle floor contact shadow directly beneath the lifter/bench.
+ *    - STRICT NEGATIVE RULE (Avoid `single-arm-pushdown.jpg` flaw):
+ *      NO radial spotlight, NO circular bright halo behind the figure,
+ *      NO vignette, NO dark shaded corners.
+ *
+ * 2. EQUIPMENT CONTRAST & MATERIAL TONES (Gold Standard: `smith-incline-press.jpg`):
+ *    - Equipment frames, bars, and plates must use harmonious, balanced shades:
+ *      matte aluminum/silver frames, brushed steel guides, dark graphite/charcoal
+ *      accents, and medium-gray/slate weight stacks.
+ *    - STRICT NEGATIVE RULE (Avoid `cable-crossover.jpg` flaw):
+ *      NO solid jet-black monoliths, NO stark pitch-black silhouettes. The black
+ *      must never overpower or dominate the scene. The lifter and highlighted
+ *      muscles must always be the visual centerpiece.
+ *
+ * 3. ANATOMICAL FIGURE & TARGET MUSCLE:
+ *    - Athletic male anatomical mannequin figure in smooth silver-gray monochrome.
+ *    - Faceless, hairless, no clothing, neutral anatomy.
+ *    - Target muscle glowing in vibrant neon red-orange (#FF4500) with detailed
+ *      fiber striations. Secondary/passive muscles remain neutral silver-gray.
+ *
+ * 4. COMPOSITION & FRAMING:
+ *    - 1:1 square aspect ratio, 300x300 px target resolution (~10-20 KB compressed).
+ *    - Clean 3/4 isometric angle, centered, consistent camera distance (~75-80% frame fill).
+ *
+ * 5. MASTER PROMPT TEMPLATE:
+ *    "Minimalist 3D fitness exercise illustration of [EXERCISE_NAME]. An athletic male
+ *    anatomical mannequin figure with a smooth silver-gray monochrome skin tone is [ACTION].
+ *    [BIOMECHANICS]. Target [MUSCLE] highlighted in glowing vibrant neon red-orange (#FF4500)
+ *    with visible muscle striations. Gym equipment in balanced matte aluminum, brushed steel,
+ *    and dark graphite charcoal tones (no solid jet-black monoliths). Uniform diffuse
+ *    light-gray studio background (#F4F4F4), no spotlight, no radial halo, no vignette,
+ *    subtle floor contact shadow, clean 3/4 isometric perspective, 1:1 square. Faceless,
+ *    hairless, clothes-free, premium modern aesthetic."
+ * ============================================================================
+ */
+
 export type MuscleGroup = 'Chest' | 'Triceps' | 'Biceps' | 'Back' | 'Shoulders' | 'Legs' | 'Abs' | 'Abs & Shoulders' | 'Back & Shoulders';
 
 export type Instrument = 'Barbell' | 'Dumbbell' | 'Cable' | 'Machine' | 'Bodyweight' | 'Kettlebell' | 'Other';
