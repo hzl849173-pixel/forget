@@ -5096,12 +5096,12 @@ export default function SinglePageLandingScreen() {
                   key={selectedModalMuscle || 'all'}
                   sections={exerciseSections}
                   keyExtractor={(item) => item.id}
-                  contentContainerStyle={[
-                    styles.modalListContent,
-                    {
-                      paddingBottom: (insets.bottom > 0 ? insets.bottom : 16) + 110,
-                    },
-                  ]}
+                    contentContainerStyle={[
+                      styles.modalListContent,
+                      {
+                        paddingBottom: (insets.bottom > 0 ? insets.bottom : 16) + 56,
+                      },
+                    ]}
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                   stickySectionHeadersEnabled={false}
@@ -5389,82 +5389,72 @@ export default function SinglePageLandingScreen() {
 
                 {/* Modal Sticky Footer if active session is not empty in post-workout mode */}
                 {loggingMode === 'post_workout' && activeSessionExercises.length > 0 && !fromTemplateList && (
-                  <View style={[styles.modalStickyFooter, { backgroundColor: theme.cardBg, borderTopColor: theme.borderColor }]}>
-                    <Text style={[styles.modalFooterText, { color: theme.textPrimary, flex: 1, marginRight: 8 }]} numberOfLines={1}>
-                      {activeSessionExercises.length} {activeSessionExercises.length === 1 ? 'exercise' : 'exercises'} in session
-                    </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <TouchableOpacity
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 5,
-                          paddingVertical: 10,
-                          paddingHorizontal: 12,
-                          borderRadius: 10,
-                          backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.12)' : '#FEE2E2',
-                          borderWidth: 1,
-                          borderColor: isDarkMode ? 'rgba(239, 68, 68, 0.28)' : '#FECACA',
-                        }}
-                        onPress={handleCancelSession}
-                        activeOpacity={0.7}
-                      >
-                        <Trash2 size={14} color="#EF4444" strokeWidth={2.2} />
-                        <Text style={{ fontSize: 11, fontWeight: '800', color: '#EF4444', letterSpacing: 0.3 }}>
-                          CANCEL
-                        </Text>
-                      </TouchableOpacity>
+                  <View
+                    style={[
+                      styles.modalStickyFooter,
+                      {
+                        backgroundColor: theme.cardBg,
+                        borderTopColor: theme.borderColor,
+                        paddingBottom: insets.bottom > 0 ? insets.bottom : 6,
+                      },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.modalCancelPill}
+                      onPress={handleCancelSession}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+                    >
+                      <Trash2 size={13} color="#EF4444" strokeWidth={2.2} />
+                      <Text style={styles.modalCancelPillText}>CANCEL</Text>
+                    </TouchableOpacity>
 
-                      <TouchableOpacity
-                        style={[styles.modalFinishBtn, { backgroundColor: '#10B981' }]}
-                        onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          setSelectedModalMuscle(null);
-                          setSelectedSubGroup(null);
-                          setActiveSegment('log');
-                        }}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={styles.modalFinishBtnText}>VIEW SESSION</Text>
-                      </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity
+                      style={styles.modalFinishPill}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setSelectedModalMuscle(null);
+                        setSelectedSubGroup(null);
+                        setActiveSegment('log');
+                      }}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={styles.modalFinishPillText}>
+                        VIEW SESSION ({activeSessionExercises.length})
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 )}
 
                 {/* Modal Sticky Footer in Live mode */}
                 {loggingMode === 'live' && !fromTemplateList && (selectedPickerExerciseIds.size > 0 || activeSessionExercises.length > 0) && (
-                  <View style={[styles.modalStickyFooter, { backgroundColor: theme.cardBg, borderTopColor: theme.borderColor }]}>
-                    <Text style={[styles.modalFooterText, { color: theme.textPrimary, flex: 1, marginRight: 8 }]} numberOfLines={1}>
-                      {selectedPickerExerciseIds.size > 0
-                        ? `${selectedPickerExerciseIds.size} Exercise${selectedPickerExerciseIds.size !== 1 ? 's' : ''} Selected`
-                        : `${activeSessionExercises.length} ${activeSessionExercises.length === 1 ? 'exercise' : 'exercises'} in session`}
-                    </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      {selectedPickerExerciseIds.size === 0 && activeSessionExercises.length > 0 && (
-                        <TouchableOpacity
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 5,
-                            paddingVertical: 10,
-                            paddingHorizontal: 12,
-                            borderRadius: 10,
-                            backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.12)' : '#FEE2E2',
-                            borderWidth: 1,
-                            borderColor: isDarkMode ? 'rgba(239, 68, 68, 0.28)' : '#FECACA',
-                          }}
-                          onPress={handleCancelSession}
-                          activeOpacity={0.7}
-                        >
-                          <Trash2 size={14} color="#EF4444" strokeWidth={2.2} />
-                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#EF4444', letterSpacing: 0.3 }}>
-                            CANCEL
-                          </Text>
-                        </TouchableOpacity>
-                      )}
+                  <View
+                    style={[
+                      styles.modalStickyFooter,
+                      {
+                        backgroundColor: theme.cardBg,
+                        borderTopColor: theme.borderColor,
+                        paddingBottom: insets.bottom > 0 ? insets.bottom : 6,
+                      },
+                    ]}
+                  >
+                    {selectedPickerExerciseIds.size === 0 && activeSessionExercises.length > 0 ? (
+                      <TouchableOpacity
+                        style={styles.modalCancelPill}
+                        onPress={handleCancelSession}
+                        activeOpacity={0.7}
+                        hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+                      >
+                        <Trash2 size={13} color="#EF4444" strokeWidth={2.2} />
+                        <Text style={styles.modalCancelPillText}>CANCEL</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View />
+                    )}
+
                     <TouchableOpacity
                       style={[
-                        styles.modalFinishBtn,
+                        styles.modalFinishPill,
                         {
                           backgroundColor: selectedPickerExerciseIds.size > 0 || activeSessionExercises.length > 0 ? '#10B981' : theme.borderColor
                         }
@@ -5545,28 +5535,40 @@ export default function SinglePageLandingScreen() {
                         }
                         setSelectedPickerExerciseIds(new Set());
                       }}
-                      activeOpacity={0.8}
+                      activeOpacity={0.85}
                     >
-                      <Text style={styles.modalFinishBtnText}>
+                      <Text style={styles.modalFinishPillText}>
                         {selectedPickerExerciseIds.size > 0
                           ? (activeSessionExercises.length > 0
-                              ? `ADD TO WORKOUT (${selectedPickerExerciseIds.size})`
-                              : `START WORKOUT (${selectedPickerExerciseIds.size})`)
-                          : 'VIEW SESSION'}
+                              ? `ADD (${selectedPickerExerciseIds.size})`
+                              : `START (${selectedPickerExerciseIds.size})`)
+                          : `VIEW SESSION (${activeSessionExercises.length})`}
                       </Text>
                     </TouchableOpacity>
-                    </View>
                   </View>
                 )}
 
                 {/* Modal Sticky Footer if fromTemplateList is true */}
                 {fromTemplateList && (
-                  <View style={[styles.modalStickyFooter, { backgroundColor: theme.cardBg, borderTopColor: theme.borderColor }]}>
-                    <Text style={[styles.modalFooterText, { color: theme.textPrimary }]}>
-                      {selectedPickerExerciseIds.size} Exercise{selectedPickerExerciseIds.size !== 1 ? 's' : ''} Selected
-                    </Text>
+                  <View
+                    style={[
+                      styles.modalStickyFooter,
+                      {
+                        backgroundColor: theme.cardBg,
+                        borderTopColor: theme.borderColor,
+                        paddingBottom: insets.bottom > 0 ? insets.bottom : 6,
+                        justifyContent: 'flex-end',
+                      },
+                    ]}
+                  >
                     <TouchableOpacity
-                      style={[styles.modalFinishBtn, { backgroundColor: selectedPickerExerciseIds.size > 0 ? '#10B981' : theme.borderColor }]}
+                      style={[
+                        styles.modalFinishPill,
+                        {
+                          backgroundColor: selectedPickerExerciseIds.size > 0 ? '#10B981' : (isDarkMode ? '#2D2D3A' : '#E5E7EB'),
+                          opacity: selectedPickerExerciseIds.size > 0 ? 1 : 0.6,
+                        }
+                      ]}
                       onPress={async () => {
                         if (selectedPickerExerciseIds.size === 0) return;
 
@@ -5630,7 +5632,11 @@ export default function SinglePageLandingScreen() {
                       disabled={selectedPickerExerciseIds.size === 0}
                       activeOpacity={0.8}
                     >
-                      <Text style={styles.modalFinishBtnText}>ADD TO TEMPLATE</Text>
+                      <Text style={[styles.modalFinishPillText, selectedPickerExerciseIds.size === 0 && { color: theme.textSecondary }]}>
+                        {selectedPickerExerciseIds.size > 0
+                          ? `ADD TO TEMPLATE (${selectedPickerExerciseIds.size})`
+                          : 'SELECT EXERCISES'}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -10612,29 +10618,49 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderTopWidth: 1,
+    paddingHorizontal: 20,
+    paddingTop: 6,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderTopWidth: 1,
+  },
+  modalCancelPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+  },
+  modalCancelPillText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#EF4444',
+    letterSpacing: 0.3,
   },
   modalFooterText: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 12,
+    fontWeight: '700',
     letterSpacing: -0.1,
   },
-  modalFinishBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+  modalFinishPill: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 9.5,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: '#10B981',
   },
-  modalFinishBtnText: {
+  modalFinishPillText: {
     fontSize: 12,
     fontWeight: '800',
     color: '#000000',
+    letterSpacing: 0.3,
   },
   exerciseLoggerOverlayContainer: {
     flex: 1,
