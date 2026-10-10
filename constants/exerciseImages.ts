@@ -100,6 +100,18 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'rev-bb-curl': require('../assets/exercises/rev-bb-curl.jpg'),
   'rev-ez-bar-curl': require('../assets/exercises/rev-ez-bar-curl.jpg'),
   'cable-reverse-curl': require('../assets/exercises/cable-reverse-curl.jpg'),
+
+  // Shoulders
+  'bb-overhead-press': require('../assets/exercises/bb-overhead-press.jpg'),
+  'seated-bb-shoulder-press': require('../assets/exercises/seated-bb-shoulder-press.jpg'),
+  'bb-upright-row': require('../assets/exercises/bb-upright-row.jpg'),
+  'ez-bar-upright-row': require('../assets/exercises/ez-bar-upright-row.jpg'),
+  'db-shoulder-press': require('../assets/exercises/db-shoulder-press.jpg'),
+  'arnold-press': require('../assets/exercises/arnold-press.jpg'),
+  'db-lateral-raise': require('../assets/exercises/db-lateral-raise.jpg'),
+  'leaning-db-lateral-raise': require('../assets/exercises/leaning-db-lateral-raise.jpg'),
+  'db-front-raise': require('../assets/exercises/db-front-raise.jpg'),
+  'db-rear-delt-fly': require('../assets/exercises/db-rear-delt-fly.jpg'),
 };
 
 export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -207,6 +219,19 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'rev-bb-curl': IMAGES['rev-bb-curl'],
   'rev-ez-bar-curl': IMAGES['rev-ez-bar-curl'],
   'cable-reverse-curl': IMAGES['cable-reverse-curl'],
+
+  // Shoulders
+  'bb-overhead-press': IMAGES['bb-overhead-press'],
+  'seated-bb-shoulder-press': IMAGES['seated-bb-shoulder-press'],
+  'bb-upright-row': IMAGES['bb-upright-row'],
+  'ez-bar-upright-row': IMAGES['ez-bar-upright-row'],
+  'db-shoulder-press': IMAGES['db-shoulder-press'],
+  'arnold-press': IMAGES['arnold-press'],
+  'db-lateral-raise': IMAGES['db-lateral-raise'],
+  'leaning-db-lateral-raise': IMAGES['leaning-db-lateral-raise'],
+  'db-front-raise': IMAGES['db-front-raise'],
+  'db-rear-delt-fly': IMAGES['db-rear-delt-fly'],
+  'db-upright-row': IMAGES['bb-upright-row'], // Fallback until db-upright-row generated
 };
 
 export function getExerciseIllustration(exerciseId: string): ImageSourcePropType | null {

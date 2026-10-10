@@ -163,10 +163,36 @@ Exact movement requirements for each bicep exercise:
 
 ---
 
-## 5. Phase 4: Shoulders Queue & Autonomous Chained Timer Directive
-- **Current Status**: The model has hit the weekly generation quota window resetting on **October 15, 2026 at 05:27 UTC (10:57 AM local time)** (`quotaResetDelay`: ~129 hours).
-- **Active Chained Timer**: `task-105` is running in the background, set for ~464,965s (October 15).
-- **On Wake-up**: Generate `bb-overhead-press`, `seated-bb-shoulder-press`, `db-shoulder-press`, `arnold-press`, `db-lateral-raise`, etc., compress via `scripts/compress-exercise-image.ps1`, register in `constants/exerciseImages.ts`, and chain subsequent timers.
+## 5. Phase 4: Shoulders Queue (Active Progress)
+
+### Completed Shoulders Movements (10 Renders Live & Calibrated to RGB 241.0):
+1. `bb-overhead-press.jpg` **[9.1 KB]**: Standing upright, pressing barbell overhead to lockout, deltoids glowing.
+2. `seated-bb-shoulder-press.jpg` **[11.4 KB]**: Seated upright on bench, pressing barbell overhead, front delts glowing.
+3. `bb-upright-row.jpg` **[9.1 KB]**: Standing upright pulling straight barbell to chest, elbows high, side delts & traps glowing.
+4. `ez-bar-upright-row.jpg` **[8.7 KB]**: Standing upright pulling wavy EZ-bar to chest, side delts & traps glowing.
+5. `db-shoulder-press.jpg` **[10.7 KB]**: Seated upright on bench, bilateral dumbbell overhead press, delts glowing.
+6. `arnold-press.jpg` **[10.8 KB]**: Seated upright, rotating dumbbell overhead press, front/side delts glowing.
+7. `db-lateral-raise.jpg` **[8.4 KB]**: Standing upright, symmetrical bilateral dumbbell raise to shoulder height (T-shape), side delts glowing.
+8. `leaning-db-lateral-raise.jpg` **[9.1 KB]**: Holding post and leaning sideways 30 degrees, unilateral dumbbell lateral raise, side delts glowing.
+9. `db-front-raise.jpg` **[7.5 KB]**: Standing upright, bilateral dumbbells raised forward to shoulder level, front delts glowing.
+10. `db-rear-delt-fly.jpg` **[8.4 KB]**: Bent over flat back parallel to floor, reverse dumbbell fly, rear delts glowing.
+
+### Remaining Shoulders Queue (12 Movements to Generate):
+11. `db-upright-row`: Standing upright pulling two dumbbells vertically to upper chest.
+12. `cable-lateral-raise`: Low cable pulley, raising single handle laterally outward to shoulder level.
+13. `cable-front-raise`: Low cable pulley, raising straight bar / handle forward to shoulder level.
+14. `cable-rear-delt-fly`: High/mid dual cables without handles, cross-body pull apart for rear delts.
+15. `cable-upright-row`: Low cable pulley with straight bar, pulling upward to collarbone.
+16. `face-pull`: High cable pulley with rope attachment, pulling rope to eye level flaring elbows.
+17. `machine-shoulder-press`: Seated in selectorized shoulder press machine, pressing handles overhead.
+18. `smith-shoulder-press`: Seated on vertical Smith machine bench, pressing guided barbell overhead.
+19. `machine-lateral-raise`: Seated in lateral raise machine, pushing elbow pads outward.
+20. `reverse-pec-deck`: Seated facing chest pad on machine, rear fly movement pulling arms backward.
+21. `machine-rear-delt-fly`: Dedicated machine rear delt fly with horizontal handles.
+22. `plate-front-raise`: Standing upright holding Olympic weight plate with both hands, raising to eye level.
+
+- **Current Quota Reset Timestamp**: Resets in ~4h 50m (approx 19:35 local / 14:05 UTC).
+- **Scheduled Wake-up**: Schedule timer for 17,560 seconds to resume remaining 12 Shoulder movements immediately upon reset.
 
 ---
 
