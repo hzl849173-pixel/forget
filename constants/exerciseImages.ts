@@ -124,6 +124,14 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'reverse-pec-deck': require('../assets/exercises/reverse-pec-deck.jpg'),
   'machine-rear-delt-fly': require('../assets/exercises/machine-rear-delt-fly.jpg'),
   'plate-front-raise': require('../assets/exercises/plate-front-raise.jpg'),
+
+  // Back
+  'bb-row': require('../assets/exercises/bb-row.jpg'),
+  'pendlay-row': require('../assets/exercises/pendlay-row.jpg'),
+  'tbar-row': require('../assets/exercises/tbar-row.jpg'),
+  'deadlift': require('../assets/exercises/deadlift.jpg'),
+  'trap-bar-deadlift': require('../assets/exercises/trap-bar-deadlift.jpg'),
+  'rack-pulls': require('../assets/exercises/rack-pulls.jpg'),
 };
 
 export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -258,6 +266,14 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'reverse-pec-deck': IMAGES['reverse-pec-deck'],
   'machine-rear-delt-fly': IMAGES['machine-rear-delt-fly'],
   'plate-front-raise': IMAGES['plate-front-raise'],
+
+  // Back
+  'bb-row': IMAGES['bb-row'],
+  'pendlay-row': IMAGES['pendlay-row'],
+  'tbar-row': IMAGES['tbar-row'],
+  'deadlift': IMAGES['deadlift'],
+  'trap-bar-deadlift': IMAGES['trap-bar-deadlift'],
+  'rack-pulls': IMAGES['rack-pulls'],
 };
 
 export function getExerciseIllustration(exerciseId: string): ImageSourcePropType | null {

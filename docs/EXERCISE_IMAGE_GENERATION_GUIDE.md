@@ -190,14 +190,17 @@ Every shoulder movement now has its dedicated biomechanical render, compressed (
 
 ---
 
-## 6. Phase 5: Back Queue (Active)
-Biomechanical requirements for each back exercise:
-1. `bb-row`: Standing 45° bent-over barbell row, pulling to lower abdomen, lats & upper back glowing.
-2. `pendlay-row`: Strict torso parallel to floor, explosive barbell pull from dead stop on floor.
-3. `tbar-row`: Straddling landmine/T-bar with V-grip handle, rowing to mid-torso.
-4. `deadlift`: Conventional barbell deadlift lockout, entire posterior chain glowing.
-5. `trap-bar-deadlift`: Standing inside hexagonal trap bar, neutral grip lift from floor.
-6. `rack-pulls`: Barbell starting at knee height in power rack, pulling to lockout, upper back & traps glowing.
+## 6. Phase 5: Back Queue (Active Progress)
+
+### Completed Back Movements (6 Renders Live & Calibrated to RGB 241.0):
+1. `bb-row.jpg` [9.5 KB] — Standing 45° bent-over barbell row, pulling to lower abdomen, lats & upper back glowing.
+2. `pendlay-row.jpg` [9.3 KB] — Strict torso parallel to floor, explosive barbell pull from dead stop on floor.
+3. `tbar-row.jpg` [10.1 KB] — Straddling landmine/T-bar with V-grip handle, rowing to mid-torso.
+4. `deadlift.jpg` [9.7 KB] — Conventional barbell deadlift lockout, entire posterior chain glowing.
+5. `trap-bar-deadlift.jpg` [10.3 KB] — Standing inside hexagonal trap bar, neutral grip lift from floor.
+6. `rack-pulls.jpg` [12.4 KB] — Barbell starting at knee height in power rack, pulling to lockout, upper back & traps glowing.
+
+### Remaining Back Queue (19 Movements to Generate):
 7. `bb-shrugs`: Standing upright holding straight barbell with overhand grip, shrugging shoulders up, traps glowing.
 8. `db-row`: One knee and hand braced on flat gym bench, single-arm dumbbell row to hip.
 9. `chest-supported-db-row`: Prone chest-down on incline bench, rowing two dumbbells with elbows flared for rhomboids/upper back.
@@ -217,6 +220,9 @@ Biomechanical requirements for each back exercise:
 23. `pull-ups`: Suspended from straight overhead pull-up bar with overhand grip, chin clearing bar.
 24. `chin-up-back`: Suspended from pull-up bar with underhand supinated grip, chin clearing bar.
 25. `inverted-row`: Underneath waist-high barbell in Smith/rack, heels on floor, rowing chest to bar.
+
+- **Current Weekly Quota Reset Timestamp**: Resets on October 17, 2026 at 10:00 UTC (15:30 local).
+- **Scheduled Wake-up**: Autonomous chained timer will resume generation on remaining back movements once quota replenishes.
 
 ---
 
