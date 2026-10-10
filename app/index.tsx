@@ -2344,33 +2344,27 @@ export default function SinglePageLandingScreen() {
   };
 
   const handleFinishFromModalLogger = async () => {
+    let updated: LoggedExercise[] = [...activeSessionExercises];
+
     if (editingModalExerciseId) {
       const setsToSave = activeSets.map((s) => ({
         ...s,
         isCompleted: s.weight > 0 && s.reps > 0 ? true : s.isCompleted,
       }));
-      const existingIdx = activeSessionExercises.findIndex((le) => le.exerciseId === editingModalExerciseId);
-      let updated: LoggedExercise[];
+      const existingIdx = updated.findIndex((le) => le.exerciseId === editingModalExerciseId);
       if (existingIdx !== -1) {
-        updated = activeSessionExercises.map((le, idx) =>
+        updated = updated.map((le, idx) =>
           idx === existingIdx ? { ...le, sets: setsToSave, notes: exerciseNote.trim() || undefined } : le
         );
       } else {
         updated = [
-          ...activeSessionExercises,
+          ...updated,
           { id: generateId(), exerciseId: editingModalExerciseId, sets: setsToSave, notes: exerciseNote.trim() || undefined },
         ];
       }
-      setActiveSessionExercises(updated);
-      await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
     }
 
-    setEditingModalExerciseId(null);
-    setSelectedModalMuscle(null);
-    setSelectedSubGroup(null);
-    setActiveSegment('log');
-
-    await handleFinishWorkoutDay();
+    await handleFinishWorkoutDay(updated);
   };
 
 
@@ -2572,44 +2566,72 @@ export default function SinglePageLandingScreen() {
     );
   };
 
-  const handleFinishWorkoutDay = async () => {
-    if (activeSessionExercises.length === 0) {
-      showCustomAlert(
-        'Active Session',
-        'You have not logged any workouts in the active session yet.',
-        [{ text: 'OK' }],
-        <Dumbbell size={28} color="#3B82F6" />
-      );
-      return;
-    }
+  const handleFinishWorkoutDay = async (exercisesOverride?: LoggedExercise[] | any) => {
+    const rawList: LoggedExercise[] = Array.isArray(exercisesOverride)
+      ? exercisesOverride
+      : activeSessionExercises;
 
-    if (!sessionStartedFromTemplate && !sessionTemplateId) {
-      const hasEmptySets = activeSessionExercises.some((ex) => ex.sets.length === 0);
-      if (hasEmptySets) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    let exercisesToSave: LoggedExercise[];
+
+    if (loggingMode === 'live') {
+      // In Live mode, only include exercises with at least one completed set (reps > 0)
+      exercisesToSave = rawList
+        .map((ex) => ({
+          ...ex,
+          sets: ex.sets.filter((s) => s.reps > 0),
+        }))
+        .filter((ex) => ex.sets.length > 0);
+
+      if (exercisesToSave.length === 0) {
         showCustomAlert(
-          'Add Sets',
-          'Please add at least one set with weight and repetitions before saving.',
+          'Active Session',
+          'You have not logged any workouts in the active session yet.',
           [{ text: 'OK' }],
-          <Flame size={28} color="#EF4444" />
+          <Dumbbell size={28} color="#3B82F6" />
+        );
+        return;
+      }
+    } else {
+      exercisesToSave = rawList;
+
+      if (exercisesToSave.length === 0) {
+        showCustomAlert(
+          'Active Session',
+          'You have not logged any workouts in the active session yet.',
+          [{ text: 'OK' }],
+          <Dumbbell size={28} color="#3B82F6" />
         );
         return;
       }
 
-      const hasInvalidReps = activeSessionExercises.some((ex) => ex.sets.some((s) => s.reps <= 0));
-      if (hasInvalidReps) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        showCustomAlert(
-          'Invalid Reps',
-          'Please ensure all sets have at least 1 repetition before saving.',
-          [{ text: 'OK' }],
-          <Flame size={28} color="#EF4444" />
-        );
-        return;
+      if (!sessionStartedFromTemplate && !sessionTemplateId) {
+        const hasEmptySets = exercisesToSave.some((ex) => ex.sets.length === 0);
+        if (hasEmptySets) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          showCustomAlert(
+            'Add Sets',
+            'Please add at least one set with weight and repetitions before saving.',
+            [{ text: 'OK' }],
+            <Flame size={28} color="#EF4444" />
+          );
+          return;
+        }
+
+        const hasInvalidReps = exercisesToSave.some((ex) => ex.sets.some((s) => s.reps <= 0));
+        if (hasInvalidReps) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          showCustomAlert(
+            'Invalid Reps',
+            'Please ensure all sets have at least 1 repetition before saving.',
+            [{ text: 'OK' }],
+            <Flame size={28} color="#EF4444" />
+          );
+          return;
+        }
       }
     }
 
-    const suggestedTitle = suggestWorkoutTitle(activeSessionExercises);
+    const suggestedTitle = suggestWorkoutTitle(exercisesToSave);
 
     const performSave = async () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -2618,7 +2640,7 @@ export default function SinglePageLandingScreen() {
         ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
         : 15;
 
-      const detectedPrs = await addCompletedWorkout(suggestedTitle, activeSessionExercises, elapsedMinutes);
+      const detectedPrs = await addCompletedWorkout(suggestedTitle, exercisesToSave, elapsedMinutes);
 
       // If started from a template, update the template's default sets/reps/notes
       if (sessionTemplateId) {
@@ -2626,7 +2648,7 @@ export default function SinglePageLandingScreen() {
         if (currentTmpl) {
           const updatedTmplExercises = [...currentTmpl.exercises];
           
-          for (const activeEx of activeSessionExercises) {
+          for (const activeEx of exercisesToSave) {
             const idx = updatedTmplExercises.findIndex(te => te.exerciseId === activeEx.exerciseId);
             const mappedEx = {
               exerciseId: activeEx.exerciseId,
@@ -2661,15 +2683,23 @@ export default function SinglePageLandingScreen() {
         AsyncStorage.removeItem('@session_template_id'),
       ]);
 
-      // Reset modal, logger, and views
+      // Reset modal, logger, and views to display clean home page directly
       setExpandedExerciseId(null);
       setEditingActiveExerciseId(null);
+      setEditingModalExerciseId(null);
+      setSelectedPickerExerciseIds(new Set());
+      setReplacingActiveId(null);
       setActiveSets([]);
+      setExerciseNote('');
+      setShowNoteInput(false);
       setSameForAll(true);
       setSelectedModalMuscle(null);
       setSelectedSubGroup(null);
       setTemplateListVisible(false);
       setFromTemplateList(false);
+      setCameFromActiveSessionPlus(false);
+      setCameFromEditModal(false);
+      setActiveSegment('log');
 
       if (detectedPrs.length > 0) {
         setNewPrsDetected(detectedPrs);
@@ -4005,7 +4035,7 @@ export default function SinglePageLandingScreen() {
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                         <TouchableOpacity
                           style={[styles.finishSessionBtn, { flex: 1, backgroundColor: '#10B981', paddingVertical: 10, borderRadius: 10 }]}
-                          onPress={handleFinishWorkoutDay}
+                          onPress={() => handleFinishWorkoutDay()}
                           activeOpacity={0.8}
                         >
                           <Text style={[styles.finishSessionBtnText, { fontSize: 11, letterSpacing: 0.3 }]}>SAVE WORKOUT</Text>
