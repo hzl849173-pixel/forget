@@ -515,11 +515,13 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const newPrs = [...prs];
     const detectedPrs: PersonalRecord[] = [];
     for (const logEx of loggedExercises) {
+      const existingInPrs = prs.find((p) => p.exerciseId === logEx.exerciseId);
       for (const set of logEx.sets) {
         if (set.weight <= 0 || set.reps <= 0) continue;
         const estimatedOneRM = Math.round(set.weight * (1 + set.reps / 30));
         const existing = newPrs.find((p) => p.exerciseId === logEx.exerciseId);
-        if (!existing || estimatedOneRM > existing.estimatedOneRM) {
+        if (!existing) {
+          // 1st logging of this exercise: establish baseline PR, but do NOT alert as a "New PR"
           const pr: PersonalRecord = {
             exerciseId: logEx.exerciseId,
             weight: set.weight,
@@ -527,17 +529,31 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
             date: completedSession.date,
             estimatedOneRM,
           };
-          if (existing) {
-            const idx = newPrs.findIndex((p) => p.exerciseId === logEx.exerciseId);
-            newPrs[idx] = pr;
-          } else {
-            newPrs.push(pr);
+          newPrs.push(pr);
+        } else if (estimatedOneRM > existing.estimatedOneRM) {
+          // Beat existing PR
+          const pr: PersonalRecord = {
+            exerciseId: logEx.exerciseId,
+            weight: set.weight,
+            reps: set.reps,
+            date: completedSession.date,
+            estimatedOneRM,
+          };
+          const idx = newPrs.findIndex((p) => p.exerciseId === logEx.exerciseId);
+          newPrs[idx] = pr;
+          // Only alert if this exercise was already logged in a previous workout
+          if (existingInPrs) {
+            const dIdx = detectedPrs.findIndex((p) => p.exerciseId === logEx.exerciseId);
+            if (dIdx !== -1) {
+              detectedPrs[dIdx] = pr;
+            } else {
+              detectedPrs.push(pr);
+            }
           }
-          detectedPrs.push(pr);
         }
       }
     }
-    if (detectedPrs.length > 0) {
+    if (newPrs.length > prs.length || detectedPrs.length > 0) {
       await savePrs(newPrs);
     }
     return detectedPrs;

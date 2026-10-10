@@ -2100,6 +2100,8 @@ export default function SinglePageLandingScreen() {
       const setsToSave: WorkoutSet[] = validSets.map((s) => ({
         ...s,
         isCompleted: true,
+        isWeightPrefilled: false,
+        isRepsPrefilled: false,
       }));
 
       const updatedExercises = activeSessionExercises.map((le) => {
@@ -2133,6 +2135,8 @@ export default function SinglePageLandingScreen() {
       const setsToSave: WorkoutSet[] = validSets.map((s) => ({
         ...s,
         isCompleted: true,
+        isWeightPrefilled: false,
+        isRepsPrefilled: false,
       }));
 
       setTemplateListExercises((prev) =>
@@ -2190,7 +2194,12 @@ export default function SinglePageLandingScreen() {
       if (isTarget) {
         return {
           ...le,
-          sets: validSets.map((s) => ({ ...s, isCompleted: true })),
+          sets: validSets.map((s) => ({
+            ...s,
+            isCompleted: true,
+            isWeightPrefilled: false,
+            isRepsPrefilled: false,
+          })),
           notes: exerciseNote.trim() || undefined,
         };
       }
@@ -2310,6 +2319,8 @@ export default function SinglePageLandingScreen() {
     const setsToSave: WorkoutSet[] = validSets.map((s) => ({
       ...s,
       isCompleted: true,
+      isWeightPrefilled: false,
+      isRepsPrefilled: false,
     }));
 
     const existingIndex = activeSessionExercises.findIndex((le) => le.exerciseId === editingModalExerciseId);
@@ -6956,7 +6967,7 @@ export default function SinglePageLandingScreen() {
           onRequestClose={() => setShowNewPrsAlert(false)}
         >
           <View style={styles.timerOverlay}>
-            <View style={[styles.timerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+            <View style={[styles.prAlertCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
               <TouchableOpacity
                 style={styles.timerCloseBtn}
                 onPress={() => setShowNewPrsAlert(false)}
@@ -6964,19 +6975,27 @@ export default function SinglePageLandingScreen() {
               >
                 <X size={14} color={theme.textSecondary} strokeWidth={2.5} />
               </TouchableOpacity>
-              <Text style={[styles.prAlertEmoji]}>🏆</Text>
+              <Text style={styles.prAlertEmoji}>🏆</Text>
               <Text style={[styles.prAlertTitle, { color: theme.textPrimary }]}>NEW PR{newPrsDetected.length > 1 ? 'S' : ''}!</Text>
-              <View style={styles.prAlertList}>
+              <ScrollView
+                style={styles.prAlertList}
+                contentContainerStyle={{ gap: 8 }}
+                showsVerticalScrollIndicator={false}
+              >
                 {newPrsDetected.map((pr) => {
                   const ex = exercises.find((e) => e.id === pr.exerciseId);
                   return (
-                    <View key={pr.exerciseId} style={[styles.prAlertItem, { borderColor: theme.borderColor }]}>
-                      <Text style={[styles.prAlertExName, { color: theme.textPrimary }]}>{ex?.name || 'Unknown'}</Text>
-                      <Text style={[styles.prAlertExValue, { color: '#10B981' }]}>{pr.weight} kg × {pr.reps}</Text>
+                    <View key={pr.exerciseId} style={[styles.prAlertItem, { borderColor: theme.borderColor, backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : '#F9FAFB' }]}>
+                      <Text style={[styles.prAlertExName, { color: theme.textPrimary }]} numberOfLines={1} ellipsizeMode="tail">
+                        {ex?.name || 'Unknown'}
+                      </Text>
+                      <Text style={[styles.prAlertExValue, { color: '#10B981' }]} numberOfLines={1}>
+                        {pr.weight} kg × {pr.reps}
+                      </Text>
                     </View>
                   );
                 })}
-              </View>
+              </ScrollView>
               <TouchableOpacity
                 style={[styles.prAlertBtn, { backgroundColor: '#10B981' }]}
                 onPress={() => setShowNewPrsAlert(false)}
@@ -7109,30 +7128,42 @@ export default function SinglePageLandingScreen() {
 
                 const saveCurrentSetsToState = () => {
                   if (expandedExerciseId && activeSets.length > 0) {
-                    const save = (prev: LoggedExercise[]) =>
-                      prev.map((ex) =>
+                    const savedSets = activeSets.map((s) => ({
+                      ...s,
+                      isCompleted: true,
+                      isWeightPrefilled: false,
+                      isRepsPrefilled: false,
+                    }));
+                    if (fromTemplateList) {
+                      let updatedTmpl = templateListExercises.map((ex) =>
                         ex.exerciseId === expandedExerciseId
-                          ? { ...ex, sets: activeSets.map((s) => ({ ...s, isCompleted: true, isWeightPrefilled: false, isRepsPrefilled: false })), notes: exerciseNote.trim() || undefined }
+                          ? { ...ex, sets: savedSets, notes: exerciseNote.trim() || undefined }
                           : ex
                       );
-                    if (fromTemplateList) {
-                      setTemplateListExercises(save);
+                      setTemplateListExercises(updatedTmpl);
+                      return updatedTmpl;
                     } else {
-                      const updated = save(activeSessionExercises);
+                      const updated = activeSessionExercises.map((ex) =>
+                        ex.exerciseId === expandedExerciseId
+                          ? { ...ex, sets: savedSets, notes: exerciseNote.trim() || undefined }
+                          : ex
+                      );
                       setActiveSessionExercises(updated);
                       AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                      return updated;
                     }
                   }
+                  return fromTemplateList ? templateListExercises : activeSessionExercises;
                 };
 
                 const switchToExercise = (targetExerciseId: string) => {
                   if (targetExerciseId === expandedExerciseId) return;
-                  const list = fromTemplateList ? templateListExercises : activeSessionExercises;
-                  const targetEx = list.find((le) => le.exerciseId === targetExerciseId);
-                  if (!targetEx) return;
 
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  saveCurrentSetsToState();
+                  const updatedList = saveCurrentSetsToState();
+
+                  const targetEx = updatedList.find((le) => le.exerciseId === targetExerciseId);
+                  if (!targetEx) return;
 
                   setExpandedExerciseId(targetEx.exerciseId);
                   const nextSets: WorkoutSet[] = targetEx.sets.map((s) => ({
@@ -7150,20 +7181,19 @@ export default function SinglePageLandingScreen() {
                 };
 
                 const navigateToExercise = (direction: 'prev' | 'next') => {
-                  const list = fromTemplateList ? templateListExercises : activeSessionExercises;
-                  if (list.length <= 1) return;
+                  const updatedList = saveCurrentSetsToState();
+                  if (updatedList.length <= 1) return;
 
-                  const curIdx = list.findIndex((le) => le.exerciseId === expandedExerciseId);
+                  const curIdx = updatedList.findIndex((le) => le.exerciseId === expandedExerciseId);
                   if (curIdx === -1) return;
 
                   const nextIndex = direction === 'next'
-                    ? (curIdx + 1) % list.length
-                    : (curIdx - 1 + list.length) % list.length;
-                  const nextEx = list[nextIndex];
+                    ? (curIdx + 1) % updatedList.length
+                    : (curIdx - 1 + updatedList.length) % updatedList.length;
+                  const nextEx = updatedList[nextIndex];
                   if (!nextEx) return;
 
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  saveCurrentSetsToState();
 
                   setExpandedExerciseId(nextEx.exerciseId);
                   const nextSets: WorkoutSet[] = nextEx.sets.map((s) => ({
@@ -9684,11 +9714,24 @@ const styles = StyleSheet.create({
     color: '#10B981',
     letterSpacing: 0.6,
   },
+  prAlertCard: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
   prAlertEmoji: {
-    fontSize: 40,
+    fontSize: 36,
     textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 4,
+    marginBottom: 6,
   },
   prAlertTitle: {
     fontSize: 20,
@@ -9699,25 +9742,29 @@ const styles = StyleSheet.create({
   },
   prAlertList: {
     width: '100%',
-    gap: 8,
-    marginBottom: 20,
+    maxHeight: 260,
+    marginBottom: 18,
   },
   prAlertItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 12,
+    gap: 8,
   },
   prAlertExName: {
+    flex: 1,
     fontSize: 13,
     fontWeight: '700',
+    marginRight: 6,
   },
   prAlertExValue: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
+    flexShrink: 0,
   },
   prAlertBtn: {
     width: '100%',
