@@ -259,21 +259,24 @@ Every back exercise now has its distinct, exact biomechanical movement and equip
 
 ---
 
-## 8. Phase 7: Abs & Core Queue (Backlog)
-All 13 core movements are currently mapped to biomechanical stand-ins in [`constants/exerciseImages.ts`](file:///c:/Users/Haisal/Documents/workout-journal/constants/exerciseImages.ts). When quota reopens:
-1. `cable-crunch`: Kneeling facing high cable tower with rope attachment, curling torso downward.
-2. `cable-woodchop`: Standing high-to-low diagonal torso twist with cable handle across body.
-3. `cable-oblique-crunch`: Standing side bend with low cable attachment targeting obliques.
-4. `machine-ab-crunch`: Seated selectorized ab crunch machine with chest/shoulder pads curling forward.
-5. `ab-crunch`: Supinated floor crunch with hands behind head, upper abs glowing.
-6. `reverse-crunch`: Lying on back with hips rolling upward towards chest, lower abs glowing.
-7. `bicycle-crunches`: Supinated alternating elbow-to-opposite-knee bicycle crunch.
-8. `russian-twist`: Seated V-sit with knees bent, rotating torso side-to-side holding weight.
-9. `plank`: Prone forearm plank position with spine neutral, full core glowing.
-10. `dead-bug`: Supinated on floor with opposite arm and leg extending outward under control.
-11. `lying-leg-raises`: Lying on back with legs straight raising up to 90 degrees.
-12. `hanging-knee-raise`: Suspended from pull-up bar curling knees up towards chest.
-13. `ab-wheel`: Kneeling rollout with ab wheel forward to full extension.
+## 8. Phase 7: Abs & Core Queue (12 of 13 Completed & Live!)
+
+12 distinct, dedicated biomechanical renders are generated, compressed (~7.8–11.2 KB), debloomed, and live:
+1. `ab-crunch.jpg` [8.8 KB] — Supine floor abdominal crunch, hands behind ears, upper abs glowing.
+2. `reverse-crunch.jpg` [9.0 KB] — Supine floor reverse crunch, knees curled to chest, pelvis elevated, lower abs glowing.
+3. `bicycle-crunches.jpg` [10.1 KB] — Supine alternating bicycle crunch, elbow to opposite lifted knee, obliques glowing.
+4. `russian-twist.jpg` [8.0 KB] — Seated V-sit rotational twist with feet floating, obliques glowing.
+5. `plank.jpg` [8.0 KB] — Strict prone forearm plank hold with straight bodyline, core glowing.
+6. `dead-bug.jpg` [8.2 KB] — Supine alternating arm-and-leg extension dead bug, deep core glowing.
+7. `lying-leg-raises.jpg` [8.1 KB] — Supine straight leg raise up to 80 degrees, lower abs glowing.
+8. `hanging-knee-raise.jpg` [8.0 KB] — Suspended from overhead pull-up bar curling knees to chest, lower abs glowing.
+9. `ab-wheel.jpg` [8.9 KB] — Kneeling dual-wheel ab roller rollout with straight arms, rectus abdominis glowing.
+10. `cable-crunch.jpg` [9.7 KB] — Kneeling high pulley cable tower rope crunch to knees, upper abs glowing.
+11. `cable-woodchop.jpg` [9.0 KB] — Standing high-to-low diagonal cable woodchop rotation across body, obliques glowing.
+12. `cable-oblique-crunch.jpg` [11.3 KB] — Standing lateral single-handle cable side crunch, obliques glowing.
+
+### Remaining to complete:
+13. `machine-ab-crunch`: Seated selectorized ab crunch machine with chest/shoulder pads (currently mapped to `cable-crunch` until short rolling capacity window clears at ~22:36 UTC).
 
 ---
 

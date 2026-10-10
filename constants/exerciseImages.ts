@@ -165,6 +165,20 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'rev-lunge': require('../assets/exercises/rev-lunge.jpg'),
   'db-rdl': require('../assets/exercises/db-rdl.jpg'),
   'db-stepups': require('../assets/exercises/db-stepups.jpg'),
+
+  // Abs & Core
+  'ab-crunch': require('../assets/exercises/ab-crunch.jpg'),
+  'reverse-crunch': require('../assets/exercises/reverse-crunch.jpg'),
+  'bicycle-crunches': require('../assets/exercises/bicycle-crunches.jpg'),
+  'russian-twist': require('../assets/exercises/russian-twist.jpg'),
+  'plank': require('../assets/exercises/plank.jpg'),
+  'dead-bug': require('../assets/exercises/dead-bug.jpg'),
+  'lying-leg-raises': require('../assets/exercises/lying-leg-raises.jpg'),
+  'hanging-knee-raise': require('../assets/exercises/hanging-knee-raise.jpg'),
+  'ab-wheel': require('../assets/exercises/ab-wheel.jpg'),
+  'cable-crunch': require('../assets/exercises/cable-crunch.jpg'),
+  'cable-woodchop': require('../assets/exercises/cable-woodchop.jpg'),
+  'cable-oblique-crunch': require('../assets/exercises/cable-oblique-crunch.jpg'),
 };
 
 export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -357,20 +371,20 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'lunges': IMAGES['bb-walking-lunge'],
   'glute-bridge': IMAGES['hip-thrust'],
 
-  // Abs & Core (Stand-ins until generation resumes)
-  'cable-crunch': IMAGES['cable-pullover'],
-  'cable-woodchop': IMAGES['cable-lateral-raise'],
-  'cable-oblique-crunch': IMAGES['cable-lateral-raise'],
-  'machine-ab-crunch': IMAGES['chest-press-machine'],
-  'ab-crunch': IMAGES['push-ups'],
-  'reverse-crunch': IMAGES['push-ups'],
-  'bicycle-crunches': IMAGES['push-ups'],
-  'russian-twist': IMAGES['goblet-squat'],
-  'plank': IMAGES['push-ups'],
-  'dead-bug': IMAGES['push-ups'],
-  'lying-leg-raises': IMAGES['push-ups'],
-  'hanging-knee-raise': IMAGES['pull-ups'],
-  'ab-wheel': IMAGES['push-ups'],
+  // Abs & Core (12 Dedicated Renders Live)
+  'cable-crunch': IMAGES['cable-crunch'],
+  'cable-woodchop': IMAGES['cable-woodchop'],
+  'cable-oblique-crunch': IMAGES['cable-oblique-crunch'],
+  'machine-ab-crunch': IMAGES['cable-crunch'],
+  'ab-crunch': IMAGES['ab-crunch'],
+  'reverse-crunch': IMAGES['reverse-crunch'],
+  'bicycle-crunches': IMAGES['bicycle-crunches'],
+  'russian-twist': IMAGES['russian-twist'],
+  'plank': IMAGES['plank'],
+  'dead-bug': IMAGES['dead-bug'],
+  'lying-leg-raises': IMAGES['lying-leg-raises'],
+  'hanging-knee-raise': IMAGES['hanging-knee-raise'],
+  'ab-wheel': IMAGES['ab-wheel'],
 };
 
 export function getExerciseIllustration(exerciseId: string): ImageSourcePropType | null {
