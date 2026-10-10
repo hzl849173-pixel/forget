@@ -1805,6 +1805,8 @@ export default function SinglePageLandingScreen() {
             weight: set.weight,
             reps: set.reps,
             isCompleted: set.isCompleted,
+            isWeightPrefilled: set.isWeightPrefilled,
+            isRepsPrefilled: set.isRepsPrefilled,
           });
         });
         setExerciseNote(existingInActive.notes || '');
@@ -1818,6 +1820,8 @@ export default function SinglePageLandingScreen() {
               weight: set.weight,
               reps: set.reps,
               isCompleted: false,
+              isWeightPrefilled: set.weight > 0,
+              isRepsPrefilled: set.reps > 0,
             });
           });
         }
@@ -1829,6 +1833,8 @@ export default function SinglePageLandingScreen() {
             weight: lastSet ? lastSet.weight : 0,
             reps: lastSet ? lastSet.reps : 0,
             isCompleted: false,
+            isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
+            isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
           });
         }
       }
@@ -1853,6 +1859,8 @@ export default function SinglePageLandingScreen() {
           weight: set.weight,
           reps: set.reps,
           isCompleted: set.isCompleted,
+          isWeightPrefilled: set.isWeightPrefilled,
+          isRepsPrefilled: set.isRepsPrefilled,
         });
       });
       setExerciseNote(targetLoggedEx.notes || '');
@@ -1868,6 +1876,8 @@ export default function SinglePageLandingScreen() {
             weight: set.weight,
             reps: set.reps,
             isCompleted: false,
+            isWeightPrefilled: set.weight > 0,
+            isRepsPrefilled: set.reps > 0,
           });
         });
       }
@@ -1879,6 +1889,8 @@ export default function SinglePageLandingScreen() {
           weight: lastSet ? lastSet.weight : 0,
           reps: lastSet ? lastSet.reps : 0,
           isCompleted: false,
+          isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
+          isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
         });
       }
     }
@@ -1985,6 +1997,8 @@ export default function SinglePageLandingScreen() {
                 weight: s.weight,
                 reps: s.reps,
                 isCompleted: s.isCompleted ?? false,
+                isWeightPrefilled: s.isWeightPrefilled,
+                isRepsPrefilled: s.isRepsPrefilled,
               }))
             : [
                 { id: generateId(), weight: 0, reps: 0, isCompleted: false },
@@ -2190,6 +2204,8 @@ export default function SinglePageLandingScreen() {
         weight: newWeight,
         reps: newReps,
         isCompleted: false,
+        isWeightPrefilled: false,
+        isRepsPrefilled: false,
       },
     ]);
   };
@@ -2204,19 +2220,25 @@ export default function SinglePageLandingScreen() {
         ...s,
         weight: firstSet.weight,
         reps: firstSet.reps,
+        isWeightPrefilled: firstSet.isWeightPrefilled,
+        isRepsPrefilled: firstSet.isRepsPrefilled,
       })));
     }
   };
 
   const handleUpdateSet = (setId: string, updates: Partial<WorkoutSet>) => {
+    const cleanUpdates: Partial<WorkoutSet> = {
+      ...updates,
+      ...(updates.weight !== undefined ? { isWeightPrefilled: false } : {}),
+      ...(updates.reps !== undefined ? { isRepsPrefilled: false } : {}),
+    };
     if (sameForAll && (updates.weight !== undefined || updates.reps !== undefined)) {
       setActiveSets(activeSets.map((s) => ({
         ...s,
-        ...(updates.weight !== undefined ? { weight: updates.weight } : {}),
-        ...(updates.reps !== undefined ? { reps: updates.reps } : {}),
+        ...cleanUpdates,
       })));
     } else {
-      setActiveSets(activeSets.map((s) => (s.id === setId ? { ...s, ...updates } : s)));
+      setActiveSets(activeSets.map((s) => (s.id === setId ? { ...s, ...cleanUpdates } : s)));
     }
   };
 
@@ -2503,6 +2525,8 @@ export default function SinglePageLandingScreen() {
         weight: isLogged ? 0 : s.weight,
         reps: isLogged ? 0 : s.reps,
         isCompleted: isLogged ? false : s.isCompleted,
+        isWeightPrefilled: isLogged ? false : s.isWeightPrefilled,
+        isRepsPrefilled: isLogged ? false : s.isRepsPrefilled,
       }));
 
       setActiveSets(nextSets);
@@ -2984,18 +3008,23 @@ export default function SinglePageLandingScreen() {
             weight: s.weight,
             reps: s.reps,
             isCompleted: s.isCompleted ?? false,
+            isWeightPrefilled: s.isWeightPrefilled,
+            isRepsPrefilled: s.isRepsPrefilled,
           }))
         : [];
 
-    if (initialSets.length === 0) {
+    if (initialSets.length === 0 || initialSets.every((s) => s.weight === 0 && s.reps === 0)) {
       const previousLog = getPreviousWorkoutForExercise(logEx.exerciseId);
       if (previousLog && previousLog.sets.length > 0) {
+        initialSets.length = 0;
         previousLog.sets.forEach((set) => {
           initialSets.push({
             id: generateId(),
             weight: set.weight,
             reps: set.reps,
             isCompleted: false,
+            isWeightPrefilled: set.weight > 0,
+            isRepsPrefilled: set.reps > 0,
           });
         });
       }
@@ -3008,6 +3037,8 @@ export default function SinglePageLandingScreen() {
         weight: lastSet ? lastSet.weight : 0,
         reps: lastSet ? lastSet.reps : 0,
         isCompleted: false,
+        isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
+        isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
       });
     }
 
@@ -3863,6 +3894,8 @@ export default function SinglePageLandingScreen() {
                                     accentColor={muscleColor}
                                     style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
                                     textColor={theme.textPrimary}
+                                    isPrefilled={!!set.isWeightPrefilled}
+                                    prefilledColor={theme.inputPlaceholder}
                                   />
                                 </View>
                                 <View style={styles.widthReps}>
@@ -3875,6 +3908,8 @@ export default function SinglePageLandingScreen() {
                                     accentColor={muscleColor}
                                     style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
                                     textColor={theme.textPrimary}
+                                    isPrefilled={!!set.isRepsPrefilled}
+                                    prefilledColor={theme.inputPlaceholder}
                                   />
                                 </View>
                                 <View style={styles.widthActions}>
@@ -5059,6 +5094,8 @@ export default function SinglePageLandingScreen() {
                                   weight: set.weight,
                                   reps: set.reps,
                                   isCompleted: fromTemplateList ? true : set.isCompleted,
+                                  isWeightPrefilled: set.isWeightPrefilled,
+                                  isRepsPrefilled: set.isRepsPrefilled,
                                 });
                               });
                             } else {
@@ -5070,6 +5107,8 @@ export default function SinglePageLandingScreen() {
                                     weight: set.weight,
                                     reps: set.reps,
                                     isCompleted: false,
+                                    isWeightPrefilled: set.weight > 0,
+                                    isRepsPrefilled: set.reps > 0,
                                   });
                                 });
                               }
@@ -5081,6 +5120,8 @@ export default function SinglePageLandingScreen() {
                                   weight: lastSet ? lastSet.weight : 0,
                                   reps: lastSet ? lastSet.reps : 0,
                                   isCompleted: false,
+                                  isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
+                                  isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
                                 });
                               }
                             }
@@ -5329,7 +5370,14 @@ export default function SinglePageLandingScreen() {
                           const initialSets: WorkoutSet[] = [];
                           if (previousLog && previousLog.sets.length > 0) {
                             previousLog.sets.forEach((set) => {
-                              initialSets.push({ id: generateId(), weight: set.weight, reps: set.reps, isCompleted: false });
+                              initialSets.push({
+                                id: generateId(),
+                                weight: set.weight,
+                                reps: set.reps,
+                                isCompleted: false,
+                                isWeightPrefilled: set.weight > 0,
+                                isRepsPrefilled: set.reps > 0,
+                              });
                             });
                           }
 
@@ -5340,6 +5388,8 @@ export default function SinglePageLandingScreen() {
                               weight: lastSet ? lastSet.weight : 0,
                               reps: lastSet ? lastSet.reps : 0,
                               isCompleted: false,
+                              isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
+                              isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
                             });
                           }
                           newExercises.push({
@@ -5406,7 +5456,14 @@ export default function SinglePageLandingScreen() {
                           const initialSets: WorkoutSet[] = [];
                           if (previousLog && previousLog.sets.length > 0) {
                             previousLog.sets.forEach((set) => {
-                              initialSets.push({ id: generateId(), weight: set.weight, reps: set.reps, isCompleted: false });
+                              initialSets.push({
+                                id: generateId(),
+                                weight: set.weight,
+                                reps: set.reps,
+                                isCompleted: false,
+                                isWeightPrefilled: set.weight > 0,
+                                isRepsPrefilled: set.reps > 0,
+                              });
                             });
                           }
 
@@ -5417,6 +5474,8 @@ export default function SinglePageLandingScreen() {
                               weight: lastSet ? lastSet.weight : 0,
                               reps: lastSet ? lastSet.reps : 0,
                               isCompleted: false,
+                              isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
+                              isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
                             });
                           }
                           newExercises.push({
@@ -5840,6 +5899,8 @@ export default function SinglePageLandingScreen() {
                                     accentColor={muscleColor}
                                     style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
                                     textColor={theme.textPrimary}
+                                    isPrefilled={!!set.isWeightPrefilled}
+                                    prefilledColor={theme.inputPlaceholder}
                                   />
                                 </View>
                                 <View style={styles.widthReps}>
@@ -5852,6 +5913,8 @@ export default function SinglePageLandingScreen() {
                                     accentColor={muscleColor}
                                     style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
                                     textColor={theme.textPrimary}
+                                    isPrefilled={!!set.isRepsPrefilled}
+                                    prefilledColor={theme.inputPlaceholder}
                                   />
                                 </View>
                                 <View style={styles.widthActions}>
@@ -6986,6 +7049,8 @@ export default function SinglePageLandingScreen() {
                     weight: s.weight,
                     reps: s.reps,
                     isCompleted: fromTemplateList ? true : s.isCompleted,
+                    isWeightPrefilled: s.isWeightPrefilled,
+                    isRepsPrefilled: s.isRepsPrefilled,
                   }));
 
                   setActiveSets(nextSets);
@@ -7015,6 +7080,8 @@ export default function SinglePageLandingScreen() {
                     weight: s.weight,
                     reps: s.reps,
                     isCompleted: fromTemplateList ? true : s.isCompleted,
+                    isWeightPrefilled: s.isWeightPrefilled,
+                    isRepsPrefilled: s.isRepsPrefilled,
                   }));
 
                   setActiveSets(nextSets);
@@ -7247,6 +7314,8 @@ export default function SinglePageLandingScreen() {
                               accentColor={categoryColor}
                               style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
                               textColor={theme.textPrimary}
+                              isPrefilled={!!set.isWeightPrefilled}
+                              prefilledColor={theme.inputPlaceholder}
                             />
                           </View>
                           <View style={styles.widthReps}>
@@ -7259,6 +7328,8 @@ export default function SinglePageLandingScreen() {
                               accentColor={categoryColor}
                               style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
                               textColor={theme.textPrimary}
+                              isPrefilled={!!set.isRepsPrefilled}
+                              prefilledColor={theme.inputPlaceholder}
                             />
                           </View>
                           <View style={styles.widthActions}>

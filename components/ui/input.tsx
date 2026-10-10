@@ -41,6 +41,8 @@ interface IncrementInputProps {
   style?: any;
   textColor?: string;
   allowDecimals?: boolean;
+  isPrefilled?: boolean;
+  prefilledColor?: string;
 }
 
 export const IncrementInput: React.FC<IncrementInputProps> = ({
@@ -54,6 +56,8 @@ export const IncrementInput: React.FC<IncrementInputProps> = ({
   style,
   textColor,
   allowDecimals = false,
+  isPrefilled = false,
+  prefilledColor,
 }) => {
   const [isFocused, setIsFocused] = React.useState(false);
   const [localText, setLocalText] = React.useState(value === 0 ? '' : value.toString());
@@ -128,6 +132,9 @@ export const IncrementInput: React.FC<IncrementInputProps> = ({
   };
 
   const activeBorderColor = accentColor || '#3B82F6';
+  const effectiveTextColor = isPrefilled
+    ? (prefilledColor || '#9CA3AF')
+    : (textColor || '#111827');
 
   return (
     <View style={[
@@ -144,11 +151,11 @@ export const IncrementInput: React.FC<IncrementInputProps> = ({
       </TouchableOpacity>
       
       <TextInput
-        style={[styles.adjusterInput, textColor ? { color: textColor } : null]}
+        style={[styles.adjusterInput, { color: effectiveTextColor }]}
         keyboardType={allowDecimals ? 'decimal-pad' : 'number-pad'}
         value={isFocused ? localText : (value === 0 ? '' : value.toString())}
         placeholder={placeholder}
-        placeholderTextColor="#6B7280"
+        placeholderTextColor={prefilledColor || '#9CA3AF'}
         onChangeText={handleTextChange}
         selectTextOnFocus
         onFocus={() => {

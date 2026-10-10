@@ -7,6 +7,8 @@ export interface WorkoutSet {
   weight: number;
   reps: number;
   isCompleted: boolean;
+  isWeightPrefilled?: boolean;
+  isRepsPrefilled?: boolean;
 }
 
 export interface LoggedExercise {
