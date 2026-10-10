@@ -4056,8 +4056,54 @@ export default function SinglePageLandingScreen() {
                   ) : (
                     <>
                       <View style={styles.activeSessionHeader}>
-                        <View>
-                          <Text style={[styles.activeSessionTitle, { color: theme.textPrimary }]}>Active Session</Text>
+                        <View style={{ flex: 1, paddingRight: 8 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <Text style={[styles.activeSessionTitle, { color: theme.textPrimary }]}>Active Session</Text>
+                            {loggingMode === 'live' && sessionStartTime > 0 && (
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 5,
+                                  paddingVertical: 3,
+                                  paddingHorizontal: 8,
+                                  borderRadius: 99,
+                                  backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
+                                  borderWidth: 1,
+                                  borderColor: isDarkMode ? '#2D2D3A' : '#E5E7EB',
+                                }}
+                              >
+                                <View
+                                  style={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: 3,
+                                    backgroundColor: '#EF4444',
+                                  }}
+                                />
+                                <Text
+                                  style={{
+                                    fontSize: 9,
+                                    fontWeight: '800',
+                                    color: theme.textSecondary,
+                                    letterSpacing: 0.6,
+                                  }}
+                                >
+                                  WORKOUT
+                                </Text>
+                                <Text
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: '800',
+                                    color: theme.textPrimary,
+                                    letterSpacing: 0.3,
+                                  }}
+                                >
+                                  {formatElapsedDuration(sessionElapsedSeconds)}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
                           <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary }]}>
                             {activeSessionExercises.length} exercise{activeSessionExercises.length > 1 ? 's' : ''} logged today
                           </Text>
@@ -4594,14 +4640,19 @@ export default function SinglePageLandingScreen() {
                                   sets: logEx.sets.map((s) => ({ ...s, id: generateId(), isCompleted: false })),
                                   notes: logEx.notes,
                                 }));
-                                const now = Date.now();
+                                const isLive = loggingMode === 'live';
+                                const now = isLive ? Date.now() : 0;
                                 setActiveSessionExercises(exercisesToLoad);
                                 setSessionStartTime(now);
                                 setSessionStartedFromTemplate(true);
                                 setSessionTemplateId(tmpl.id);
                                 setActiveSegment('log');
                                 AsyncStorage.setItem('@active_session_exercises', JSON.stringify(exercisesToLoad));
-                                AsyncStorage.setItem('@session_start_time', String(now));
+                                if (isLive) {
+                                  AsyncStorage.setItem('@session_start_time', String(now));
+                                } else {
+                                  AsyncStorage.removeItem('@session_start_time');
+                                }
                                 AsyncStorage.setItem('@session_started_from_template', 'true');
                                 AsyncStorage.setItem('@session_template_id', tmpl.id);
                               }}
@@ -7925,7 +7976,8 @@ export default function SinglePageLandingScreen() {
                       if (activeTemplateId) {
                         await incrementTemplateUsage(activeTemplateId);
                       }
-                      const now = Date.now();
+                      const isLive = loggingMode === 'live';
+                      const now = isLive ? Date.now() : 0;
                       setActiveSessionExercises(selectedExercises);
                       setSessionStartTime(now);
                       setSessionStartedFromTemplate(true);
@@ -7937,7 +7989,11 @@ export default function SinglePageLandingScreen() {
                       setTemplateListExercises([]);
                       setActiveSegment('log');
                       AsyncStorage.setItem('@active_session_exercises', JSON.stringify(selectedExercises));
-                      AsyncStorage.setItem('@session_start_time', String(now));
+                      if (isLive) {
+                        AsyncStorage.setItem('@session_start_time', String(now));
+                      } else {
+                        AsyncStorage.removeItem('@session_start_time');
+                      }
                       AsyncStorage.setItem('@session_started_from_template', 'true');
                       if (activeTemplateId) {
                         AsyncStorage.setItem('@session_template_id', activeTemplateId);
@@ -8076,7 +8132,8 @@ export default function SinglePageLandingScreen() {
                         sets: e.sets.map(s => ({ ...s, id: generateId(), isCompleted: false })),
                         notes: e.notes,
                       }));
-                    const now = Date.now();
+                    const isLive = loggingMode === 'live';
+                    const now = isLive ? Date.now() : 0;
                     setActiveSessionExercises(selectedExercises);
                     setSessionStartTime(now);
                     setSessionStartedFromTemplate(true);
@@ -8088,7 +8145,11 @@ export default function SinglePageLandingScreen() {
                     setTemplateListExercises([]);
                     setActiveSegment('log');
                     AsyncStorage.setItem('@active_session_exercises', JSON.stringify(selectedExercises));
-                    AsyncStorage.setItem('@session_start_time', String(now));
+                    if (isLive) {
+                      AsyncStorage.setItem('@session_start_time', String(now));
+                    } else {
+                      AsyncStorage.removeItem('@session_start_time');
+                    }
                     AsyncStorage.setItem('@session_started_from_template', 'true');
                     if (activeTemplateId) {
                       AsyncStorage.setItem('@session_template_id', activeTemplateId);
