@@ -150,6 +150,7 @@ export default function RootLayout() {
             <Stack.Screen name="onboarding/brand" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/name" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/weight" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding/rest-days" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/mode" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/signin" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding/templates" options={{ headerShown: false }} />

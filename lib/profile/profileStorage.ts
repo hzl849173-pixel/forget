@@ -21,6 +21,7 @@ const KEYS = {
     HEIGHT_CM: '@workout_journal_profile_height_cm_v1',
     WEIGHT_KG: '@workout_journal_profile_weight_kg_v1',
     GOAL: '@workout_journal_profile_goal_v1',
+    REST_DAYS: '@workout_journal_profile_rest_days_v1',
 };
 
 export async function setOnboardingCompleted() {
@@ -70,6 +71,24 @@ export async function loadLocalProfile(): Promise<OnboardingProfile | null> {
         goal: (g || '') as FitnessGoal,
         updatedAt: new Date().toISOString(),
     };
+}
+
+export async function saveLocalRestDays(days: string[]) {
+    await Promise.all([
+        AsyncStorage.setItem(KEYS.REST_DAYS, JSON.stringify(days)),
+        AsyncStorage.setItem('@user_rest_days', JSON.stringify(days)),
+    ]);
+}
+
+export async function loadLocalRestDays(): Promise<string[]> {
+    try {
+        const raw = (await AsyncStorage.getItem(KEYS.REST_DAYS)) || (await AsyncStorage.getItem('@user_rest_days'));
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+    } catch {}
+    return ['Sunday'];
 }
 
 // Firestore sync helpers (implemented in auth layer but we keep the local shape here)

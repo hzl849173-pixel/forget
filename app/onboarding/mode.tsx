@@ -66,7 +66,7 @@ export default function ModeScreen() {
     };
 
     const handleBack = () => {
-        router.replace('/onboarding/weight');
+        router.replace('/onboarding/rest-days');
     };
 
     return (
@@ -159,6 +159,7 @@ export default function ModeScreen() {
 
                 <View style={styles.footer}>
                     <View style={styles.progressDots}>
+                        <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={styles.dot} />
                         <View style={[styles.dot, styles.activeDot]} />
