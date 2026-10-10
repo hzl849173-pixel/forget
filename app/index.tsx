@@ -822,6 +822,7 @@ export default function SinglePageLandingScreen() {
 
   // Consistency Modal state
   const [consistencyModalVisible, setConsistencyModalVisible] = useState(false);
+  const [streakSessionsExpanded, setStreakSessionsExpanded] = useState(false);
   const [currentQuote, setCurrentQuote] = useState('');
 
   // Add exercise state
@@ -2688,9 +2689,10 @@ export default function SinglePageLandingScreen() {
 
     // 2. Compute workout metrics & reset session trackers
     const suggestedTitle = suggestWorkoutTitle(exercisesToSave);
-    const elapsedMinutes = sessionStartTime > 0
-      ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
-      : 15;
+    const elapsedSeconds = sessionStartTime > 0
+      ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 1000))
+      : 15 * 60;
+    const elapsedMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
     const currentTmplId = sessionTemplateId;
 
     setSessionStartTime(0);
@@ -2699,7 +2701,7 @@ export default function SinglePageLandingScreen() {
 
     // 3. Perform persistence in background without freezing UI or delaying navigation
     const performSave = async () => {
-      const detectedPrs = await addCompletedWorkout(suggestedTitle, exercisesToSave, elapsedMinutes);
+      const detectedPrs = await addCompletedWorkout(suggestedTitle, exercisesToSave, elapsedMinutes, elapsedSeconds);
 
       if (currentTmplId) {
         const currentTmpl = templates.find(t => t.id === currentTmplId);
@@ -2875,12 +2877,13 @@ export default function SinglePageLandingScreen() {
     if (isSavingActiveSessionAsTemplate) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      const elapsedMinutes = sessionStartTime > 0
-        ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
-        : 15;
+      const elapsedSeconds = sessionStartTime > 0
+        ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 1000))
+        : 15 * 60;
+      const elapsedMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
 
       const workoutTitle = templateName.trim();
-      const detectedPrs = await addCompletedWorkout(workoutTitle, activeSessionExercises, elapsedMinutes);
+      const detectedPrs = await addCompletedWorkout(workoutTitle, activeSessionExercises, elapsedMinutes, elapsedSeconds);
 
       const exercisesToSave = activeSessionExercises.map((le) => ({
         exerciseId: le.exerciseId,
@@ -3075,6 +3078,34 @@ export default function SinglePageLandingScreen() {
       }
     });
     return Array.from(muscles);
+  };
+
+  const formatSessionDuration = (session: WorkoutSession) => {
+    if (session.durationSeconds && session.durationSeconds > 0) {
+      const s = session.durationSeconds;
+      const hrs = Math.floor(s / 3600);
+      const mins = Math.floor((s % 3600) / 60);
+      const secs = s % 60;
+      if (hrs > 0) {
+        if (mins > 0 && secs > 0) return `${hrs}h ${mins}m ${secs}s`;
+        if (mins > 0) return `${hrs}h ${mins}m`;
+        if (secs > 0) return `${hrs}h ${secs}s`;
+        return `${hrs}h`;
+      }
+      if (mins > 0) {
+        return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+      }
+      return `${secs}s`;
+    }
+    if (session.duration && session.duration > 0) {
+      if (session.duration >= 60) {
+        const hrs = Math.floor(session.duration / 60);
+        const mins = session.duration % 60;
+        return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+      }
+      return `${session.duration}m`;
+    }
+    return '0m';
   };
 
   const formatDate = (dateStr: string) => {
@@ -6651,7 +6682,7 @@ export default function SinglePageLandingScreen() {
                           Duration
                         </Text>
                         <Text style={[styles.detailDurationValue, { color: theme.textPrimary }]}>
-                          {selectedHistoryItem.duration} min
+                          {formatSessionDuration(selectedHistoryItem)}
                         </Text>
                       </View>
                     )}
@@ -7901,7 +7932,10 @@ export default function SinglePageLandingScreen() {
           visible={consistencyModalVisible}
           transparent={true}
           animationType="none"
-          onRequestClose={() => setConsistencyModalVisible(false)}
+          onRequestClose={() => {
+            setConsistencyModalVisible(false);
+            setStreakSessionsExpanded(false);
+          }}
         >
           <View
             style={{
@@ -7916,120 +7950,255 @@ export default function SinglePageLandingScreen() {
                 backgroundColor: theme.cardBg,
                 borderColor: theme.borderColor,
                 width: '94%',
-                paddingVertical: 28,
-                paddingHorizontal: 24,
+                maxHeight: '88%',
+                paddingVertical: 24,
+                paddingHorizontal: 22,
                 borderRadius: 24,
                 borderWidth: 1.5,
                 alignItems: 'center',
               }}
             >
-              {/* Header */}
-              <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Flame size={18} color="#EF4444" fill="#EF4444" />
-                  <Text style={{ fontSize: 13, fontWeight: '900', color: theme.textPrimary, letterSpacing: 0.3 }}>
-                    REST DAYS & STREAK
-                  </Text>
+              <ScrollView
+                style={{ width: '100%' }}
+                contentContainerStyle={{ alignItems: 'center' }}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+              >
+                {/* Header */}
+                <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Flame size={18} color="#EF4444" fill="#EF4444" />
+                    <Text style={{ fontSize: 13, fontWeight: '900', color: theme.textPrimary, letterSpacing: 0.3 }}>
+                      REST DAYS & STREAK
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setConsistencyModalVisible(false);
+                      setStreakSessionsExpanded(false);
+                    }}
+                    activeOpacity={0.7}
+                    style={{ padding: 4 }}
+                  >
+                    <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  onPress={() => setConsistencyModalVisible(false)}
-                  activeOpacity={0.7}
-                  style={{ padding: 4 }}
-                >
-                  <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
-                </TouchableOpacity>
-              </View>
 
-              {/* Day Streak & Workout Days Summary */}
-              <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-around', backgroundColor: theme.background, borderRadius: 10, paddingVertical: 14, paddingHorizontal: 6, marginBottom: 24 }}>
-                <View style={{ flex: 1, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 16, fontWeight: '900', color: theme.textPrimary }}>
-                    {overallStats.currentStreak}
-                  </Text>
-                  <Text style={{ fontSize: 8.5, fontWeight: '800', color: theme.textSecondary, marginTop: 2 }}>
-                    ACTIVE STREAK
-                  </Text>
+                {/* Day Streak & Workout Days Summary */}
+                <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-around', backgroundColor: theme.background, borderRadius: 10, paddingVertical: 14, paddingHorizontal: 6, marginBottom: 18 }}>
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 16, fontWeight: '900', color: theme.textPrimary }}>
+                      {overallStats.currentStreak}
+                    </Text>
+                    <Text style={{ fontSize: 8.5, fontWeight: '800', color: theme.textSecondary, marginTop: 2 }}>
+                      ACTIVE STREAK
+                    </Text>
+                  </View>
+                  <View style={{ width: 1, backgroundColor: theme.borderColor }} />
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 16, fontWeight: '900', color: theme.textPrimary }}>
+                      {overallStats.longestStreak}
+                    </Text>
+                    <Text style={{ fontSize: 8.5, fontWeight: '800', color: theme.textSecondary, marginTop: 2 }}>
+                      LONGEST STREAK
+                    </Text>
+                  </View>
+                  <View style={{ width: 1, backgroundColor: theme.borderColor }} />
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 16, fontWeight: '900', color: theme.textPrimary }}>
+                      {totalWorkoutDays}
+                    </Text>
+                    <Text style={{ fontSize: 8.5, fontWeight: '800', color: theme.textSecondary, marginTop: 2 }}>
+                      WORKOUT DAYS
+                    </Text>
+                  </View>
                 </View>
-                <View style={{ width: 1, backgroundColor: theme.borderColor }} />
-                <View style={{ flex: 1, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 16, fontWeight: '900', color: theme.textPrimary }}>
-                    {overallStats.longestStreak}
-                  </Text>
-                  <Text style={{ fontSize: 8.5, fontWeight: '800', color: theme.textSecondary, marginTop: 2 }}>
-                    LONGEST STREAK
-                  </Text>
-                </View>
-                <View style={{ width: 1, backgroundColor: theme.borderColor }} />
-                <View style={{ flex: 1, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 16, fontWeight: '900', color: theme.textPrimary }}>
-                    {totalWorkoutDays}
-                  </Text>
-                  <Text style={{ fontSize: 8.5, fontWeight: '800', color: theme.textSecondary, marginTop: 2 }}>
-                    WORKOUT DAYS
-                  </Text>
-                </View>
-              </View>
 
-              {/* Sub-label */}
-              <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textSecondary, alignSelf: 'flex-start', marginBottom: 10 }}>
-                SELECT YOUR RECURRING REST DAYS:
-              </Text>
-
-              {/* Days of the week row */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 24 }}>
-                {[
-                  { label: 'M', value: 1 },
-                  { label: 'T', value: 2 },
-                  { label: 'W', value: 3 },
-                  { label: 'T', value: 4 },
-                  { label: 'F', value: 5 },
-                  { label: 'S', value: 6 },
-                  { label: 'S', value: 0 },
-                ].map((day) => {
-                  const isSelected = restDaysOfWeek.includes(day.value);
-                  return (
-                    <TouchableOpacity
-                      key={day.value}
-                      style={{
-                        width: 30,
-                        height: 30,
-                        borderRadius: 15,
-                        backgroundColor: isSelected ? '#10B981' : 'transparent',
-                        borderWidth: isSelected ? 0 : 1.2,
-                        borderColor: theme.borderColor,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                      onPress={async () => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        await toggleRestDayOfWeek(day.value);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={{ fontSize: 10, fontWeight: '900', color: isSelected ? '#FFFFFF' : theme.textSecondary }}>
-                        {day.label}
+                {/* Expandable Last 10 Sessions Window */}
+                <View style={{ width: '100%', marginBottom: 20 }}>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setStreakSessionsExpanded((prev) => !prev);
+                    }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      backgroundColor: theme.background,
+                      borderWidth: 1,
+                      borderColor: theme.borderColor,
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Timer size={14} color={theme.textSecondary} strokeWidth={2.2} />
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textPrimary, letterSpacing: 0.4 }}>
+                        RECENT WORKOUT DURATIONS
                       </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+                    </View>
+                    <ChevronDown
+                      size={16}
+                      color={theme.textSecondary}
+                      strokeWidth={2.2}
+                      style={{
+                        transform: [{ rotate: streakSessionsExpanded ? '180deg' : '0deg' }],
+                      }}
+                    />
+                  </TouchableOpacity>
 
-              {/* Quote Block */}
-              <View style={{ width: '100%', borderTopWidth: 1, borderTopColor: theme.borderColor, marginTop: 20, paddingTop: 20, alignItems: 'center' }}>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: '600',
-                    fontStyle: 'italic',
-                    color: theme.textPrimary,
-                    textAlign: 'center',
-                    lineHeight: 18,
-                    paddingHorizontal: 8,
-                  }}
-                >
-                  {`"${currentQuote}"`}
+                  {streakSessionsExpanded && (
+                    <View
+                      style={{
+                        marginTop: 8,
+                        backgroundColor: theme.background,
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: theme.borderColor,
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                      }}
+                    >
+                      {history.length === 0 ? (
+                        <View style={{ paddingVertical: 14, alignItems: 'center' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: theme.textSecondary }}>
+                            No workout sessions logged yet
+                          </Text>
+                        </View>
+                      ) : (
+                        <ScrollView
+                          style={{ maxHeight: 180 }}
+                          showsVerticalScrollIndicator={true}
+                          nestedScrollEnabled={true}
+                        >
+                          {history.slice(0, 10).map((session, index) => {
+                            const dateStr = new Date(session.date).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                            });
+                            const durationDisplay = formatSessionDuration(session);
+
+                            return (
+                              <View
+                                key={session.id || `${session.date}-${index}`}
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  paddingVertical: 8,
+                                  borderBottomWidth: index < Math.min(10, history.length) - 1 ? 1 : 0,
+                                  borderBottomColor: theme.borderColor,
+                                }}
+                              >
+                                <View style={{ flex: 1, marginRight: 10 }}>
+                                  <Text
+                                    numberOfLines={1}
+                                    style={{ fontSize: 12, fontWeight: '700', color: theme.textPrimary }}
+                                  >
+                                    {session.name || 'Workout'}
+                                  </Text>
+                                  <Text style={{ fontSize: 10, fontWeight: '600', color: theme.textSecondary, marginTop: 1 }}>
+                                    {dateStr} • {session.exercises?.length || 0} ex
+                                  </Text>
+                                </View>
+                                <View
+                                  style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    backgroundColor: theme.cardBg,
+                                    paddingHorizontal: 8,
+                                    paddingVertical: 4,
+                                    borderRadius: 8,
+                                    borderWidth: 1,
+                                    borderColor: theme.borderColor,
+                                  }}
+                                >
+                                  <Timer size={11} color={theme.textSecondary} strokeWidth={2} />
+                                  <Text
+                                    style={{
+                                      fontSize: 11,
+                                      fontWeight: '800',
+                                      color: theme.textPrimary,
+                                      fontVariant: ['tabular-nums'],
+                                    }}
+                                  >
+                                    {durationDisplay}
+                                  </Text>
+                                </View>
+                              </View>
+                            );
+                          })}
+                        </ScrollView>
+                      )}
+                    </View>
+                  )}
+                </View>
+
+                {/* Sub-label */}
+                <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textSecondary, alignSelf: 'flex-start', marginBottom: 10 }}>
+                  SELECT YOUR RECURRING REST DAYS:
                 </Text>
-              </View>
+
+                {/* Days of the week row */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 20 }}>
+                  {[
+                    { label: 'M', value: 1 },
+                    { label: 'T', value: 2 },
+                    { label: 'W', value: 3 },
+                    { label: 'T', value: 4 },
+                    { label: 'F', value: 5 },
+                    { label: 'S', value: 6 },
+                    { label: 'S', value: 0 },
+                  ].map((day) => {
+                    const isSelected = restDaysOfWeek.includes(day.value);
+                    return (
+                      <TouchableOpacity
+                        key={day.value}
+                        style={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: 15,
+                          backgroundColor: isSelected ? '#10B981' : 'transparent',
+                          borderWidth: isSelected ? 0 : 1.2,
+                          borderColor: theme.borderColor,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                        onPress={async () => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          await toggleRestDayOfWeek(day.value);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={{ fontSize: 10, fontWeight: '900', color: isSelected ? '#FFFFFF' : theme.textSecondary }}>
+                          {day.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                {/* Quote Block */}
+                <View style={{ width: '100%', borderTopWidth: 1, borderTopColor: theme.borderColor, marginTop: 10, paddingTop: 16, alignItems: 'center' }}>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '600',
+                      fontStyle: 'italic',
+                      color: theme.textPrimary,
+                      textAlign: 'center',
+                      lineHeight: 18,
+                      paddingHorizontal: 8,
+                    }}
+                  >
+                    {`"${currentQuote}"`}
+                  </Text>
+                </View>
+              </ScrollView>
             </View>
           </View>
         </Modal>

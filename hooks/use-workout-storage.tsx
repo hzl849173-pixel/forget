@@ -21,6 +21,7 @@ export interface WorkoutSession {
   date: string; // ISO String
   name: string;
   duration: number; // in minutes
+  durationSeconds?: number; // exact seconds from timer
   exercises: LoggedExercise[];
 }
 
@@ -299,7 +300,12 @@ interface WorkoutContextType {
   templates: WorkoutTemplate[];
   weekStartDay: number;
   setWeekStartDay: (day: number) => Promise<void>;
-  addCompletedWorkout: (name: string, loggedExercises: LoggedExercise[], durationMinutes: number) => Promise<PersonalRecord[]>;
+  addCompletedWorkout: (
+    name: string,
+    loggedExercises: LoggedExercise[],
+    durationMinutes: number,
+    durationSeconds?: number
+  ) => Promise<PersonalRecord[]>;
   createCustomExercise: (name: string, muscleGroup: MuscleGroup, instrument?: Instrument) => Promise<Exercise>;
   toggleFavoriteExercise: (exerciseId: string) => Promise<void>;
   deleteCustomExercise: (exerciseId: string) => Promise<void>;
@@ -485,12 +491,18 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await AsyncStorage.setItem(STORAGE_KEYS.PRS, JSON.stringify(newPrs));
   };
 
-  const addCompletedWorkout = async (name: string, loggedExercises: LoggedExercise[], durationMinutes: number) => {
+  const addCompletedWorkout = async (
+    name: string,
+    loggedExercises: LoggedExercise[],
+    durationMinutes: number,
+    durationSeconds?: number
+  ) => {
     const completedSession: WorkoutSession = {
       id: generateId(),
       date: new Date().toISOString(),
       name,
       duration: durationMinutes,
+      durationSeconds: durationSeconds ?? Math.round(durationMinutes * 60),
       exercises: loggedExercises,
     };
 
