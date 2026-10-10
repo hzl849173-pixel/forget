@@ -380,7 +380,7 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'reverse-crunch': IMAGES['reverse-crunch'],
   'bicycle-crunches': IMAGES['bicycle-crunches'],
   'russian-twist': IMAGES['russian-twist'],
-  'plank': IMAGES['plank'],
+  'plank': IMAGES['push-ups'],
   'dead-bug': IMAGES['dead-bug'],
   'lying-leg-raises': IMAGES['lying-leg-raises'],
   'hanging-knee-raise': IMAGES['hanging-knee-raise'],
