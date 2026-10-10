@@ -227,7 +227,7 @@ When generating or updating exercise illustration assets:
    - Harmonious, balanced shades: matte aluminum / light-to-medium steel gray frames, brushed silver hardware, dark graphite/charcoal accents, and dark gray plates.
    - **STRICT PROHIBITION**: NO stark jet-black monoliths or overpowering black blocks (anti-pattern: `cable-crossover.jpg`). The mannequin and glowing muscle must always be the visual centerpiece.
 3. **Reference Docs & Implementation**:
-   - See detailed master prompt and negative directives in [`constants/exercises.ts`](file:///c:/Users/Haisal/Documents/workout-journal/constants/exercises.ts), [`constants/exerciseImages.ts`](file:///c:/Users/Haisal/Documents/workout-journal/constants/exerciseImages.ts), and [`docs/EXERCISE_IMAGE_GENERATION_GUIDE.md`](file:///c:/Users/Haisal/Documents/workout-journal/docs/EXERCISE_IMAGE_GENERATION_GUIDE.md).
+   - See detailed master prompt and negative directives in [`constants/exercises.ts`](file:///c:/Users/Haisal/Documents/workout-journal/constants/exercises.ts), [`constants/exerciseImages.ts`](file:///c:/Users/Haisal/Documents/workout-journal/constants/exerciseImages.ts), [`docs/EXERCISE_IMAGE_GENERATION_GUIDE.md`](file:///c:/Users/Haisal/Documents/workout-journal/docs/EXERCISE_IMAGE_GENERATION_GUIDE.md), and the background normalization pipeline in [`docs/BACKGROUND_UNIFORMITY_AND_NORMALIZATION_GUIDE.md`](file:///c:/Users/Haisal/Documents/workout-journal/docs/BACKGROUND_UNIFORMITY_AND_NORMALIZATION_GUIDE.md).
 
 
 
