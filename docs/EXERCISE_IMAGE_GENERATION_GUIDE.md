@@ -163,36 +163,60 @@ Exact movement requirements for each bicep exercise:
 
 ---
 
-## 5. Phase 4: Shoulders Queue (Active Progress)
+## 5. Phase 4 Completed: Shoulders (100% Distinct Variations Live)
+Every shoulder movement now has its dedicated biomechanical render, compressed (~7–14 KB), debloomed, and calibrated to exact RGB 241.0:
+1. `bb-overhead-press.jpg` [9.1 KB] — Standing Barbell Overhead Press to lockout
+2. `seated-bb-shoulder-press.jpg` [11.4 KB] — Seated Barbell Shoulder Press on 90° bench
+3. `bb-upright-row.jpg` [9.1 KB] — Straight Barbell Upright Row with high elbows
+4. `ez-bar-upright-row.jpg` [8.7 KB] — Wavy EZ-Bar Upright Row
+5. `db-shoulder-press.jpg` [10.7 KB] — Seated Dumbbell Overhead Press
+6. `arnold-press.jpg` [10.8 KB] — Seated Arnold Press with rotational trajectory
+7. `db-lateral-raise.jpg` [8.4 KB] — Symmetrical Bilateral Dumbbell Lateral Raise (T-pose)
+8. `leaning-db-lateral-raise.jpg` [9.1 KB] — 30° Leaning Unilateral Dumbbell Lateral Raise
+9. `db-front-raise.jpg` [7.5 KB] — Bilateral Dumbbell Front Raise to shoulder height
+10. `db-rear-delt-fly.jpg` [8.4 KB] — Bent-Over Dumbbell Reverse Fly with glowing rear deltoids
+11. `db-upright-row.jpg` [8.1 KB] — Bilateral Dumbbell Upright Row with high flaring elbows
+12. `cable-lateral-raise.jpg` [11.2 KB] — Single-Arm Low Cable Lateral Raise to shoulder height
+13. `cable-front-raise.jpg` [9.3 KB] — Low Cable Front Raise with straight bar
+14. `cable-rear-delt-fly.jpg` [15.6 KB] — Standing High Cable Cross-Body Rear Delt Fly
+15. `cable-upright-row.jpg` [10.8 KB] — Low Cable Straight Bar Upright Row to collarbone
+16. `face-pull.jpg` [9.9 KB] — High Cable Rope Face Pull to eye level
+17. `machine-shoulder-press.jpg` [12.9 KB] — Seated Selectorized Shoulder Press Machine
+18. `smith-shoulder-press.jpg` [14.1 KB] — Seated Smith Machine Overhead Press on vertical rails
+19. `machine-lateral-raise.jpg` [12.3 KB] — Seated Machine Lateral Raise pushing elbow pads
+20. `reverse-pec-deck.jpg` [11.2 KB] — Seated Reverse Pec Deck Rear Delt Fly
+21. `machine-rear-delt-fly.jpg` [12.2 KB] — Dedicated Seated Machine Rear Delt Fly
+22. `plate-front-raise.jpg` [7.6 KB] — Standing Olympic Weight Plate Front Raise
 
-### Completed Shoulders Movements (10 Renders Live & Calibrated to RGB 241.0):
-1. `bb-overhead-press.jpg` **[9.1 KB]**: Standing upright, pressing barbell overhead to lockout, deltoids glowing.
-2. `seated-bb-shoulder-press.jpg` **[11.4 KB]**: Seated upright on bench, pressing barbell overhead, front delts glowing.
-3. `bb-upright-row.jpg` **[9.1 KB]**: Standing upright pulling straight barbell to chest, elbows high, side delts & traps glowing.
-4. `ez-bar-upright-row.jpg` **[8.7 KB]**: Standing upright pulling wavy EZ-bar to chest, side delts & traps glowing.
-5. `db-shoulder-press.jpg` **[10.7 KB]**: Seated upright on bench, bilateral dumbbell overhead press, delts glowing.
-6. `arnold-press.jpg` **[10.8 KB]**: Seated upright, rotating dumbbell overhead press, front/side delts glowing.
-7. `db-lateral-raise.jpg` **[8.4 KB]**: Standing upright, symmetrical bilateral dumbbell raise to shoulder height (T-shape), side delts glowing.
-8. `leaning-db-lateral-raise.jpg` **[9.1 KB]**: Holding post and leaning sideways 30 degrees, unilateral dumbbell lateral raise, side delts glowing.
-9. `db-front-raise.jpg` **[7.5 KB]**: Standing upright, bilateral dumbbells raised forward to shoulder level, front delts glowing.
-10. `db-rear-delt-fly.jpg` **[8.4 KB]**: Bent over flat back parallel to floor, reverse dumbbell fly, rear delts glowing.
+---
 
-### Remaining Shoulders Queue (12 Movements to Generate):
-11. `db-upright-row`: Standing upright pulling two dumbbells vertically to upper chest.
-12. `cable-lateral-raise`: Low cable pulley, raising single handle laterally outward to shoulder level.
-13. `cable-front-raise`: Low cable pulley, raising straight bar / handle forward to shoulder level.
-14. `cable-rear-delt-fly`: High/mid dual cables without handles, cross-body pull apart for rear delts.
-15. `cable-upright-row`: Low cable pulley with straight bar, pulling upward to collarbone.
-16. `face-pull`: High cable pulley with rope attachment, pulling rope to eye level flaring elbows.
-17. `machine-shoulder-press`: Seated in selectorized shoulder press machine, pressing handles overhead.
-18. `smith-shoulder-press`: Seated on vertical Smith machine bench, pressing guided barbell overhead.
-19. `machine-lateral-raise`: Seated in lateral raise machine, pushing elbow pads outward.
-20. `reverse-pec-deck`: Seated facing chest pad on machine, rear fly movement pulling arms backward.
-21. `machine-rear-delt-fly`: Dedicated machine rear delt fly with horizontal handles.
-22. `plate-front-raise`: Standing upright holding Olympic weight plate with both hands, raising to eye level.
-
-- **Current Quota Reset Timestamp**: Resets in ~4h 50m (approx 19:35 local / 14:05 UTC).
-- **Scheduled Wake-up**: Schedule timer for 17,560 seconds to resume remaining 12 Shoulder movements immediately upon reset.
+## 6. Phase 5: Back Queue (Active)
+Biomechanical requirements for each back exercise:
+1. `bb-row`: Standing 45° bent-over barbell row, pulling to lower abdomen, lats & upper back glowing.
+2. `pendlay-row`: Strict torso parallel to floor, explosive barbell pull from dead stop on floor.
+3. `tbar-row`: Straddling landmine/T-bar with V-grip handle, rowing to mid-torso.
+4. `deadlift`: Conventional barbell deadlift lockout, entire posterior chain glowing.
+5. `trap-bar-deadlift`: Standing inside hexagonal trap bar, neutral grip lift from floor.
+6. `rack-pulls`: Barbell starting at knee height in power rack, pulling to lockout, upper back & traps glowing.
+7. `bb-shrugs`: Standing upright holding straight barbell with overhand grip, shrugging shoulders up, traps glowing.
+8. `db-row`: One knee and hand braced on flat gym bench, single-arm dumbbell row to hip.
+9. `chest-supported-db-row`: Prone chest-down on incline bench, rowing two dumbbells with elbows flared for rhomboids/upper back.
+10. `db-shrugs`: Standing upright with heavy dumbbells at sides, shrugging shoulders straight up.
+11. `db-back-pullover`: Lying perpendicular across flat bench, dumbbell pulled overhead focusing on lats.
+12. `cable-row`: Seated cable row machine with V-bar handle, pulling to abdomen with upright posture.
+13. `single-arm-cable-row`: Seated or standing single-arm cable row with neutral D-handle.
+14. `lat-pulldown`: Seated at high lat pulldown station, wide overhand grip pulling bar to upper chest.
+15. `underhand-pulldown`: Seated lat pulldown with shoulder-width supinated underhand grip.
+16. `close-grip-pulldown`: Seated lat pulldown with neutral close-grip V-handle.
+17. `neutral-grip-lat-pulldown`: Seated lat pulldown with wide parallel neutral grip bar.
+18. `wide-grip-lat-pulldown`: Seated lat pulldown with ultra-wide overhand grip bar.
+19. `single-arm-pulldown`: Seated high cable single-arm pulldown with D-handle to collarbone.
+20. `straight-arm-pulldown`: Standing facing high cable tower with straight bar, arms straight sweeping down to thighs.
+21. `cable-back-pullover`: Supine on bench or standing pullover with high cable.
+22. `machine-row`: Seated chest-supported plate-loaded or selectorized machine row.
+23. `pull-ups`: Suspended from straight overhead pull-up bar with overhand grip, chin clearing bar.
+24. `chin-up-back`: Suspended from pull-up bar with underhand supinated grip, chin clearing bar.
+25. `inverted-row`: Underneath waist-high barbell in Smith/rack, heels on floor, rowing chest to bar.
 
 ---
 

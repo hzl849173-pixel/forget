@@ -112,6 +112,18 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'leaning-db-lateral-raise': require('../assets/exercises/leaning-db-lateral-raise.jpg'),
   'db-front-raise': require('../assets/exercises/db-front-raise.jpg'),
   'db-rear-delt-fly': require('../assets/exercises/db-rear-delt-fly.jpg'),
+  'db-upright-row': require('../assets/exercises/db-upright-row.jpg'),
+  'cable-lateral-raise': require('../assets/exercises/cable-lateral-raise.jpg'),
+  'cable-front-raise': require('../assets/exercises/cable-front-raise.jpg'),
+  'cable-rear-delt-fly': require('../assets/exercises/cable-rear-delt-fly.jpg'),
+  'cable-upright-row': require('../assets/exercises/cable-upright-row.jpg'),
+  'face-pull': require('../assets/exercises/face-pull.jpg'),
+  'machine-shoulder-press': require('../assets/exercises/machine-shoulder-press.jpg'),
+  'smith-shoulder-press': require('../assets/exercises/smith-shoulder-press.jpg'),
+  'machine-lateral-raise': require('../assets/exercises/machine-lateral-raise.jpg'),
+  'reverse-pec-deck': require('../assets/exercises/reverse-pec-deck.jpg'),
+  'machine-rear-delt-fly': require('../assets/exercises/machine-rear-delt-fly.jpg'),
+  'plate-front-raise': require('../assets/exercises/plate-front-raise.jpg'),
 };
 
 export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -231,7 +243,21 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'leaning-db-lateral-raise': IMAGES['leaning-db-lateral-raise'],
   'db-front-raise': IMAGES['db-front-raise'],
   'db-rear-delt-fly': IMAGES['db-rear-delt-fly'],
-  'db-upright-row': IMAGES['bb-upright-row'], // Fallback until db-upright-row generated
+  'db-upright-row': IMAGES['db-upright-row'],
+  'cable-lateral-raise': IMAGES['cable-lateral-raise'],
+  'cable-front-raise': IMAGES['cable-front-raise'],
+  'cable-rear-delt-fly': IMAGES['cable-rear-delt-fly'],
+  'cable-upright-row': IMAGES['cable-upright-row'],
+  'face-pull': IMAGES['face-pull'],
+  'face-pull-back': IMAGES['face-pull'],
+  'reverse-cable-fly': IMAGES['cable-rear-delt-fly'],
+  'cable-rear-delt-row': IMAGES['cable-rear-delt-fly'],
+  'machine-shoulder-press': IMAGES['machine-shoulder-press'],
+  'smith-shoulder-press': IMAGES['smith-shoulder-press'],
+  'machine-lateral-raise': IMAGES['machine-lateral-raise'],
+  'reverse-pec-deck': IMAGES['reverse-pec-deck'],
+  'machine-rear-delt-fly': IMAGES['machine-rear-delt-fly'],
+  'plate-front-raise': IMAGES['plate-front-raise'],
 };
 
 export function getExerciseIllustration(exerciseId: string): ImageSourcePropType | null {
