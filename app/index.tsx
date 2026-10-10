@@ -5462,6 +5462,7 @@ export default function SinglePageLandingScreen() {
                             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                               <TouchableOpacity
                                 onPress={() => {
+                                  Keyboard.dismiss();
                                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                   if (editingModalExerciseId) {
                                     const setsToSave = activeSets.map((s) => ({
@@ -5482,11 +5483,13 @@ export default function SinglePageLandingScreen() {
                                     }
                                     setActiveSessionExercises(updated);
                                     AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+
+                                    const currentEx = exercises.find((e) => e.id === editingModalExerciseId);
+                                    if (currentEx && !selectedModalMuscle) {
+                                      setSelectedModalMuscle(currentEx.muscleGroup);
+                                    }
                                   }
                                   setEditingModalExerciseId(null);
-                                  setSelectedModalMuscle(null);
-                                  setSelectedSubGroup(null);
-                                  setActiveSegment('log');
                                 }}
                                 activeOpacity={0.7}
                                 style={{
