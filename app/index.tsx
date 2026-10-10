@@ -5677,13 +5677,11 @@ export default function SinglePageLandingScreen() {
                     }) : '';
 
                     const isLiveLogger = loggingMode === 'live';
-                    const ContentWrapper = isLiveLogger ? View : Card;
-                    const contentWrapperProps = isLiveLogger
-                      ? { style: { flex: 1, paddingBottom: 16 } }
-                      : { style: [styles.activeSessionCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }] };
+                    const ContentWrapper = Card;
+                    const contentWrapperProps = { style: [styles.activeSessionCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }] };
 
                     return (
-                      <View style={[StyleSheet.absoluteFill, { backgroundColor: isLiveLogger ? theme.cardBg : theme.background, zIndex: 50 }]}>
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, zIndex: 50 }]}>
                         <ScrollView
                           ref={modalLoggerScrollRef}
                           style={{ flex: 1 }}
@@ -5696,8 +5694,9 @@ export default function SinglePageLandingScreen() {
                           automaticallyAdjustKeyboardInsets={true}
                           showsVerticalScrollIndicator={false}
                         >
-                          {/* Live Mode Top Header: Minimize on left, Elapsed Duration on right */}
-                          {isLiveLogger && (
+                          <ContentWrapper {...contentWrapperProps}>
+                            {/* Live Mode Top Header: Minimize on left, Elapsed Duration on right */}
+                            {isLiveLogger && (
                             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                               <TouchableOpacity
                                 onPress={() => {
@@ -5807,7 +5806,7 @@ export default function SinglePageLandingScreen() {
 
                           {/* Selected Workouts Navigation Strip (Live Mode) */}
                           {isLiveLogger && activeSessionExercises.length > 1 && (
-                            <View style={[styles.loggerNavPillWrap, { marginTop: 0, marginBottom: 22, gap: 8 }]}>
+                            <View style={[styles.loggerNavPillWrap, { marginTop: 0, marginBottom: 16, gap: 8 }]}>
                               {activeSessionExercises.map((item, index) => {
                                 const isSelected = item.exerciseId === editingModalExerciseId;
                                 const exDetails = exercises.find((e) => e.id === item.exerciseId);
@@ -5863,8 +5862,7 @@ export default function SinglePageLandingScreen() {
                             </View>
                           )}
 
-                          <ContentWrapper {...contentWrapperProps}>
-                            {/* Header */}
+                          {/* Header */}
                             <View style={[styles.activeSessionHeader, { alignItems: 'flex-start' }]}>
                               <View style={{ flex: 1, paddingRight: 8 }}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
