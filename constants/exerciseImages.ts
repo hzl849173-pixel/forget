@@ -132,6 +132,18 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'deadlift': require('../assets/exercises/deadlift.jpg'),
   'trap-bar-deadlift': require('../assets/exercises/trap-bar-deadlift.jpg'),
   'rack-pulls': require('../assets/exercises/rack-pulls.jpg'),
+  'bb-shrugs': require('../assets/exercises/bb-shrugs.jpg'),
+  'db-row': require('../assets/exercises/db-row.jpg'),
+  'chest-supported-db-row': require('../assets/exercises/chest-supported-db-row.jpg'),
+  'db-shrugs': require('../assets/exercises/db-shrugs.jpg'),
+  'db-back-pullover': require('../assets/exercises/db-back-pullover.jpg'),
+  'cable-row': require('../assets/exercises/cable-row.jpg'),
+  'single-arm-cable-row': require('../assets/exercises/single-arm-cable-row.jpg'),
+  'lat-pulldown': require('../assets/exercises/lat-pulldown.jpg'),
+  'underhand-pulldown': require('../assets/exercises/underhand-pulldown.jpg'),
+  'close-grip-pulldown': require('../assets/exercises/close-grip-pulldown.jpg'),
+  'neutral-grip-lat-pulldown': require('../assets/exercises/neutral-grip-lat-pulldown.jpg'),
+  'wide-grip-lat-pulldown': require('../assets/exercises/wide-grip-lat-pulldown.jpg'),
 };
 
 export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -274,6 +286,18 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'deadlift': IMAGES['deadlift'],
   'trap-bar-deadlift': IMAGES['trap-bar-deadlift'],
   'rack-pulls': IMAGES['rack-pulls'],
+  'bb-shrugs': IMAGES['bb-shrugs'],
+  'db-row': IMAGES['db-row'],
+  'chest-supported-db-row': IMAGES['chest-supported-db-row'],
+  'db-shrugs': IMAGES['db-shrugs'],
+  'db-back-pullover': IMAGES['db-back-pullover'],
+  'cable-row': IMAGES['cable-row'],
+  'single-arm-cable-row': IMAGES['single-arm-cable-row'],
+  'lat-pulldown': IMAGES['lat-pulldown'],
+  'underhand-pulldown': IMAGES['underhand-pulldown'],
+  'close-grip-pulldown': IMAGES['close-grip-pulldown'],
+  'neutral-grip-lat-pulldown': IMAGES['neutral-grip-lat-pulldown'],
+  'wide-grip-lat-pulldown': IMAGES['wide-grip-lat-pulldown'],
 };
 
 export function getExerciseIllustration(exerciseId: string): ImageSourcePropType | null {

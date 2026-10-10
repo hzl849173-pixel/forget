@@ -192,37 +192,37 @@ Every shoulder movement now has its dedicated biomechanical render, compressed (
 
 ## 6. Phase 5: Back Queue (Active Progress)
 
-### Completed Back Movements (6 Renders Live & Calibrated to RGB 241.0):
+### Completed Back Movements (18 Renders Live & Calibrated to RGB 241.0):
 1. `bb-row.jpg` [9.5 KB] — Standing 45° bent-over barbell row, pulling to lower abdomen, lats & upper back glowing.
 2. `pendlay-row.jpg` [9.3 KB] — Strict torso parallel to floor, explosive barbell pull from dead stop on floor.
 3. `tbar-row.jpg` [10.1 KB] — Straddling landmine/T-bar with V-grip handle, rowing to mid-torso.
 4. `deadlift.jpg` [9.7 KB] — Conventional barbell deadlift lockout, entire posterior chain glowing.
 5. `trap-bar-deadlift.jpg` [10.3 KB] — Standing inside hexagonal trap bar, neutral grip lift from floor.
 6. `rack-pulls.jpg` [12.4 KB] — Barbell starting at knee height in power rack, pulling to lockout, upper back & traps glowing.
+7. `bb-shrugs.jpg` [8.6 KB] — Upright barbell shrug, arms straight, traps elevated at peak contraction (shadowless).
+8. `db-row.jpg` [9.3 KB] — Single-arm dumbbell row braced on flat bench, pulling to hip (shadowless).
+9. `chest-supported-db-row.jpg` [10.3 KB] — Incline bench prone dumbbell row, elbows flared for rhomboids & upper back (shadowless).
+10. `db-shrugs.jpg` [7.6 KB] — Standing upright with heavy dumbbells at sides, shrugging shoulders upward (shadowless).
+11. `db-back-pullover.jpg` [10.7 KB] — Crossways across flat bench, dumbbell pulled overhead focusing on lats & serratus (shadowless).
+12. `cable-row.jpg` [11.4 KB] — Seated cable row with close-grip V-handle, pulling to abdomen (shadowless).
+13. `single-arm-cable-row.jpg` [9.7 KB] — Seated single-arm cable row with D-handle to hip crease (shadowless).
+14. `lat-pulldown.jpg` [11.3 KB] — Seated lat pulldown station with wide overhand bar to upper chest (shadowless).
+15. `underhand-pulldown.jpg` [10.7 KB] — Supinated shoulder-width reverse-grip lat pulldown to upper chest (shadowless).
+16. `close-grip-pulldown.jpg` [9.9 KB] — Close-grip triangle V-handle lat pulldown to sternum (shadowless).
+17. `neutral-grip-lat-pulldown.jpg` [11.3 KB] — Parallel-grip neutral lat bar pulldown to upper chest (shadowless).
+18. `wide-grip-lat-pulldown.jpg` [11.6 KB] — Ultra-wide overhand grip lat pulldown for maximum lat width (shadowless).
 
-### Remaining Back Queue (19 Movements to Generate):
-7. `bb-shrugs`: Standing upright holding straight barbell with overhand grip, shrugging shoulders up, traps glowing.
-8. `db-row`: One knee and hand braced on flat gym bench, single-arm dumbbell row to hip.
-9. `chest-supported-db-row`: Prone chest-down on incline bench, rowing two dumbbells with elbows flared for rhomboids/upper back.
-10. `db-shrugs`: Standing upright with heavy dumbbells at sides, shrugging shoulders straight up.
-11. `db-back-pullover`: Lying perpendicular across flat bench, dumbbell pulled overhead focusing on lats.
-12. `cable-row`: Seated cable row machine with V-bar handle, pulling to abdomen with upright posture.
-13. `single-arm-cable-row`: Seated or standing single-arm cable row with neutral D-handle.
-14. `lat-pulldown`: Seated at high lat pulldown station, wide overhand grip pulling bar to upper chest.
-15. `underhand-pulldown`: Seated lat pulldown with shoulder-width supinated underhand grip.
-16. `close-grip-pulldown`: Seated lat pulldown with neutral close-grip V-handle.
-17. `neutral-grip-lat-pulldown`: Seated lat pulldown with wide parallel neutral grip bar.
-18. `wide-grip-lat-pulldown`: Seated lat pulldown with ultra-wide overhand grip bar.
+### Remaining Back Queue (7 Movements to Generate):
 19. `single-arm-pulldown`: Seated high cable single-arm pulldown with D-handle to collarbone.
 20. `straight-arm-pulldown`: Standing facing high cable tower with straight bar, arms straight sweeping down to thighs.
-21. `cable-back-pullover`: Supine on bench or standing pullover with high cable.
+21. `cable-back-pullover`: High cable pullover focusing on lats.
 22. `machine-row`: Seated chest-supported plate-loaded or selectorized machine row.
 23. `pull-ups`: Suspended from straight overhead pull-up bar with overhand grip, chin clearing bar.
 24. `chin-up-back`: Suspended from pull-up bar with underhand supinated grip, chin clearing bar.
 25. `inverted-row`: Underneath waist-high barbell in Smith/rack, heels on floor, rowing chest to bar.
 
-- **Current Weekly Quota Reset Timestamp**: Resets on October 17, 2026 at 10:00 UTC (15:30 local).
-- **Scheduled Wake-up**: Autonomous chained timer will resume generation on remaining back movements once quota replenishes.
+- **Current Burst Quota Reset Timestamp**: Resets in ~4h 50m (approx 20:45 local / 15:15 UTC).
+- **Shadow Direction**: As requested by user, new Back images are generated completely shadowless (no floor shadows / drop shadows).
 
 ---
 
