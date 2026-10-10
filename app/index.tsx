@@ -22,7 +22,7 @@ import {
   User,
   X
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -713,6 +713,7 @@ export default function SinglePageLandingScreen() {
 
   const [activeSessionExercises, setActiveSessionExercises] = useState<LoggedExercise[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<number>(0);
+  const [sessionElapsedSeconds, setSessionElapsedSeconds] = useState<number>(0);
 
 
   const [sessionInitialLoaded, setSessionInitialLoaded] = useState(false);
@@ -736,6 +737,27 @@ export default function SinglePageLandingScreen() {
   } | null>(null);
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [mainScrollEnabled, setMainScrollEnabled] = useState(true);
+
+  useEffect(() => {
+    if (editingModalExerciseId && loggingMode === 'live' && sessionStartTime === 0) {
+      const now = Date.now();
+      setSessionStartTime(now);
+      AsyncStorage.setItem('@session_start_time', String(now));
+    }
+  }, [editingModalExerciseId, loggingMode, sessionStartTime]);
+
+  useEffect(() => {
+    if (sessionStartTime <= 0) {
+      setSessionElapsedSeconds(0);
+      return;
+    }
+    const updateElapsed = () => {
+      setSessionElapsedSeconds(Math.max(0, Math.floor((Date.now() - sessionStartTime) / 1000)));
+    };
+    updateElapsed();
+    const interval = setInterval(updateElapsed, 1000);
+    return () => clearInterval(interval);
+  }, [sessionStartTime]);
 
   const [cameFromReplaceTarget, setCameFromReplaceTarget] = useState<{
     activeId: string;
@@ -921,6 +943,16 @@ export default function SinglePageLandingScreen() {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${m}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  const formatElapsedDuration = (s: number) => {
+    const hrs = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    if (hrs > 0) {
+      return `${hrs}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    }
+    return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
 
 
@@ -5451,9 +5483,9 @@ export default function SinglePageLandingScreen() {
                           automaticallyAdjustKeyboardInsets={true}
                           showsVerticalScrollIndicator={false}
                         >
-                          {/* Live Mode Top Header: Minimize on left */}
+                          {/* Live Mode Top Header: Minimize on left, Elapsed Duration on right */}
                           {isLiveLogger && (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                               <TouchableOpacity
                                 onPress={() => {
                                   Keyboard.dismiss();
@@ -5503,6 +5535,40 @@ export default function SinglePageLandingScreen() {
                                   MINIMIZE
                                 </Text>
                               </TouchableOpacity>
+
+                              {/* Active Session Elapsed Duration Badge */}
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  paddingVertical: 7,
+                                  paddingHorizontal: 12,
+                                  borderRadius: 99,
+                                  backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.08)' : '#ECFDF5',
+                                  borderWidth: 1,
+                                  borderColor: isDarkMode ? 'rgba(16, 185, 129, 0.22)' : '#A7F3D0',
+                                }}
+                              >
+                                <View
+                                  style={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: 3,
+                                    backgroundColor: '#10B981',
+                                  }}
+                                />
+                                <Text
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: '700',
+                                    color: isDarkMode ? '#6EE7B7' : '#059669',
+                                    letterSpacing: 0.5,
+                                  }}
+                                >
+                                  {formatElapsedDuration(sessionElapsedSeconds)}
+                                </Text>
+                              </View>
                             </View>
                           )}
 
