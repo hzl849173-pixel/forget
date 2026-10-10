@@ -2344,6 +2344,7 @@ export default function SinglePageLandingScreen() {
   };
 
   const handleFinishFromModalLogger = async () => {
+    Keyboard.dismiss();
     let updated: LoggedExercise[] = [...activeSessionExercises];
 
     if (editingModalExerciseId) {
@@ -2631,20 +2632,45 @@ export default function SinglePageLandingScreen() {
       }
     }
 
+    // 1. Synchronously dismiss keyboard and clear all modal/session state in a single frame
+    Keyboard.dismiss();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    setEditingModalExerciseId(null);
+    setSelectedModalMuscle(null);
+    setSelectedSubGroup(null);
+    setSelectedPickerExerciseIds(new Set());
+    setExpandedExerciseId(null);
+    setEditingActiveExerciseId(null);
+    setReplacingActiveId(null);
+    setActiveSets([]);
+    setExerciseNote('');
+    setShowNoteInput(false);
+    setSameForAll(true);
+    setActiveSessionExercises([]);
+    setTemplateListVisible(false);
+    setFromTemplateList(false);
+    setCameFromActiveSessionPlus(false);
+    setCameFromEditModal(false);
+    setActiveSegment('log');
+
+    // 2. Compute workout metrics & reset session trackers
     const suggestedTitle = suggestWorkoutTitle(exercisesToSave);
+    const elapsedMinutes = sessionStartTime > 0
+      ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
+      : 15;
+    const currentTmplId = sessionTemplateId;
 
+    setSessionStartTime(0);
+    setSessionStartedFromTemplate(false);
+    setSessionTemplateId(null);
+
+    // 3. Perform persistence in background without freezing UI or delaying navigation
     const performSave = async () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-      const elapsedMinutes = sessionStartTime > 0
-        ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
-        : 15;
-
       const detectedPrs = await addCompletedWorkout(suggestedTitle, exercisesToSave, elapsedMinutes);
 
-      // If started from a template, update the template's default sets/reps/notes
-      if (sessionTemplateId) {
-        const currentTmpl = templates.find(t => t.id === sessionTemplateId);
+      if (currentTmplId) {
+        const currentTmpl = templates.find(t => t.id === currentTmplId);
         if (currentTmpl) {
           const updatedTmplExercises = [...currentTmpl.exercises];
           
@@ -2667,15 +2693,10 @@ export default function SinglePageLandingScreen() {
               updatedTmplExercises.push(mappedEx);
             }
           }
-          await updateTemplate(sessionTemplateId, updatedTmplExercises);
+          await updateTemplate(currentTmplId, updatedTmplExercises);
         }
       }
 
-      // Clear active session
-      setActiveSessionExercises([]);
-      setSessionStartTime(0);
-      setSessionStartedFromTemplate(false);
-      setSessionTemplateId(null);
       await Promise.all([
         AsyncStorage.removeItem('@active_session_exercises'),
         AsyncStorage.removeItem('@session_start_time'),
@@ -2683,31 +2704,13 @@ export default function SinglePageLandingScreen() {
         AsyncStorage.removeItem('@session_template_id'),
       ]);
 
-      // Reset modal, logger, and views to display clean home page directly
-      setExpandedExerciseId(null);
-      setEditingActiveExerciseId(null);
-      setEditingModalExerciseId(null);
-      setSelectedPickerExerciseIds(new Set());
-      setReplacingActiveId(null);
-      setActiveSets([]);
-      setExerciseNote('');
-      setShowNoteInput(false);
-      setSameForAll(true);
-      setSelectedModalMuscle(null);
-      setSelectedSubGroup(null);
-      setTemplateListVisible(false);
-      setFromTemplateList(false);
-      setCameFromActiveSessionPlus(false);
-      setCameFromEditModal(false);
-      setActiveSegment('log');
-
       if (detectedPrs.length > 0) {
         setNewPrsDetected(detectedPrs);
         setShowNewPrsAlert(true);
       }
     };
 
-    await performSave();
+    performSave();
   };
 
   const handleCancelSession = () => {
