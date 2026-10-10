@@ -5457,9 +5457,9 @@ export default function SinglePageLandingScreen() {
                           automaticallyAdjustKeyboardInsets={true}
                           showsVerticalScrollIndicator={false}
                         >
-                          {/* Live Mode Top Header: Minimize on left, Rest Timer on right */}
+                          {/* Live Mode Top Header: Minimize on left */}
                           {isLiveLogger && (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
                               <TouchableOpacity
                                 onPress={() => {
                                   Keyboard.dismiss();
@@ -5509,57 +5509,6 @@ export default function SinglePageLandingScreen() {
                                   MINIMIZE
                                 </Text>
                               </TouchableOpacity>
-
-                              {/* Rest Timer Button / Active Countdown */}
-                              {restTimerRunning ? (
-                                <TouchableOpacity
-                                  onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setRestTimerVisible(true);
-                                  }}
-                                  activeOpacity={0.8}
-                                  style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    gap: 6,
-                                    paddingVertical: 8,
-                                    paddingHorizontal: 14,
-                                    borderRadius: 99,
-                                    backgroundColor: isDarkMode ? '#10B98125' : '#10B98118',
-                                    borderWidth: 1,
-                                    borderColor: '#10B981',
-                                  }}
-                                >
-                                  <Timer size={13} color="#10B981" strokeWidth={2.4} />
-                                  <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981', letterSpacing: 0.5 }}>
-                                    {formatRestTime(restTimerSeconds)}
-                                  </Text>
-                                </TouchableOpacity>
-                              ) : (
-                                <TouchableOpacity
-                                  onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setRestTimerVisible(true);
-                                  }}
-                                  activeOpacity={0.7}
-                                  style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    gap: 6,
-                                    paddingVertical: 8,
-                                    paddingHorizontal: 14,
-                                    borderRadius: 99,
-                                    backgroundColor: isDarkMode ? 'rgba(56, 189, 248, 0.08)' : '#F0F9FF',
-                                    borderWidth: 1,
-                                    borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.28)' : '#BAE6FD',
-                                  }}
-                                >
-                                  <Timer size={13} color={isDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth={2.4} />
-                                  <Text style={{ fontSize: 11, fontWeight: '700', color: isDarkMode ? '#38BDF8' : '#0284C7', letterSpacing: 0.4 }}>
-                                    REST TIMER
-                                  </Text>
-                                </TouchableOpacity>
-                              )}
                             </View>
                           )}
 
@@ -5651,44 +5600,71 @@ export default function SinglePageLandingScreen() {
                                   ) : null}
                                 </View>
                               </View>
-                            <TouchableOpacity
-                              onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                if (loggingMode === 'live') {
-                                  if (editingModalExerciseId) {
-                                    const setsToSave = activeSets.map((s) => ({
-                                      ...s,
-                                      isCompleted: s.weight > 0 && s.reps > 0 ? true : s.isCompleted,
-                                    }));
-                                    const existingIdx = activeSessionExercises.findIndex((le) => le.exerciseId === editingModalExerciseId);
-                                    let updated: LoggedExercise[];
-                                    if (existingIdx !== -1) {
-                                      updated = activeSessionExercises.map((le, idx) =>
-                                        idx === existingIdx ? { ...le, sets: setsToSave, notes: exerciseNote.trim() || undefined } : le
-                                      );
-                                    } else {
-                                      updated = [
-                                        ...activeSessionExercises,
-                                        { id: generateId(), exerciseId: editingModalExerciseId, sets: setsToSave, notes: exerciseNote.trim() || undefined },
-                                      ];
-                                    }
-                                    setActiveSessionExercises(updated);
-                                    AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
-                                  }
+                            {isLiveLogger ? (
+                              <View style={{ alignSelf: 'center', marginRight: 4 }}>
+                                {restTimerRunning ? (
+                                  <TouchableOpacity
+                                    onPress={() => {
+                                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                      setRestTimerVisible(true);
+                                    }}
+                                    activeOpacity={0.8}
+                                    style={{
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                      paddingVertical: 5,
+                                      paddingHorizontal: 11,
+                                      borderRadius: 99,
+                                      backgroundColor: isDarkMode ? '#10B98125' : '#10B98118',
+                                      borderWidth: 1,
+                                      borderColor: '#10B981',
+                                    }}
+                                  >
+                                    <Timer size={12} color="#10B981" strokeWidth={2.4} />
+                                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#10B981', letterSpacing: 0.4 }}>
+                                      {formatRestTime(restTimerSeconds)}
+                                    </Text>
+                                  </TouchableOpacity>
+                                ) : (
+                                  <TouchableOpacity
+                                    onPress={() => {
+                                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                      setRestTimerVisible(true);
+                                    }}
+                                    activeOpacity={0.7}
+                                    style={{
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                      paddingVertical: 5,
+                                      paddingHorizontal: 10,
+                                      borderRadius: 99,
+                                      backgroundColor: isDarkMode ? 'rgba(56, 189, 248, 0.08)' : '#F0F9FF',
+                                      borderWidth: 1,
+                                      borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.28)' : '#BAE6FD',
+                                    }}
+                                  >
+                                    <Timer size={12} color={isDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth={2.4} />
+                                    <Text style={{ fontSize: 10, fontWeight: '700', color: isDarkMode ? '#38BDF8' : '#0284C7', letterSpacing: 0.3 }}>
+                                      REST TIMER
+                                    </Text>
+                                  </TouchableOpacity>
+                                )}
+                              </View>
+                            ) : (
+                              <TouchableOpacity
+                                onPress={() => {
+                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                   setEditingModalExerciseId(null);
-                                  setSelectedModalMuscle(null);
-                                  setSelectedSubGroup(null);
-                                  setActiveSegment('log');
-                                  return;
-                                }
-                                setEditingModalExerciseId(null);
-                              }}
-                              activeOpacity={0.6}
-                              style={{ padding: 6 }}
-                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            >
-                              <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
-                            </TouchableOpacity>
+                                }}
+                                activeOpacity={0.6}
+                                style={{ padding: 6 }}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                              >
+                                <X size={18} color={theme.textSecondary} strokeWidth={2.5} />
+                              </TouchableOpacity>
+                            )}
                           </View>
 
                           <View style={{ marginVertical: 6 }}>
