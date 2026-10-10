@@ -350,9 +350,27 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'leg-extensions': IMAGES['goblet-squat'],
   'lying-leg-curls': IMAGES['rdl'],
   'seated-leg-curls': IMAGES['rdl'],
+  'standing-calf-raises': IMAGES['db-stepups'],
+  'seated-calf-raises': IMAGES['db-stepups'],
+  'calf-press-legpress': IMAGES['bb-squat'],
   'adductor-machine': IMAGES['sumo-deadlift'],
   'lunges': IMAGES['bb-walking-lunge'],
   'glute-bridge': IMAGES['hip-thrust'],
+
+  // Abs & Core (Stand-ins until generation resumes)
+  'cable-crunch': IMAGES['cable-pullover'],
+  'cable-woodchop': IMAGES['cable-lateral-raise'],
+  'cable-oblique-crunch': IMAGES['cable-lateral-raise'],
+  'machine-ab-crunch': IMAGES['chest-press-machine'],
+  'ab-crunch': IMAGES['push-ups'],
+  'reverse-crunch': IMAGES['push-ups'],
+  'bicycle-crunches': IMAGES['push-ups'],
+  'russian-twist': IMAGES['goblet-squat'],
+  'plank': IMAGES['push-ups'],
+  'dead-bug': IMAGES['push-ups'],
+  'lying-leg-raises': IMAGES['push-ups'],
+  'hanging-knee-raise': IMAGES['pull-ups'],
+  'ab-wheel': IMAGES['push-ups'],
 };
 
 export function getExerciseIllustration(exerciseId: string): ImageSourcePropType | null {

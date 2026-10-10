@@ -237,29 +237,47 @@ Every back exercise now has its distinct, exact biomechanical movement and equip
 11. `db-rdl.jpg` [8.1 KB] — Bilateral dumbbell Romanian deadlift hip hinge, hamstrings glowing.
 12. `db-stepups.jpg` [9.5 KB] — Stepping up onto plyo box holding dumbbells, working leg glowing.
 
-*Note: Aliases configured in `constants/exerciseImages.ts` for remaining movements until generation queue resumes.*
+*Note: All remaining movements currently mapped to seamless biomechanical stand-in aliases in `constants/exerciseImages.ts`.*
 
-### Remaining Movements to Generate (When image quota resets):
-13. `single-leg-rdl`: Unilateral single-leg dumbbell Romanian deadlift (currently aliased to `db-rdl`).
-14. `leg-press`: 45-degree sled leg press sled at bottom inflection (currently aliased to `bb-squat`).
-15. `hack-squat`: Hack squat machine sled descending to parallel (currently aliased to `bb-squat`).
-16. `belt-squat`: Belt squat platform with weight loaded at hips (currently aliased to `bb-squat`).
-17. `v-squat-machine`: V-Squat machine facing in/out (currently aliased to `bb-squat`).
-18. `smith-squat`: Smith machine squat with guided vertical barbell (currently aliased to `bb-squat`).
-19. `machine-hip-thrust`: Dedicated machine hip thrust with padded lap bar (currently aliased to `hip-thrust`).
-20. `leg-extensions`: Seated leg extension machine kicking up to lockout, quadriceps glowing (currently aliased to `goblet-squat`).
-21. `lying-leg-curls`: Prone lying leg curl machine curling pad to glutes, hamstrings glowing (currently aliased to `rdl`).
-22. `seated-leg-curls`: Seated leg curl machine curling downward under knees (currently aliased to `rdl`).
-23. `standing-calf-raises`: Standing calf raise machine on toes, gastrocnemius glowing.
-24. `seated-calf-raises`: Seated calf raise machine on knees, soleus glowing.
-25. `calf-press-legpress`: Toes on bottom of leg press sled, calf press extension.
-26. `adductor-machine`: Seated hip adductor machine squeezing thighs inward (currently aliased to `sumo-deadlift`).
-27. `lunges`: Bodyweight stationary lunges (currently aliased to `bb-walking-lunge`).
-28. `glute-bridge`: Floor bodyweight glute bridge with hips driven up (currently aliased to `hip-thrust`).
+### Remaining Movements to Generate (Quota Reset: October 17, 2026 ~10:00 UTC):
+13. `single-leg-rdl`: Unilateral single-leg dumbbell Romanian deadlift (aliased to `db-rdl`).
+14. `leg-press`: 45-degree sled leg press sled at bottom inflection (aliased to `bb-squat`).
+15. `hack-squat`: Hack squat machine sled descending to parallel (aliased to `bb-squat`).
+16. `belt-squat`: Belt squat platform with weight loaded at hips (aliased to `bb-squat`).
+17. `v-squat-machine`: V-Squat machine facing in/out (aliased to `bb-squat`).
+18. `smith-squat`: Smith machine squat with guided vertical barbell (aliased to `bb-squat`).
+19. `machine-hip-thrust`: Dedicated machine hip thrust with padded lap bar (aliased to `hip-thrust`).
+20. `leg-extensions`: Seated leg extension machine kicking up to lockout, quadriceps glowing (aliased to `goblet-squat`).
+21. `lying-leg-curls`: Prone lying leg curl machine curling pad to glutes, hamstrings glowing (aliased to `rdl`).
+22. `seated-leg-curls`: Seated leg curl machine curling downward under knees (aliased to `rdl`).
+23. `standing-calf-raises`: Standing calf raise machine on toes, gastrocnemius glowing (aliased to `db-stepups`).
+24. `seated-calf-raises`: Seated calf raise machine on knees, soleus glowing (aliased to `db-stepups`).
+25. `calf-press-legpress`: Toes on bottom of leg press sled, calf press extension (aliased to `bb-squat`).
+26. `adductor-machine`: Seated hip adductor machine squeezing thighs inward (aliased to `sumo-deadlift`).
+27. `lunges`: Bodyweight stationary lunges (aliased to `bb-walking-lunge`).
+28. `glute-bridge`: Floor bodyweight glute bridge with hips driven up (aliased to `hip-thrust`).
 
 ---
 
-## 6. Standard Image Prompt Template
+## 8. Phase 7: Abs & Core Queue (Backlog)
+All 13 core movements are currently mapped to biomechanical stand-ins in [`constants/exerciseImages.ts`](file:///c:/Users/Haisal/Documents/workout-journal/constants/exerciseImages.ts). When quota reopens:
+1. `cable-crunch`: Kneeling facing high cable tower with rope attachment, curling torso downward.
+2. `cable-woodchop`: Standing high-to-low diagonal torso twist with cable handle across body.
+3. `cable-oblique-crunch`: Standing side bend with low cable attachment targeting obliques.
+4. `machine-ab-crunch`: Seated selectorized ab crunch machine with chest/shoulder pads curling forward.
+5. `ab-crunch`: Supinated floor crunch with hands behind head, upper abs glowing.
+6. `reverse-crunch`: Lying on back with hips rolling upward towards chest, lower abs glowing.
+7. `bicycle-crunches`: Supinated alternating elbow-to-opposite-knee bicycle crunch.
+8. `russian-twist`: Seated V-sit with knees bent, rotating torso side-to-side holding weight.
+9. `plank`: Prone forearm plank position with spine neutral, full core glowing.
+10. `dead-bug`: Supinated on floor with opposite arm and leg extending outward under control.
+11. `lying-leg-raises`: Lying on back with legs straight raising up to 90 degrees.
+12. `hanging-knee-raise`: Suspended from pull-up bar curling knees up towards chest.
+13. `ab-wheel`: Kneeling rollout with ab wheel forward to full extension.
+
+---
+
+## 9. Standard Image Prompt Template
 
 ```text
 Minimalist 3D fitness exercise illustration of [EXERCISE_NAME]. An athletic male anatomical mannequin figure with a smooth silver-gray monochrome skin tone is [PRECISE_POSTURE_AND_EQUIPMENT]. [EXACT_GRIP_AND_BIOMECHANICS]. Target [TARGET_MUSCLE] muscles highlighted in vibrant glowing neon red-orange (#FF4500) with visible muscle striations. Gym equipment rendered in balanced matte aluminum, brushed steel, and dark graphite charcoal tones (no solid jet-black monoliths). Uniform diffuse light-gray studio background (#F4F4F4), no spotlight, no radial halo, no vignette, subtle floor contact shadow, clean 3/4 isometric perspective, 1:1 square framing. Faceless, hairless, clothes-free, premium modern aesthetic.
@@ -268,5 +286,6 @@ Minimalist 3D fitness exercise illustration of [EXERCISE_NAME]. An athletic male
 ### Negative Prompt Directives (Crucial to Enforce Uniformity)
 * **Lighting/Background**: `spotlight, radial vignette, circular halo, dark corners, moody lighting, colored background, dramatic lighting, lens flare`.
 * **Equipment**: `solid jet black silhouette, heavy black block, pitch black monolith, overpowering high contrast black frame`.
+
 
 
