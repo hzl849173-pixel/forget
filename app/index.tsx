@@ -5376,17 +5376,11 @@ export default function SinglePageLandingScreen() {
                         setSelectedSubGroup(null);
                         setSelectedPickerExerciseIds(new Set());
 
-                        if (isCreatingNewTemplate) {
-                          setIsCreatingNewTemplate(false);
-                          setTemplateListVisible(false);
-                          setFromTemplateList(false);
-                          setTemplateListExercises([]);
-                          setActiveTemplateId(null);
-                          setActiveSegment('templates');
-                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        } else {
-                          setTemplateListVisible(true);
-                        }
+                        setIsCreatingNewTemplate(false);
+                        setFromTemplateList(true);
+                        setTemplateListVisible(true);
+                        setActiveSegment('templates');
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                       }}
                       disabled={selectedPickerExerciseIds.size === 0}
                       activeOpacity={0.8}
@@ -7361,13 +7355,20 @@ export default function SinglePageLandingScreen() {
           <View style={[styles.timerOverlay, { padding: 12 }]}>
             <View style={[styles.editWorkoutCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor, maxHeight: '92%', width: '98%', padding: 20 }]}>
               <View style={styles.editWorkoutHeader}>
-                <View>
-                  <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]}>
-                    {isDeleteMode ? 'Delete Workouts' : `Workouts (${templateListExercises.length})`}
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <Text style={[styles.editWorkoutTitle, { color: theme.textPrimary }]} numberOfLines={1}>
+                    {isDeleteMode
+                      ? 'Delete Workouts'
+                      : (templates.find((t) => t.id === activeTemplateId)?.name || `Workouts (${templateListExercises.length})`)}
                   </Text>
                   {templateListExercises.length > 1 && !isDeleteMode && (
                     <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 3, opacity: 0.8, letterSpacing: 0.2 }}>
-                      Drag ⠿ to reorder
+                      {templateListExercises.length} workouts • Drag ⠿ to reorder
+                    </Text>
+                  )}
+                  {templateListExercises.length === 1 && !isDeleteMode && (
+                    <Text style={{ color: theme.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 3, opacity: 0.8, letterSpacing: 0.2 }}>
+                      1 workout
                     </Text>
                   )}
                   {isDeleteMode && (
