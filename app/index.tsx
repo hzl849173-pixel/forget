@@ -4057,58 +4057,48 @@ export default function SinglePageLandingScreen() {
                     <>
                       <View style={styles.activeSessionHeader}>
                         <View style={{ flex: 1, paddingRight: 8 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                            <Text style={[styles.activeSessionTitle, { color: theme.textPrimary }]}>Active Session</Text>
-                            {loggingMode === 'live' && sessionStartTime > 0 && (
-                              <View
-                                style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  gap: 5,
-                                  paddingVertical: 3,
-                                  paddingHorizontal: 8,
-                                  borderRadius: 99,
-                                  backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
-                                  borderWidth: 1,
-                                  borderColor: isDarkMode ? '#2D2D3A' : '#E5E7EB',
-                                }}
-                              >
-                                <View
-                                  style={{
-                                    width: 6,
-                                    height: 6,
-                                    borderRadius: 3,
-                                    backgroundColor: '#EF4444',
-                                  }}
-                                />
-                                <Text
-                                  style={{
-                                    fontSize: 9,
-                                    fontWeight: '800',
-                                    color: theme.textSecondary,
-                                    letterSpacing: 0.6,
-                                  }}
-                                >
-                                  WORKOUT
-                                </Text>
-                                <Text
-                                  style={{
-                                    fontSize: 11,
-                                    fontWeight: '800',
-                                    color: theme.textPrimary,
-                                    letterSpacing: 0.3,
-                                  }}
-                                >
-                                  {formatElapsedDuration(sessionElapsedSeconds)}
-                                </Text>
-                              </View>
-                            )}
-                          </View>
+                          <Text style={[styles.activeSessionTitle, { color: theme.textPrimary }]}>Active Session</Text>
                           <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary }]}>
-                            {activeSessionExercises.length} exercise{activeSessionExercises.length > 1 ? 's' : ''} logged today
+                            {activeSessionExercises.length} {activeSessionExercises.length === 1 ? 'exercise' : 'exercises'} logged today
                           </Text>
                         </View>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          {loggingMode === 'live' && sessionStartTime > 0 && (
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 5,
+                                paddingVertical: 3.5,
+                                paddingHorizontal: 9,
+                                borderRadius: 99,
+                                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6',
+                                borderWidth: 1,
+                                borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : '#E5E7EB',
+                                marginRight: 2,
+                              }}
+                            >
+                              <View
+                                style={{
+                                  width: 5,
+                                  height: 5,
+                                  borderRadius: 2.5,
+                                  backgroundColor: '#10B981',
+                                }}
+                              />
+                              <Text
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: '700',
+                                  color: theme.textPrimary,
+                                  fontVariant: ['tabular-nums'],
+                                  letterSpacing: 0.2,
+                                }}
+                              >
+                                {formatElapsedDuration(sessionElapsedSeconds)}
+                              </Text>
+                            </View>
+                          )}
                           <TouchableOpacity
                             onPress={() => {
                               setCameFromActiveSessionPlus(true);
