@@ -164,11 +164,9 @@ Exact movement requirements for each bicep exercise:
 ---
 
 ## 5. Phase 4: Shoulders Queue & Autonomous Chained Timer Directive
-When the active quota timer (`task-89`) triggers at **1:48 AM**, the agent will:
-1. Generate the next batch of shoulder movement illustrations (`bb-overhead-press`, `seated-bb-shoulder-press`, `db-shoulder-press`, `arnold-press`, `db-lateral-raise`, etc.).
-2. Compress each render to ~10–15 KB using `scripts/compress-exercise-image.ps1`.
-3. Register them in `constants/exerciseImages.ts`.
-4. **Autonomous Timer Chaining Rule (User Directive)**: Upon exhausting quota during the 1:48 AM run, immediately parse the reset delay from the API response and schedule the NEXT automated timer (~6:35 AM) to keep the pipeline executing completely hands-free until all exercises are done.
+- **Current Status**: The model has hit the weekly generation quota window resetting on **October 15, 2026 at 05:27 UTC (10:57 AM local time)** (`quotaResetDelay`: ~129 hours).
+- **Active Chained Timer**: `task-105` is running in the background, set for ~464,965s (October 15).
+- **On Wake-up**: Generate `bb-overhead-press`, `seated-bb-shoulder-press`, `db-shoulder-press`, `arnold-press`, `db-lateral-raise`, etc., compress via `scripts/compress-exercise-image.ps1`, register in `constants/exerciseImages.ts`, and chain subsequent timers.
 
 ---
 
