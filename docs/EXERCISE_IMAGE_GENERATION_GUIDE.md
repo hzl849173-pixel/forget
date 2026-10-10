@@ -190,9 +190,9 @@ Every shoulder movement now has its dedicated biomechanical render, compressed (
 
 ---
 
-## 6. Phase 5: Back Queue (Active Progress)
+## 6. Phase 5 Completed: Back (100% Distinct Variations Live)
 
-### Completed Back Movements (18 Renders Live & Calibrated to RGB 241.0):
+Every back exercise now has its distinct, exact biomechanical movement and equipment render, compressed (~8–12 KB), debloomed, and calibrated to exact studio gray:
 1. `bb-row.jpg` [9.5 KB] — Standing 45° bent-over barbell row, pulling to lower abdomen, lats & upper back glowing.
 2. `pendlay-row.jpg` [9.3 KB] — Strict torso parallel to floor, explosive barbell pull from dead stop on floor.
 3. `tbar-row.jpg` [10.1 KB] — Straddling landmine/T-bar with V-grip handle, rowing to mid-torso.
@@ -211,18 +211,51 @@ Every shoulder movement now has its dedicated biomechanical render, compressed (
 16. `close-grip-pulldown.jpg` [9.9 KB] — Close-grip triangle V-handle lat pulldown to sternum (shadowless).
 17. `neutral-grip-lat-pulldown.jpg` [11.3 KB] — Parallel-grip neutral lat bar pulldown to upper chest (shadowless).
 18. `wide-grip-lat-pulldown.jpg` [11.6 KB] — Ultra-wide overhand grip lat pulldown for maximum lat width (shadowless).
+19. `single-arm-pulldown.jpg` [11.7 KB] — Seated high cable single-arm pulldown with D-handle to collarbone (shadowless).
+20. `straight-arm-pulldown.jpg` [11.5 KB] — Standing facing high cable tower with straight bar sweeping down to thighs (shadowless).
+21. `cable-back-pullover.jpg` [12.1 KB] — Lying bench high cable lat pullover in wide arching motion (shadowless).
+22. `machine-row.jpg` [11.1 KB] — Seated chest-supported plate-loaded row machine (shadowless).
+23. `pull-ups.jpg` [10.7 KB] — Suspended from overhead pull-up bar with overhand grip, chin clearing bar (shadowless).
+24. `chin-up-back.jpg` [8.8 KB] — Suspended from pull-up bar with underhand supinated grip, chin clearing bar (shadowless).
+25. `inverted-row.jpg` [12.2 KB] — Underneath waist-high barbell in rack, heels on floor, rowing chest to bar (shadowless).
 
-### Remaining Back Queue (7 Movements to Generate):
-19. `single-arm-pulldown`: Seated high cable single-arm pulldown with D-handle to collarbone.
-20. `straight-arm-pulldown`: Standing facing high cable tower with straight bar, arms straight sweeping down to thighs.
-21. `cable-back-pullover`: High cable pullover focusing on lats.
-22. `machine-row`: Seated chest-supported plate-loaded or selectorized machine row.
-23. `pull-ups`: Suspended from straight overhead pull-up bar with overhand grip, chin clearing bar.
-24. `chin-up-back`: Suspended from pull-up bar with underhand supinated grip, chin clearing bar.
-25. `inverted-row`: Underneath waist-high barbell in Smith/rack, heels on floor, rowing chest to bar.
+---
 
-- **Current Burst Quota Reset Timestamp**: Resets in ~4h 50m (approx 20:45 local / 15:15 UTC).
-- **Shadow Direction**: As requested by user, new Back images are generated completely shadowless (no floor shadows / drop shadows).
+## 7. Phase 6: Legs Queue (Active & In Progress)
+
+### Completed Movements (12 Distinct Dedicated Renders Live & Debloomed):
+1. `bb-squat.jpg` [10.3 KB] — High bar back squat at parallel depth, quads & glutes glowing.
+2. `front-squat.jpg` [16.4 KB] — Barbell front rack position across anterior deltoids, upright torso, quads glowing.
+3. `rdl.jpg` [10.2 KB] — Barbell Romanian deadlift hip hinge, hamstrings & glutes glowing.
+4. `stiff-leg-deadlift.jpg` [10.1 KB] — Stiff-legged barbell deadlift from floor, high hips, deep hamstring stretch.
+5. `sumo-deadlift.jpg` [9.6 KB] — Wide sumo stance barbell deadlift, glutes & adductors glowing.
+6. `hip-thrust.jpg` [11.4 KB] — Upper back on bench, barbell across hips at full lockout, glutes glowing.
+7. `bb-walking-lunge.jpg` [14.2 KB] — Barbell on back, walking lunge stride, quads & glutes glowing.
+8. `goblet-squat.jpg` [8.8 KB] — Holding dumbbell vertically at chest, deep squat, quads & glutes glowing.
+9. `bulgarian-split-squat.jpg` [9.9 KB] — Rear foot elevated on bench holding dumbbells, front quad & glute glowing.
+10. `rev-lunge.jpg` [8.9 KB] — Dumbbells in hands, stepping back into reverse lunge, glutes & quads glowing.
+11. `db-rdl.jpg` [8.1 KB] — Bilateral dumbbell Romanian deadlift hip hinge, hamstrings glowing.
+12. `db-stepups.jpg` [9.5 KB] — Stepping up onto plyo box holding dumbbells, working leg glowing.
+
+*Note: Aliases configured in `constants/exerciseImages.ts` for remaining movements until generation queue resumes.*
+
+### Remaining Movements to Generate (When image quota resets):
+13. `single-leg-rdl`: Unilateral single-leg dumbbell Romanian deadlift (currently aliased to `db-rdl`).
+14. `leg-press`: 45-degree sled leg press sled at bottom inflection (currently aliased to `bb-squat`).
+15. `hack-squat`: Hack squat machine sled descending to parallel (currently aliased to `bb-squat`).
+16. `belt-squat`: Belt squat platform with weight loaded at hips (currently aliased to `bb-squat`).
+17. `v-squat-machine`: V-Squat machine facing in/out (currently aliased to `bb-squat`).
+18. `smith-squat`: Smith machine squat with guided vertical barbell (currently aliased to `bb-squat`).
+19. `machine-hip-thrust`: Dedicated machine hip thrust with padded lap bar (currently aliased to `hip-thrust`).
+20. `leg-extensions`: Seated leg extension machine kicking up to lockout, quadriceps glowing (currently aliased to `goblet-squat`).
+21. `lying-leg-curls`: Prone lying leg curl machine curling pad to glutes, hamstrings glowing (currently aliased to `rdl`).
+22. `seated-leg-curls`: Seated leg curl machine curling downward under knees (currently aliased to `rdl`).
+23. `standing-calf-raises`: Standing calf raise machine on toes, gastrocnemius glowing.
+24. `seated-calf-raises`: Seated calf raise machine on knees, soleus glowing.
+25. `calf-press-legpress`: Toes on bottom of leg press sled, calf press extension.
+26. `adductor-machine`: Seated hip adductor machine squeezing thighs inward (currently aliased to `sumo-deadlift`).
+27. `lunges`: Bodyweight stationary lunges (currently aliased to `bb-walking-lunge`).
+28. `glute-bridge`: Floor bodyweight glute bridge with hips driven up (currently aliased to `hip-thrust`).
 
 ---
 
