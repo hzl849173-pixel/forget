@@ -5297,6 +5297,10 @@ export default function SinglePageLandingScreen() {
                     const isFav = liveEx?.isFavorite ?? false;
                     const itemInstrument = item.instrument || 'Other';
                     const itemColor = sectionColorMap[section?.title || ''] || '#6B7280';
+                    const isAlreadyInActive = fromTemplateList
+                      ? templateListExercises.some((le) => le.exerciseId === item.id)
+                      : activeSessionExercises.some((le) => le.exerciseId === item.id);
+                    const isChecked = isAlreadyInActive || selectedPickerExerciseIds.has(item.id);
 
                     return (
                       <View
@@ -5305,6 +5309,115 @@ export default function SinglePageLandingScreen() {
                           { backgroundColor: theme.cardBg, borderColor: theme.borderColor },
                         ]}
                       >
+                        {(fromTemplateList || loggingMode === 'live') && (
+                          <TouchableOpacity
+                            activeOpacity={0.7}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 6 }}
+                            onPress={() => {
+                              if (isChecked) {
+                                if (fromTemplateList) {
+                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                  const updated = templateListExercises.filter((le) => le.exerciseId !== item.id);
+                                  setTemplateListExercises(updated);
+                                  if (activeTemplateId) {
+                                    updateTemplate(activeTemplateId, updated);
+                                  }
+                                  setSelectedPickerExerciseIds((prev) => {
+                                    if (!prev.has(item.id)) return prev;
+                                    const next = new Set(prev);
+                                    next.delete(item.id);
+                                    return next;
+                                  });
+                                } else if (loggingMode === 'live') {
+                                  if (activeSessionExercises.length > 0) {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                    const updated = activeSessionExercises.filter((le) => le.exerciseId !== item.id);
+                                    setActiveSessionExercises(updated);
+                                    AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                                    if (updated.length === 0) {
+                                      setSessionStartTime(0);
+                                      AsyncStorage.removeItem('@session_start_time');
+                                    }
+                                    if (editingModalExerciseId === item.id) {
+                                      setEditingModalExerciseId(null);
+                                    }
+                                    setSelectedPickerExerciseIds((prev) => {
+                                      if (!prev.has(item.id)) return prev;
+                                      const next = new Set(prev);
+                                      next.delete(item.id);
+                                      return next;
+                                    });
+                                  } else {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                    setSelectedPickerExerciseIds((prev) => {
+                                      const next = new Set(prev);
+                                      next.delete(item.id);
+                                      return next;
+                                    });
+                                  }
+                                }
+                              } else {
+                                if (loggingMode === 'live' && !fromTemplateList && activeSessionExercises.length > 0) {
+                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                  const previousLog = getPreviousWorkoutForExercise(item.id);
+                                  const initialSets: WorkoutSet[] = [];
+                                  if (previousLog && previousLog.sets.length > 0) {
+                                    previousLog.sets.forEach((set) => {
+                                      initialSets.push({
+                                        id: generateId(),
+                                        weight: set.weight,
+                                        reps: set.reps,
+                                        isCompleted: false,
+                                        isWeightPrefilled: set.weight > 0,
+                                        isRepsPrefilled: set.reps > 0,
+                                      });
+                                    });
+                                  }
+
+                                  while (initialSets.length < 3) {
+                                    const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
+                                    initialSets.push({
+                                      id: generateId(),
+                                      weight: lastSet ? lastSet.weight : 0,
+                                      reps: lastSet ? lastSet.reps : 0,
+                                      isCompleted: false,
+                                      isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
+                                      isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
+                                    });
+                                  }
+
+                                  const updated = [
+                                    ...activeSessionExercises,
+                                    {
+                                      id: generateId(),
+                                      exerciseId: item.id,
+                                      sets: initialSets,
+                                    },
+                                  ];
+                                  setActiveSessionExercises(updated);
+                                  AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                                } else {
+                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                  setSelectedPickerExerciseIds((prev) => {
+                                    const next = new Set(prev);
+                                    next.add(item.id);
+                                    return next;
+                                  });
+                                }
+                              }
+                            }}
+                            style={[
+                              styles.modalExerciseCheckbox,
+                              {
+                                borderColor: isChecked ? '#10B981' : theme.borderColor,
+                                backgroundColor: isChecked ? '#10B981' : 'transparent',
+                              },
+                            ]}
+                          >
+                            {isChecked && <Check size={11} color="#FFFFFF" strokeWidth={3} />}
+                          </TouchableOpacity>
+                        )}
+
                         <TouchableOpacity
                           style={styles.modalExerciseMainClick}
                           onPress={() => {
@@ -5314,6 +5427,71 @@ export default function SinglePageLandingScreen() {
                             }
 
                             if (fromTemplateList || loggingMode === 'live') {
+                              if (isAlreadyInActive) {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                if (fromTemplateList) {
+                                  const existingInActive = templateListExercises.find((le) => le.exerciseId === item.id);
+                                  setActiveSets(existingInActive ? existingInActive.sets.map((s) => ({ ...s })) : []);
+                                  setSameForAll(true);
+                                  setExerciseNote(existingInActive?.notes || '');
+                                  setExpandedExerciseId(item.id);
+                                  setSelectedModalMuscle(null);
+                                  setSelectedSubGroup(null);
+                                } else {
+                                  const existingInActive = activeSessionExercises.find((le) => le.exerciseId === item.id);
+                                  if (existingInActive) {
+                                    setActiveSets(existingInActive.sets.map((s) => ({ ...s })));
+                                    setSameForAll(true);
+                                    setExerciseNote(existingInActive.notes || '');
+                                    setShowNoteInput(!!existingInActive.notes);
+                                    setEditingModalExerciseId(existingInActive.exerciseId);
+                                  }
+                                }
+                                return;
+                              }
+
+                              if (loggingMode === 'live' && !fromTemplateList && activeSessionExercises.length > 0) {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                const previousLog = getPreviousWorkoutForExercise(item.id);
+                                const initialSets: WorkoutSet[] = [];
+                                if (previousLog && previousLog.sets.length > 0) {
+                                  previousLog.sets.forEach((set) => {
+                                    initialSets.push({
+                                      id: generateId(),
+                                      weight: set.weight,
+                                      reps: set.reps,
+                                      isCompleted: false,
+                                      isWeightPrefilled: set.weight > 0,
+                                      isRepsPrefilled: set.reps > 0,
+                                    });
+                                  });
+                                }
+
+                                while (initialSets.length < 3) {
+                                  const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
+                                  initialSets.push({
+                                    id: generateId(),
+                                    weight: lastSet ? lastSet.weight : 0,
+                                    reps: lastSet ? lastSet.reps : 0,
+                                    isCompleted: false,
+                                    isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
+                                    isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
+                                  });
+                                }
+
+                                const updated = [
+                                  ...activeSessionExercises,
+                                  {
+                                    id: generateId(),
+                                    exerciseId: item.id,
+                                    sets: initialSets,
+                                  },
+                                ];
+                                setActiveSessionExercises(updated);
+                                AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                                return;
+                              }
+
                               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                               setSelectedPickerExerciseIds((prev) => {
                                 const next = new Set(prev);
@@ -5392,19 +5570,6 @@ export default function SinglePageLandingScreen() {
                           delayLongPress={450}
                           activeOpacity={0.65}
                         >
-                          {(fromTemplateList || loggingMode === 'live') && (
-                            <View
-                              style={[
-                                styles.modalExerciseCheckbox,
-                                {
-                                  borderColor: selectedPickerExerciseIds.has(item.id) ? '#10B981' : theme.borderColor,
-                                  backgroundColor: selectedPickerExerciseIds.has(item.id) ? '#10B981' : 'transparent',
-                                },
-                              ]}
-                            >
-                              {selectedPickerExerciseIds.has(item.id) && <Check size={11} color="#FFFFFF" strokeWidth={3} />}
-                            </View>
-                          )}
 
                           <View style={[styles.activeSessionItemAccent, { backgroundColor: itemColor, height: getExerciseIllustration(item.id) ? 36 : 28 }]} />
 
@@ -5646,24 +5811,26 @@ export default function SinglePageLandingScreen() {
                             },
                           ]}
                           onPress={async () => {
-                            if (selectedPickerExerciseIds.size === 0) {
-                              if (activeSessionExercises.length > 0) {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                const first = activeSessionExercises[0];
-                                setActiveSets(first.sets.map((s) => ({ ...s })));
-                                setExerciseNote(first.notes || '');
-                                setShowNoteInput(!!first.notes);
+                            if (activeSessionExercises.length > 0) {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                              const targetToOpen = editingModalExerciseId
+                                ? activeSessionExercises.find(e => e.exerciseId === editingModalExerciseId) || activeSessionExercises[0]
+                                : activeSessionExercises[0];
+                              if (targetToOpen) {
+                                setActiveSets(targetToOpen.sets.map((s) => ({ ...s })));
+                                setExerciseNote(targetToOpen.notes || '');
+                                setShowNoteInput(!!targetToOpen.notes);
                                 setSameForAll(true);
-                                setEditingModalExerciseId(first.exerciseId);
+                                setEditingModalExerciseId(targetToOpen.exerciseId);
                               }
                               return;
                             }
 
+                            if (selectedPickerExerciseIds.size === 0) return;
+
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             const newExercises: LoggedExercise[] = [];
                             selectedPickerExerciseIds.forEach((id) => {
-                              if (activeSessionExercises.some(e => e.exerciseId === id)) return;
-
                               const previousLog = getPreviousWorkoutForExercise(id);
                               const initialSets: WorkoutSet[] = [];
                               if (previousLog && previousLog.sets.length > 0) {
@@ -5697,21 +5864,14 @@ export default function SinglePageLandingScreen() {
                               });
                             });
 
-                            let updatedList = [...activeSessionExercises];
-                            if (newExercises.length > 0) {
-                              updatedList = [...activeSessionExercises, ...newExercises];
-                              setActiveSessionExercises(updatedList);
-                              AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updatedList));
-                            }
+                            setActiveSessionExercises(newExercises);
+                            AsyncStorage.setItem('@active_session_exercises', JSON.stringify(newExercises));
 
-                            if (sessionStartTime === 0) {
-                              const now = Date.now();
-                              setSessionStartTime(now);
-                              AsyncStorage.setItem('@session_start_time', now.toString());
-                            }
+                            const now = Date.now();
+                            setSessionStartTime(now);
+                            AsyncStorage.setItem('@session_start_time', now.toString());
 
-                            // Open first exercise directly into the full-screen modal logger!
-                            const firstToOpen = newExercises[0] || updatedList[0];
+                            const firstToOpen = newExercises[0];
                             if (firstToOpen) {
                               setActiveSets(firstToOpen.sets.map((s) => ({ ...s })));
                               setExerciseNote(firstToOpen.notes || '');
@@ -5724,11 +5884,9 @@ export default function SinglePageLandingScreen() {
                           activeOpacity={0.8}
                         >
                           <Text style={styles.modalFinishBtnText}>
-                            {selectedPickerExerciseIds.size > 0
-                              ? (activeSessionExercises.length > 0
-                                  ? `ADD (${selectedPickerExerciseIds.size})`
-                                  : `START (${selectedPickerExerciseIds.size})`)
-                              : `VIEW SESSION (${activeSessionExercises.length})`}
+                            {activeSessionExercises.length > 0
+                              ? `VIEW SESSION (${activeSessionExercises.length})`
+                              : `START (${selectedPickerExerciseIds.size})`}
                           </Text>
                         </TouchableOpacity>
                       </View>
@@ -5897,9 +6055,12 @@ export default function SinglePageLandingScreen() {
                                   Keyboard.dismiss();
                                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                   if (editingModalExerciseId) {
+                                    const hasValidValues = activeSets.some((s) => s.reps > 0);
                                     const setsToSave = activeSets.map((s) => ({
                                       ...s,
-                                      isCompleted: s.weight > 0 && s.reps > 0 ? true : s.isCompleted,
+                                      isCompleted: hasValidValues ? s.reps > 0 : false,
+                                      isWeightPrefilled: hasValidValues ? false : s.isWeightPrefilled,
+                                      isRepsPrefilled: hasValidValues ? false : s.isRepsPrefilled,
                                     }));
                                     const existingIdx = activeSessionExercises.findIndex((le) => le.exerciseId === editingModalExerciseId);
                                     let updated: LoggedExercise[];
