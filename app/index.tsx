@@ -2070,12 +2070,18 @@ export default function SinglePageLandingScreen() {
     );
     if (curIdx === -1) return;
 
-    if (activeSets.length > 0 && activeSets.some((s) => s.reps > 0)) {
+    if (activeSets.length > 0) {
+      const hasValidValues = activeSets.some((s) => s.reps > 0);
       const updated = activeSessionExercises.map((le, idx) =>
         idx === curIdx
           ? {
               ...le,
-              sets: activeSets.map((s) => ({ ...s, isCompleted: true })),
+              sets: activeSets.map((s) => ({
+                ...s,
+                isCompleted: hasValidValues ? s.reps > 0 : false,
+                isWeightPrefilled: hasValidValues ? false : s.isWeightPrefilled,
+                isRepsPrefilled: hasValidValues ? false : s.isRepsPrefilled,
+              })),
               notes: exerciseNote.trim() || undefined,
             }
           : le
@@ -2134,21 +2140,25 @@ export default function SinglePageLandingScreen() {
     if (targetLoggedExId === editingActiveExerciseId || targetExId === editingActiveExerciseId) return;
 
     if (inPlaceLoggingContext?.source === 'template_list') {
-      if (activeSets.length > 0 && activeSets.some((s) => s.reps > 0)) {
-        const curExId = inPlaceLoggingContext.templateExerciseId;
-        if (curExId) {
-          setTemplateListExercises((prev) =>
-            prev.map((ex) =>
-              ex.exerciseId === curExId
-                ? {
-                    ...ex,
-                    sets: activeSets.filter((s) => s.reps > 0).map((s) => ({ ...s, isCompleted: true, isWeightPrefilled: false, isRepsPrefilled: false })),
-                    notes: exerciseNote.trim() || undefined,
-                  }
-                : ex
-            )
-          );
-        }
+      const curExId = inPlaceLoggingContext.templateExerciseId;
+      if (curExId && activeSets.length > 0) {
+        const hasValidValues = activeSets.some((s) => s.reps > 0);
+        setTemplateListExercises((prev) =>
+          prev.map((ex) =>
+            ex.exerciseId === curExId
+              ? {
+                  ...ex,
+                  sets: activeSets.map((s) => ({
+                    ...s,
+                    isCompleted: hasValidValues ? s.reps > 0 : false,
+                    isWeightPrefilled: hasValidValues ? false : s.isWeightPrefilled,
+                    isRepsPrefilled: hasValidValues ? false : s.isRepsPrefilled,
+                  })),
+                  notes: exerciseNote.trim() || undefined,
+                }
+              : ex
+          )
+        );
       }
 
       const targetTmplEx = templateListExercises.find((le) => le.exerciseId === targetExId);
@@ -2186,11 +2196,12 @@ export default function SinglePageLandingScreen() {
 
     let updatedList = activeSessionExercises;
     if (editingActiveExerciseId && activeSets.length > 0) {
+      const hasValidValues = activeSets.some((s) => s.reps > 0);
       const setsToSave = activeSets.map((s) => ({
         ...s,
-        isCompleted: true,
-        isWeightPrefilled: false,
-        isRepsPrefilled: false,
+        isCompleted: hasValidValues ? s.reps > 0 : false,
+        isWeightPrefilled: hasValidValues ? false : s.isWeightPrefilled,
+        isRepsPrefilled: hasValidValues ? false : s.isRepsPrefilled,
       }));
       const curIdx = activeSessionExercises.findIndex(
         (le) => (le.id ? le.id === editingActiveExerciseId : le.exerciseId === editingActiveExerciseId)
@@ -2548,11 +2559,12 @@ export default function SinglePageLandingScreen() {
 
     // Save current exercise sets if valid
     if (editingModalExerciseId) {
+      const hasValidValues = activeSets.some((s) => s.reps > 0);
       const setsToSave = activeSets.map((s) => ({
         ...s,
-        isCompleted: true,
-        isWeightPrefilled: false,
-        isRepsPrefilled: false,
+        isCompleted: hasValidValues ? s.reps > 0 : false,
+        isWeightPrefilled: hasValidValues ? false : s.isWeightPrefilled,
+        isRepsPrefilled: hasValidValues ? false : s.isRepsPrefilled,
       }));
       const existingIdx = activeSessionExercises.findIndex((le) => le.exerciseId === editingModalExerciseId);
       if (existingIdx !== -1) {
@@ -2594,11 +2606,12 @@ export default function SinglePageLandingScreen() {
     let updated: LoggedExercise[] = [...activeSessionExercises];
 
     if (editingModalExerciseId) {
+      const hasValidValues = activeSets.some((s) => s.reps > 0);
       const setsToSave = activeSets.map((s) => ({
         ...s,
-        isCompleted: true,
-        isWeightPrefilled: false,
-        isRepsPrefilled: false,
+        isCompleted: hasValidValues ? s.reps > 0 : false,
+        isWeightPrefilled: hasValidValues ? false : s.isWeightPrefilled,
+        isRepsPrefilled: hasValidValues ? false : s.isRepsPrefilled,
       }));
       const existingIdx = updated.findIndex((le) => le.exerciseId === editingModalExerciseId);
       if (existingIdx !== -1) {
@@ -2822,65 +2835,57 @@ export default function SinglePageLandingScreen() {
       ? exercisesOverride
       : activeSessionExercises;
 
-    let exercisesToSave: LoggedExercise[];
-
-    if (loggingMode === 'live') {
-      // In Live mode, only include exercises with at least one completed set (reps > 0)
-      exercisesToSave = rawList
-        .map((ex) => ({
-          ...ex,
-          sets: ex.sets.filter((s) => s.reps > 0),
-        }))
-        .filter((ex) => ex.sets.length > 0);
-
-      if (exercisesToSave.length === 0) {
-        showCustomAlert(
-          'Active Session',
-          'You have not logged any workouts in the active session yet.',
-          [{ text: 'OK' }],
-          <Dumbbell size={28} color="#3B82F6" />
-        );
-        return;
-      }
-    } else {
-      exercisesToSave = rawList;
-
-      if (exercisesToSave.length === 0) {
-        showCustomAlert(
-          'Active Session',
-          'You have not logged any workouts in the active session yet.',
-          [{ text: 'OK' }],
-          <Dumbbell size={28} color="#3B82F6" />
-        );
-        return;
-      }
-
-      if (!sessionStartedFromTemplate && !sessionTemplateId) {
-        const hasEmptySets = exercisesToSave.some((ex) => ex.sets.length === 0);
-        if (hasEmptySets) {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          showCustomAlert(
-            'Add Sets',
-            'Please add at least one set with weight and repetitions before saving.',
-            [{ text: 'OK' }],
-            <Flame size={28} color="#EF4444" />
-          );
-          return;
-        }
-
-        const hasInvalidReps = exercisesToSave.some((ex) => ex.sets.some((s) => s.reps <= 0));
-        if (hasInvalidReps) {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          showCustomAlert(
-            'Invalid Reps',
-            'Please ensure all sets have at least 1 repetition before saving.',
-            [{ text: 'OK' }],
-            <Flame size={28} color="#EF4444" />
-          );
-          return;
-        }
-      }
+    if (rawList.length === 0) {
+      showCustomAlert(
+        'Active Session',
+        'You have not logged any workouts in the active session yet.',
+        [{ text: 'OK' }],
+        <Dumbbell size={28} color="#3B82F6" />
+      );
+      return;
     }
+
+    // Strictly validate that NO workout in the session has 0 values
+    const workoutsWithZeroValues = rawList.filter((ex) => {
+      if (!ex.sets || ex.sets.length === 0) return true;
+      const validSets = ex.sets.filter((s) => s.reps > 0);
+      return validSets.length === 0;
+    });
+
+    if (workoutsWithZeroValues.length > 0) {
+      const exNames = workoutsWithZeroValues
+        .map((ex) => exercises.find((e) => e.id === ex.exerciseId)?.name || 'Exercise')
+        .slice(0, 3)
+        .join(', ');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showCustomAlert(
+        'Incomplete Workout',
+        `The following workout has 0 values: ${exNames}. Every workout must have completed repetitions (> 0) before finishing. Please complete your sets or remove unused workouts.`,
+        [{ text: 'OK' }],
+        <Flame size={28} color="#EF4444" />
+      );
+      return;
+    }
+
+    // Check if any entered set has weight > 0 but reps <= 0 (e.g. weight entered without reps)
+    const hasIncompleteSets = rawList.some((ex) =>
+      ex.sets.some((s) => (s.weight > 0 && s.reps <= 0) || (s.isCompleted && s.reps <= 0))
+    );
+    if (hasIncompleteSets) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showCustomAlert(
+        'Invalid Reps',
+        'Please ensure all entered sets have at least 1 repetition before finishing.',
+        [{ text: 'OK' }],
+        <Flame size={28} color="#EF4444" />
+      );
+      return;
+    }
+
+    let exercisesToSave: LoggedExercise[] = rawList.map((ex) => ({
+      ...ex,
+      sets: ex.sets.filter((s) => s.reps > 0),
+    }));
 
     // 1. Synchronously dismiss keyboard and clear all modal/session state in a single frame
     Keyboard.dismiss();
@@ -3840,7 +3845,7 @@ export default function SinglePageLandingScreen() {
                                 const rawName = exDetails?.name || 'Exercise';
                                 const exName = getCompactNavName(rawName);
                                 const mColor = exDetails ? categoryColors[exDetails.muscleGroup] || '#10B981' : '#10B981';
-                                const hasCompletedSets = item.sets.some((s) => s.isCompleted || (!s.isWeightPrefilled && !s.isRepsPrefilled && s.weight > 0 && s.reps > 0));
+                                const hasCompletedSets = item.sets.some((s) => (s.isCompleted && s.reps > 0) || (!s.isWeightPrefilled && !s.isRepsPrefilled && s.weight > 0 && s.reps > 0));
 
                                 return (
                                   <TouchableOpacity
@@ -6002,7 +6007,7 @@ export default function SinglePageLandingScreen() {
                                 const rawName = exDetails?.name || 'Exercise';
                                 const exName = getCompactNavName(rawName);
                                 const mColor = exDetails ? categoryColors[exDetails.muscleGroup] || '#10B981' : '#10B981';
-                                const hasCompletedSets = item.sets.some((s) => s.isCompleted || (!s.isWeightPrefilled && !s.isRepsPrefilled && s.weight > 0 && s.reps > 0));
+                                const hasCompletedSets = item.sets.some((s) => (s.isCompleted && s.reps > 0) || (!s.isWeightPrefilled && !s.isRepsPrefilled && s.weight > 0 && s.reps > 0));
 
                                 return (
                                   <TouchableOpacity
@@ -6363,34 +6368,7 @@ export default function SinglePageLandingScreen() {
                           {/* Footer buttons */}
                           {loggingMode === 'live' ? (
                             <View style={{ gap: 8, marginTop: 8 }}>
-                              <View style={{ flexDirection: 'row', gap: 8 }}>
-                                <TouchableOpacity
-                                  onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    handleSaveModalExercise();
-                                  }}
-                                  style={[
-                                    styles.finishSessionBtn,
-                                    {
-                                      flex: 1,
-                                      backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
-                                      borderWidth: 1,
-                                      borderColor: theme.borderColor,
-                                    }
-                                  ]}
-                                  activeOpacity={0.7}
-                                >
-                                  <Text style={[styles.finishSessionBtnText, { color: theme.textPrimary }]}>
-                                    {(() => {
-                                      const curIdx = activeSessionExercises.findIndex(le => le.exerciseId === editingModalExerciseId);
-                                      if (curIdx !== -1 && curIdx < activeSessionExercises.length - 1) {
-                                        return 'SAVE & NEXT';
-                                      }
-                                      return 'SAVE EXERCISE';
-                                    })()}
-                                  </Text>
-                                </TouchableOpacity>
-
+                              <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
                                 <TouchableOpacity
                                   style={[styles.finishSessionBtn, { flex: 1, backgroundColor: '#10B981' }]}
                                   onPress={handleFinishFromModalLogger}
@@ -7374,11 +7352,12 @@ export default function SinglePageLandingScreen() {
 
                 const saveCurrentSetsToState = () => {
                   if (expandedExerciseId && activeSets.length > 0) {
+                    const hasValidValues = activeSets.some((s) => s.reps > 0);
                     const savedSets = activeSets.map((s) => ({
                       ...s,
-                      isCompleted: true,
-                      isWeightPrefilled: false,
-                      isRepsPrefilled: false,
+                      isCompleted: hasValidValues ? s.reps > 0 : false,
+                      isWeightPrefilled: hasValidValues ? false : s.isWeightPrefilled,
+                      isRepsPrefilled: hasValidValues ? false : s.isRepsPrefilled,
                     }));
                     if (fromTemplateList) {
                       let updatedTmpl = templateListExercises.map((ex) =>
@@ -7416,7 +7395,7 @@ export default function SinglePageLandingScreen() {
                     id: s.id,
                     weight: s.weight,
                     reps: s.reps,
-                    isCompleted: fromTemplateList ? true : s.isCompleted,
+                    isCompleted: s.isCompleted && s.reps > 0,
                     isWeightPrefilled: s.isWeightPrefilled,
                     isRepsPrefilled: s.isRepsPrefilled,
                   }));
@@ -7446,7 +7425,7 @@ export default function SinglePageLandingScreen() {
                     id: s.id,
                     weight: s.weight,
                     reps: s.reps,
-                    isCompleted: fromTemplateList ? true : s.isCompleted,
+                    isCompleted: s.isCompleted && s.reps > 0,
                     isWeightPrefilled: s.isWeightPrefilled,
                     isRepsPrefilled: s.isRepsPrefilled,
                   }));
@@ -7477,7 +7456,7 @@ export default function SinglePageLandingScreen() {
                           const rawName = exDetails?.name || 'Exercise';
                           const exName = getCompactNavName(rawName);
                           const mColor = exDetails ? categoryColors[exDetails.muscleGroup] || '#10B981' : '#10B981';
-                          const hasCompletedSets = item.sets.some((s) => s.isCompleted || (!s.isWeightPrefilled && !s.isRepsPrefilled && s.weight > 0 && s.reps > 0));
+                          const hasCompletedSets = item.sets.some((s) => (s.isCompleted && s.reps > 0) || (!s.isWeightPrefilled && !s.isRepsPrefilled && s.weight > 0 && s.reps > 0));
 
                           return (
                             <TouchableOpacity
