@@ -877,13 +877,22 @@ export default function SinglePageLandingScreen() {
     try {
       if (Platform.OS === 'android') {
         await notifee.createChannel({
-          id: 'workout-alarm-v12',
+          id: 'workout-alarm-v13',
           name: 'Rest Timer Alarm',
           importance: AndroidImportance.HIGH,
           sound: 'alarm',
           vibration: true,
-          vibrationPattern: [100, 400, 200, 400],
+          vibrationPattern: [100, 300],
           bypassDnd: true,
+          visibility: AndroidVisibility.PUBLIC,
+        });
+
+        await notifee.createChannel({
+          id: 'workout-alarm-silent-v13',
+          name: 'Rest Timer Foreground Alert',
+          importance: AndroidImportance.HIGH,
+          sound: undefined,
+          vibration: false,
           visibility: AndroidVisibility.PUBLIC,
         });
       }
@@ -940,12 +949,12 @@ export default function SinglePageLandingScreen() {
           title: "Time's up! ⏱️",
           body: "Rest period over. Time to start your next set!",
           android: {
-            channelId: 'workout-alarm-v12',
+            channelId: 'workout-alarm-v13',
             smallIcon: 'notification_icon',
             color: '#10B981',
             importance: AndroidImportance.HIGH,
             sound: restTimerSound === 'none' ? undefined : 'alarm',
-            vibrationPattern: [100, 400, 200, 400],
+            vibrationPattern: [100, 300],
             ongoing: false,
             autoCancel: true,
             pressAction: { id: 'default' },
@@ -990,7 +999,7 @@ export default function SinglePageLandingScreen() {
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
         staysActiveInBackground: true,
-        shouldDuckAndroid: true,
+        shouldDuckAndroid: false,
         playThroughEarpieceAndroid: false,
       });
 
@@ -1075,12 +1084,10 @@ export default function SinglePageLandingScreen() {
           title: "Time's up! ⏱️",
           body: "Rest period over. Time to start your next set!",
           android: {
-            channelId: 'workout-alarm-v12',
+            channelId: 'workout-alarm-silent-v13',
             smallIcon: 'notification_icon',
             color: '#10B981',
             importance: AndroidImportance.HIGH,
-            sound: undefined,
-            vibrationPattern: [100, 400, 200, 400],
             ongoing: false,
             autoCancel: true,
             pressAction: { id: 'default' },
@@ -1248,15 +1255,27 @@ export default function SinglePageLandingScreen() {
             try {
               await notifee.deleteChannel('workout-alarm-v11');
             } catch (_) {}
+            try {
+              await notifee.deleteChannel('workout-alarm-v12');
+            } catch (_) {}
 
             await notifee.createChannel({
-              id: 'workout-alarm-v12',
+              id: 'workout-alarm-v13',
               name: 'Rest Timer Alarm',
               importance: AndroidImportance.HIGH,
               sound: 'alarm',
               vibration: true,
-              vibrationPattern: [100, 400, 200, 400],
+              vibrationPattern: [100, 300],
               bypassDnd: true,
+              visibility: AndroidVisibility.PUBLIC,
+            });
+
+            await notifee.createChannel({
+              id: 'workout-alarm-silent-v13',
+              name: 'Rest Timer Foreground Alert',
+              importance: AndroidImportance.HIGH,
+              sound: undefined,
+              vibration: false,
               visibility: AndroidVisibility.PUBLIC,
             });
 
@@ -1271,14 +1290,23 @@ export default function SinglePageLandingScreen() {
           } catch (e) {}
 
           try {
-            await Notifications.setNotificationChannelAsync('workout-alarm-v12', {
+            await Notifications.deleteNotificationChannelAsync('workout-alarm-v12').catch(() => {});
+            await Notifications.setNotificationChannelAsync('workout-alarm-v13', {
               name: 'Rest Timer Alarm',
               importance: Notifications.AndroidImportance.MAX,
-              vibrationPattern: [100, 400, 200, 400],
+              vibrationPattern: [100, 300],
               lightColor: '#10B981',
               sound: 'alarm.wav',
               enableVibrate: true,
               bypassDnd: true,
+              lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            });
+
+            await Notifications.setNotificationChannelAsync('workout-alarm-silent-v13', {
+              name: 'Rest Timer Foreground Alert',
+              importance: Notifications.AndroidImportance.MAX,
+              sound: undefined,
+              enableVibrate: false,
               lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
             });
 
