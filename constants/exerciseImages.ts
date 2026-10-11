@@ -178,6 +178,9 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'seated-calf-raises': require('../assets/exercises/seated-calf-raises.jpg'),
   'calf-press-legpress': require('../assets/exercises/calf-press-legpress.jpg'),
   'adductor-machine': require('../assets/exercises/adductor-machine.jpg'),
+  'single-leg-rdl': require('../assets/exercises/single-leg-rdl.jpg'),
+  'lunges': require('../assets/exercises/lunges.jpg'),
+  'glute-bridge': require('../assets/exercises/glute-bridge.jpg'),
 
   // Abs & Core
   'ab-crunch': require('../assets/exercises/ab-crunch.jpg'),
@@ -354,7 +357,7 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'chin-up-back': IMAGES['chin-up-back'],
   'inverted-row': IMAGES['inverted-row'],
 
-  // Legs (25 Dedicated 3D Renders Live - 100% Unique Mappings)
+  // Legs (28 Dedicated 3D Renders Live - 100% Unique Mappings For All 28 Movements)
   'bb-squat': IMAGES['bb-squat'],
   'front-squat': IMAGES['front-squat'],
   'rdl': IMAGES['rdl'],
@@ -366,6 +369,7 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'bulgarian-split-squat': IMAGES['bulgarian-split-squat'],
   'rev-lunge': IMAGES['rev-lunge'],
   'db-rdl': IMAGES['db-rdl'],
+  'single-leg-rdl': IMAGES['single-leg-rdl'],
   'db-stepups': IMAGES['db-stepups'],
   'leg-press': IMAGES['leg-press'],
   'hack-squat': IMAGES['hack-squat'],
@@ -380,6 +384,8 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'seated-calf-raises': IMAGES['seated-calf-raises'],
   'calf-press-legpress': IMAGES['calf-press-legpress'],
   'adductor-machine': IMAGES['adductor-machine'],
+  'lunges': IMAGES['lunges'],
+  'glute-bridge': IMAGES['glute-bridge'],
 
   // Abs & Core (12 Dedicated Renders Live)
   'cable-crunch': IMAGES['cable-crunch'],
