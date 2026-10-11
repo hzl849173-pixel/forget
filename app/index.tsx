@@ -2358,7 +2358,7 @@ export default function SinglePageLandingScreen() {
     setShowNoteInput(false);
     setMainScrollEnabled(true);
 
-    if (loggingMode === 'live') {
+    if (loggingMode === 'live' && !isFromTemplate) {
       startRestTimer(restTimerDuration || 90);
     }
 
@@ -4231,7 +4231,17 @@ export default function SinglePageLandingScreen() {
                         </View>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                           {loggingMode === 'live' && sessionStartTime > 0 && (
-                            <View
+                            <TouchableOpacity
+                              onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                showCustomAlert(
+                                  'Workout Timer',
+                                  'Tracks the total active time elapsed since starting this workout.',
+                                  [{ text: 'Got it' }],
+                                  <Timer size={24} color="#10B981" strokeWidth={2.4} />
+                                );
+                              }}
+                              activeOpacity={0.7}
                               style={{
                                 flexDirection: 'row',
                                 alignItems: 'center',
@@ -4264,7 +4274,7 @@ export default function SinglePageLandingScreen() {
                               >
                                 {formatElapsedDuration(sessionElapsedSeconds)}
                               </Text>
-                            </View>
+                            </TouchableOpacity>
                           )}
                           <TouchableOpacity
                             onPress={() => {
@@ -5023,30 +5033,8 @@ export default function SinglePageLandingScreen() {
                       </Text>
                     </View>
 
-                    {/* Top Horizontal Muscle Switcher with Smooth Centering & Edge Fades */}
+                    {/* Top Horizontal Muscle Switcher */}
                     <View style={styles.modalSwitcherRow}>
-                      <View style={styles.switcherLeftFade} pointerEvents="none">
-                        <Svg height="100%" width="100%">
-                          <Defs>
-                            <SvgGradient id="fadeLeft" x1="0" y1="0" x2="1" y2="0">
-                              <Stop offset="0" stopColor={theme.background} stopOpacity="1" />
-                              <Stop offset="1" stopColor={theme.background} stopOpacity="0" />
-                            </SvgGradient>
-                          </Defs>
-                          <Rect x="0" y="0" width="100%" height="100%" fill="url(#fadeLeft)" />
-                        </Svg>
-                      </View>
-                      <View style={styles.switcherRightFade} pointerEvents="none">
-                        <Svg height="100%" width="100%">
-                          <Defs>
-                            <SvgGradient id="fadeRight" x1="0" y1="0" x2="1" y2="0">
-                              <Stop offset="0" stopColor={theme.background} stopOpacity="1" />
-                              <Stop offset="1" stopColor={theme.background} stopOpacity="0" />
-                            </SvgGradient>
-                          </Defs>
-                          <Rect x="0" y="0" width="100%" height="100%" fill="url(#fadeRight)" />
-                        </Svg>
-                      </View>
 
                       <ScrollView
                         horizontal
