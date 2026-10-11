@@ -92,64 +92,81 @@ export const useWorkoutAnalytics = () => {
       }
     }
 
-    // Streak calculations
+    // Streak calculations (scheduled rest days preserve the streak without inflating the count)
     const historyDates = new Set(history.map((s) => s.date.split('T')[0]));
-    const activeDates: string[] = [];
+    let longestStreak = 0;
+    let currentStreak = 0;
 
     if (historyDates.size > 0) {
-      const datesList = Array.from(historyDates).sort();
-      const firstDate = new Date(datesList[0]);
-      const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
-      
-      const checkDate = new Date(firstDate);
-      while (true) {
-        const dateStr = checkDate.toISOString().split('T')[0];
-        if (dateStr > todayStr) break;
-        
-        const dayOfWeek = checkDate.getDay();
-        const isWorkout = historyDates.has(dateStr);
+      const parseDate = (str: string) => {
+        const [y, m, d] = str.split('-').map(Number);
+        return new Date(y, m - 1, d, 12, 0, 0);
+      };
+      const toDateStr = (d: Date) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      };
+
+      const sortedDates = Array.from(historyDates).sort();
+      const firstDate = parseDate(sortedDates[0]);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+
+      // 1. Longest Streak (across history)
+      let runningStreak = 0;
+      const cursor = new Date(firstDate);
+      while (cursor <= today) {
+        const dStr = toDateStr(cursor);
+        const dayOfWeek = cursor.getDay();
+        const isWorkout = historyDates.has(dStr);
         const isRest = restDaysOfWeek.includes(dayOfWeek);
-        
-        if (isWorkout || isRest) {
-          activeDates.push(dateStr);
-        }
-        
-        checkDate.setDate(checkDate.getDate() + 1);
-      }
-    }
-    
-    let longestStreak = 0;
-    let tempStreak = 0;
-    for (let i = 0; i < activeDates.length; i++) {
-      if (i === 0) {
-        tempStreak = 1;
-      } else {
-        const prevDate = new Date(activeDates[i - 1]);
-        const currDate = new Date(activeDates[i]);
-        const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays === 1) {
-          tempStreak++;
-        } else if (diffDays > 1) {
-          if (tempStreak > longestStreak) longestStreak = tempStreak;
-          tempStreak = 1;
-        }
-      }
-    }
-    if (tempStreak > longestStreak) longestStreak = tempStreak;
 
-    // Current Streak (ending today or yesterday)
-    const todayStr = new Date().toISOString().split('T')[0];
-    const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    const datesSet = new Set(activeDates);
-    let currentStreak = 0;
-    const checkDateStr = datesSet.has(todayStr) ? todayStr : (datesSet.has(yesterdayStr) ? yesterdayStr : null);
+        if (isWorkout) {
+          runningStreak++;
+          if (runningStreak > longestStreak) {
+            longestStreak = runningStreak;
+          }
+        } else if (isRest) {
+          // Scheduled rest day: preserves streak, does not increment
+        } else {
+          // Missed non-rest day: streak broken
+          runningStreak = 0;
+        }
+        cursor.setDate(cursor.getDate() + 1);
+      }
 
-    if (checkDateStr) {
-      const checkDate = new Date(checkDateStr);
-      while (datesSet.has(checkDate.toISOString().split('T')[0])) {
-        currentStreak++;
-        checkDate.setDate(checkDate.getDate() - 1);
+      // 2. Current Active Streak
+      const currCursor = new Date(today);
+      const todayStr = toDateStr(today);
+      const todayIsWorkout = historyDates.has(todayStr);
+
+      if (!todayIsWorkout) {
+        // If user hasn't worked out today yet, check backwards starting from yesterday
+        currCursor.setDate(currCursor.getDate() - 1);
+      }
+
+      while (currCursor >= firstDate) {
+        const dStr = toDateStr(currCursor);
+        const dayOfWeek = currCursor.getDay();
+        const isWorkout = historyDates.has(dStr);
+        const isRest = restDaysOfWeek.includes(dayOfWeek);
+
+        if (isWorkout) {
+          currentStreak++;
+          currCursor.setDate(currCursor.getDate() - 1);
+        } else if (isRest) {
+          // Scheduled rest day: preserves streak, does not increment count
+          currCursor.setDate(currCursor.getDate() - 1);
+        } else {
+          // Missed non-rest day: streak broken
+          break;
+        }
+      }
+
+      if (currentStreak > longestStreak) {
+        longestStreak = currentStreak;
       }
     }
 

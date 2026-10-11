@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_EXERCISES, MuscleGroup, ExerciseSeed, Instrument } from '../constants/exercises';
+import { DAY_NAME_TO_INDEX, INDEX_TO_DAY_NAME } from '@/lib/profile/profileStorage';
 
 export interface WorkoutSet {
   id: string;
@@ -461,8 +462,31 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
 
         const storedRestDays = await AsyncStorage.getItem(STORAGE_KEYS.REST_DAYS_OF_WEEK);
+        let parsedRestDays: number[] | null = null;
         if (storedRestDays !== null) {
-          setRestDaysOfWeek(JSON.parse(storedRestDays));
+          try {
+            const p = JSON.parse(storedRestDays);
+            if (Array.isArray(p)) parsedRestDays = p;
+          } catch (_) {}
+        }
+
+        if (parsedRestDays !== null && parsedRestDays.length > 0) {
+          setRestDaysOfWeek(parsedRestDays);
+        } else {
+          // Fallback: check onboarding rest days saved as string names
+          try {
+            const rawOnboarding = (await AsyncStorage.getItem('@profile_rest_days')) || (await AsyncStorage.getItem('@user_rest_days'));
+            if (rawOnboarding) {
+              const strArr: string[] = JSON.parse(rawOnboarding);
+              if (Array.isArray(strArr) && strArr.length > 0) {
+                const numArr = strArr.map((d) => DAY_NAME_TO_INDEX[d]).filter((n) => typeof n === 'number');
+                if (numArr.length > 0) {
+                  setRestDaysOfWeek(numArr);
+                  await AsyncStorage.setItem(STORAGE_KEYS.REST_DAYS_OF_WEEK, JSON.stringify(numArr));
+                }
+              }
+            }
+          } catch (_) {}
         }
       } catch (error) {
         console.error('Failed to load local storage workout data:', error);
@@ -736,6 +760,11 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
     setRestDaysOfWeek(newDays);
     await AsyncStorage.setItem(STORAGE_KEYS.REST_DAYS_OF_WEEK, JSON.stringify(newDays));
+    const strDays = newDays.map((n) => INDEX_TO_DAY_NAME[n]).filter(Boolean);
+    await Promise.all([
+      AsyncStorage.setItem('@profile_rest_days', JSON.stringify(strDays)),
+      AsyncStorage.setItem('@user_rest_days', JSON.stringify(strDays)),
+    ]);
   };
 
   return (

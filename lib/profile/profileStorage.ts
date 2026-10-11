@@ -73,15 +73,47 @@ export async function loadLocalProfile(): Promise<OnboardingProfile | null> {
     };
 }
 
+export const DAY_NAME_TO_INDEX: Record<string, number> = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
+};
+
+export const INDEX_TO_DAY_NAME: Record<number, string> = {
+    0: 'Sunday',
+    1: 'Monday',
+    2: 'Tuesday',
+    3: 'Wednesday',
+    4: 'Thursday',
+    5: 'Friday',
+    6: 'Saturday',
+};
+
 export async function saveLocalRestDays(days: string[]) {
+    const numericDays = days
+        .map((d) => DAY_NAME_TO_INDEX[d])
+        .filter((n) => typeof n === 'number');
+
     await Promise.all([
         AsyncStorage.setItem(KEYS.REST_DAYS, JSON.stringify(days)),
         AsyncStorage.setItem('@user_rest_days', JSON.stringify(days)),
+        AsyncStorage.setItem('@workout_journal_rest_days_of_week', JSON.stringify(numericDays)),
     ]);
 }
 
 export async function loadLocalRestDays(): Promise<string[]> {
     try {
+        const numRaw = await AsyncStorage.getItem('@workout_journal_rest_days_of_week');
+        if (numRaw) {
+            const parsedNums: number[] = JSON.parse(numRaw);
+            if (Array.isArray(parsedNums) && parsedNums.length > 0) {
+                return parsedNums.map((n) => INDEX_TO_DAY_NAME[n]).filter(Boolean);
+            }
+        }
         const raw = (await AsyncStorage.getItem(KEYS.REST_DAYS)) || (await AsyncStorage.getItem('@user_rest_days'));
         if (raw) {
             const parsed = JSON.parse(raw);
