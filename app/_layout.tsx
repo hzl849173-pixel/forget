@@ -42,14 +42,14 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
             title: "Time's up! ⏱️",
             body: "Rest period over. Time to start your next set!",
             android: {
-              channelId: 'workout-alarm-v11',
+              channelId: 'workout-alarm-v12',
               smallIcon: 'notification_icon',
               color: '#10B981',
               importance: AndroidImportance.HIGH,
-              sound: 'default',
-              vibrationPattern: [100, 500, 250, 500],
-              ongoing: true,
-              autoCancel: false,
+              sound: 'alarm',
+              vibrationPattern: [100, 400, 200, 400],
+              ongoing: false,
+              autoCancel: true,
               pressAction: { id: 'default' },
               actions: [
                 {
@@ -57,10 +57,13 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
                   pressAction: { id: 'add-30s' },
                 },
                 {
-                  title: 'DISMISS',
+                  title: 'READY',
                   pressAction: { id: 'stop-alarm' },
                 },
               ],
+            },
+            ios: {
+              sound: 'alarm.wav',
             },
           },
           {

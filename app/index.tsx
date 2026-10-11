@@ -20,8 +20,11 @@ import {
   Trash2,
   Trophy,
   User,
+  Volume2,
+  VolumeX,
   X
 } from 'lucide-react-native';
+import { Audio } from 'expo-av';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -840,6 +843,23 @@ export default function SinglePageLandingScreen() {
   const notificationIdRef = React.useRef<string | null>(null);
   const soundObjectRef = React.useRef<any>(null);
 
+  useEffect(() => {
+    AsyncStorage.getItem('@workout_rest_timer_sound')
+      .then((val) => {
+        if (val === 'alarm' || val === 'none') {
+          setRestTimerSound(val);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const toggleRestTimerSound = async () => {
+    const next = restTimerSound === 'alarm' ? 'none' : 'alarm';
+    setRestTimerSound(next);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await AsyncStorage.setItem('@workout_rest_timer_sound', next).catch(() => {});
+  };
+
   const ensureNotificationPermission = async () => {
     try {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -852,6 +872,21 @@ export default function SinglePageLandingScreen() {
 
     try {
       await notifee.requestPermission();
+    } catch (e) {}
+
+    try {
+      if (Platform.OS === 'android') {
+        await notifee.createChannel({
+          id: 'workout-alarm-v12',
+          name: 'Rest Timer Alarm',
+          importance: AndroidImportance.HIGH,
+          sound: 'alarm',
+          vibration: true,
+          vibrationPattern: [100, 400, 200, 400],
+          bypassDnd: true,
+          visibility: AndroidVisibility.PUBLIC,
+        });
+      }
     } catch (e) {}
   };
 
@@ -905,14 +940,14 @@ export default function SinglePageLandingScreen() {
           title: "Time's up! ⏱️",
           body: "Rest period over. Time to start your next set!",
           android: {
-            channelId: 'workout-alarm-v11',
+            channelId: 'workout-alarm-v12',
             smallIcon: 'notification_icon',
             color: '#10B981',
             importance: AndroidImportance.HIGH,
-            sound: 'default',
-            vibrationPattern: [100, 500, 250, 500],
-            ongoing: true,
-            autoCancel: false,
+            sound: restTimerSound === 'none' ? undefined : 'alarm',
+            vibrationPattern: [100, 400, 200, 400],
+            ongoing: false,
+            autoCancel: true,
             pressAction: { id: 'default' },
             actions: [
               {
@@ -920,10 +955,13 @@ export default function SinglePageLandingScreen() {
                 pressAction: { id: 'add-30s' },
               },
               {
-                title: 'DISMISS',
+                title: 'READY',
                 pressAction: { id: 'stop-alarm' },
               },
             ],
+          },
+          ios: {
+            sound: restTimerSound === 'none' ? undefined : 'alarm.wav',
           },
         },
         trigger
@@ -937,8 +975,61 @@ export default function SinglePageLandingScreen() {
     }
   };
 
-  const playTimerSound = async () => {};
-  const stopTimerSound = async () => {};
+  const playTimerSound = async () => {
+    try {
+      if (restTimerSound === 'none') return;
+
+      if (soundObjectRef.current) {
+        try {
+          await soundObjectRef.current.stopAsync();
+          await soundObjectRef.current.unloadAsync();
+        } catch (_) {}
+        soundObjectRef.current = null;
+      }
+
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+
+      const soundFile = require('@/assets/sounds/alarm.wav');
+      const { sound } = await Audio.Sound.createAsync(
+        soundFile,
+        {
+          shouldPlay: true,
+          isLooping: false,
+          volume: 1.0,
+        },
+        (status: any) => {
+          if (status.isLoaded && status.didJustFinish) {
+            try {
+              sound.unloadAsync().catch(() => {});
+            } catch (_) {}
+            if (soundObjectRef.current === sound) {
+              soundObjectRef.current = null;
+            }
+          }
+        }
+      );
+      soundObjectRef.current = sound;
+    } catch (e) {
+      console.warn('Sound playback failed:', e);
+    }
+  };
+
+  const stopTimerSound = async () => {
+    if (soundObjectRef.current) {
+      try {
+        await soundObjectRef.current.stopAsync();
+      } catch (_) {}
+      try {
+        await soundObjectRef.current.unloadAsync();
+      } catch (_) {}
+      soundObjectRef.current = null;
+    }
+  };
 
   const formatRestTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -956,8 +1047,6 @@ export default function SinglePageLandingScreen() {
     return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
 
-
-
   const handleTimerFinished = async () => {
     if (restTimerRef.current) clearInterval(restTimerRef.current);
     restTimerRef.current = null;
@@ -968,11 +1057,47 @@ export default function SinglePageLandingScreen() {
     await AsyncStorage.removeItem('@workout_rest_timer_target_end').catch(() => {});
     await AsyncStorage.removeItem('@workout_rest_timer_duration').catch(() => {});
 
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    // Play pleasant, properly audible sound (non-looping chime)
+    if (restTimerSound !== 'none') {
+      playTimerSound();
+    }
+
     const isMinimized = AppState.currentState !== 'active';
 
     if (!isMinimized) {
       cancelRestTimerNotification();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      try {
+        await notifee.displayNotification({
+          id: 'workout-alarm-trigger',
+          title: "Time's up! ⏱️",
+          body: "Rest period over. Time to start your next set!",
+          android: {
+            channelId: 'workout-alarm-v12',
+            smallIcon: 'notification_icon',
+            color: '#10B981',
+            importance: AndroidImportance.HIGH,
+            sound: undefined,
+            vibrationPattern: [100, 400, 200, 400],
+            ongoing: false,
+            autoCancel: true,
+            pressAction: { id: 'default' },
+            actions: [
+              {
+                title: '+ 30s',
+                pressAction: { id: 'add-30s' },
+              },
+              {
+                title: 'READY',
+                pressAction: { id: 'stop-alarm' },
+              },
+            ],
+          },
+        });
+      } catch (err) {}
+
       showCustomAlert(
         'Rest Finished',
         'Time to start your next set!',
@@ -982,6 +1107,7 @@ export default function SinglePageLandingScreen() {
             color: '#38BDF8',
             bgColor: isDarkMode ? 'rgba(56, 189, 248, 0.15)' : '#E0F2FE',
             onPress: () => {
+              stopTimerSound();
               startRestTimer(30);
             },
           },
@@ -989,7 +1115,9 @@ export default function SinglePageLandingScreen() {
             text: 'READY',
             color: '#10B981',
             bgColor: isDarkMode ? 'rgba(16, 185, 129, 0.15)' : '#DCFCE7',
-            onPress: () => {},
+            onPress: () => {
+              stopTimerSound();
+            },
           },
         ],
         <Timer size={28} color="#10B981" />
@@ -1117,13 +1245,17 @@ export default function SinglePageLandingScreen() {
       try {
         if (Platform.OS === 'android') {
           try {
+            try {
+              await notifee.deleteChannel('workout-alarm-v11');
+            } catch (_) {}
+
             await notifee.createChannel({
-              id: 'workout-alarm-v11',
-              name: 'Workout Alarm',
+              id: 'workout-alarm-v12',
+              name: 'Rest Timer Alarm',
               importance: AndroidImportance.HIGH,
-              sound: 'default',
+              sound: 'alarm',
               vibration: true,
-              vibrationPattern: [100, 500, 250, 500],
+              vibrationPattern: [100, 400, 200, 400],
               bypassDnd: true,
               visibility: AndroidVisibility.PUBLIC,
             });
@@ -1139,12 +1271,12 @@ export default function SinglePageLandingScreen() {
           } catch (e) {}
 
           try {
-            await Notifications.setNotificationChannelAsync('workout-alarm-v11', {
-              name: 'Workout Alarm',
+            await Notifications.setNotificationChannelAsync('workout-alarm-v12', {
+              name: 'Rest Timer Alarm',
               importance: Notifications.AndroidImportance.MAX,
-              vibrationPattern: [100, 500, 250, 500],
+              vibrationPattern: [100, 400, 200, 400],
               lightColor: '#10B981',
-              sound: 'default',
+              sound: 'alarm.wav',
               enableVibrate: true,
               bypassDnd: true,
               lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
@@ -1167,8 +1299,10 @@ export default function SinglePageLandingScreen() {
     const unsubscribeForeground = notifee.onForegroundEvent(({ type, detail }) => {
       if (type === EventType.ACTION_PRESS) {
         if (detail.pressAction?.id === 'stop-alarm') {
+          stopTimerSound();
           stopRestTimer();
         } else if (detail.pressAction?.id === 'add-30s') {
+          stopTimerSound();
           startRestTimer(30);
         }
       } else if (type === EventType.PRESS) {
@@ -6504,6 +6638,24 @@ export default function SinglePageLandingScreen() {
             <View style={[styles.timerCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
               <TouchableOpacity
                 style={[
+                  styles.timerSoundToggleBtn,
+                  {
+                    backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
+                    borderColor: theme.borderColor,
+                  },
+                ]}
+                onPress={toggleRestTimerSound}
+                activeOpacity={0.7}
+              >
+                {restTimerSound === 'alarm' ? (
+                  <Volume2 size={13} color="#10B981" strokeWidth={2.4} />
+                ) : (
+                  <VolumeX size={13} color={theme.textSecondary} strokeWidth={2.2} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
                   styles.timerCloseBtn,
                   {
                     backgroundColor: isDarkMode ? '#1E1E28' : '#F3F4F6',
@@ -10336,6 +10488,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
+  },
+  timerSoundToggleBtn: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F3F4F6',
   },
   timerCloseBtn: {
     position: 'absolute',
