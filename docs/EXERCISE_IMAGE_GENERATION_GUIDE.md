@@ -223,7 +223,7 @@ Every back exercise now has its distinct, exact biomechanical movement and equip
 
 ## 7. Phase 6: Legs Queue (Active & In Progress)
 
-### Completed Movements (12 Distinct Dedicated Renders Live & Debloomed):
+### Completed Movements (25 Distinct Dedicated Renders Live, Compressed & Calibrated):
 1. `bb-squat.jpg` [10.3 KB] — High bar back squat at parallel depth, quads & glutes glowing.
 2. `front-squat.jpg` [16.4 KB] — Barbell front rack position across anterior deltoids, upright torso, quads glowing.
 3. `rdl.jpg` [10.2 KB] — Barbell Romanian deadlift hip hinge, hamstrings & glutes glowing.
@@ -236,26 +236,24 @@ Every back exercise now has its distinct, exact biomechanical movement and equip
 10. `rev-lunge.jpg` [8.9 KB] — Dumbbells in hands, stepping back into reverse lunge, glutes & quads glowing.
 11. `db-rdl.jpg` [8.1 KB] — Bilateral dumbbell Romanian deadlift hip hinge, hamstrings glowing.
 12. `db-stepups.jpg` [9.5 KB] — Stepping up onto plyo box holding dumbbells, working leg glowing.
+13. `leg-press.jpg` [16.0 KB] — 45-degree sled leg press machine pressing footplate upward, quadriceps & glutes glowing.
+14. `hack-squat.jpg` [16.2 KB] — Angled 45-degree hack squat machine with back on pad and shoulder pads engaged.
+15. `leg-extensions.jpg` [13.7 KB] — Seated leg extension machine kicking shins upward to lockout, quadriceps glowing.
+16. `lying-leg-curls.jpg` [13.0 KB] — Prone lying leg curl machine curling heel roller pad to glutes, hamstrings glowing.
+17. `seated-leg-curls.jpg` [13.4 KB] — Seated leg curl machine curling downward under knees, hamstrings glowing.
+18. `standing-calf-raises.jpg` [10.7 KB] — Standing machine calf raise on tiptoes in full plantarflexion, calves glowing.
+19. `seated-calf-raises.jpg` [12.6 KB] — Seated calf raise machine with padded lever on knees, soleus glowing.
+20. `adductor-machine.jpg` [13.1 KB] — Seated hip adductor machine squeezing padded knee levers together, inner thighs glowing.
+21. `machine-hip-thrust.jpg` [12.0 KB] — Dedicated machine hip thrust with padded lap bar over pelvis, full glute lockout.
+22. `smith-squat.jpg` [14.3 KB] — Smith machine squat with guided vertical barbell along fixed rails.
+23. `belt-squat.jpg` [12.5 KB] — Belt squat platform with weight loaded at hips/lever, deep squat.
+24. `v-squat-machine.jpg` [14.2 KB] — V-Squat machine facing inward/outward with shoulder pads along arc trajectory.
+25. `calf-press-legpress.jpg` [14.0 KB] — Toes on bottom edge of leg press footplate, ankles extending sled, calves glowing.
 
-*Note: All remaining movements currently mapped to seamless biomechanical stand-in aliases in `constants/exerciseImages.ts`.*
-
-### Remaining Movements to Generate (Quota Reset: October 17, 2026 ~10:00 UTC):
-13. `single-leg-rdl`: Unilateral single-leg dumbbell Romanian deadlift (aliased to `db-rdl`).
-14. `leg-press`: 45-degree sled leg press sled at bottom inflection (aliased to `bb-squat`).
-15. `hack-squat`: Hack squat machine sled descending to parallel (aliased to `bb-squat`).
-16. `belt-squat`: Belt squat platform with weight loaded at hips (aliased to `bb-squat`).
-17. `v-squat-machine`: V-Squat machine facing in/out (aliased to `bb-squat`).
-18. `smith-squat`: Smith machine squat with guided vertical barbell (aliased to `bb-squat`).
-19. `machine-hip-thrust`: Dedicated machine hip thrust with padded lap bar (aliased to `hip-thrust`).
-20. `leg-extensions`: Seated leg extension machine kicking up to lockout, quadriceps glowing (aliased to `goblet-squat`).
-21. `lying-leg-curls`: Prone lying leg curl machine curling pad to glutes, hamstrings glowing (aliased to `rdl`).
-22. `seated-leg-curls`: Seated leg curl machine curling downward under knees (aliased to `rdl`).
-23. `standing-calf-raises`: Standing calf raise machine on toes, gastrocnemius glowing (aliased to `db-stepups`).
-24. `seated-calf-raises`: Seated calf raise machine on knees, soleus glowing (aliased to `db-stepups`).
-25. `calf-press-legpress`: Toes on bottom of leg press sled, calf press extension (aliased to `bb-squat`).
-26. `adductor-machine`: Seated hip adductor machine squeezing thighs inward (aliased to `sumo-deadlift`).
-27. `lunges`: Bodyweight stationary lunges (aliased to `bb-walking-lunge`).
-28. `glute-bridge`: Floor bodyweight glute bridge with hips driven up (aliased to `hip-thrust`).
+### Remaining 3 Movements to Generate (Rolling Quota Window):
+26. `single-leg-rdl`: Unilateral single-leg dumbbell Romanian deadlift with rear leg extended back horizontally.
+27. `lunges`: Bodyweight athletic stationary lunge stride with 90° knee bend.
+28. `glute-bridge`: Floor bodyweight glute bridge with knees bent and hips driven upward into full bridge extension.
 
 ---
 
