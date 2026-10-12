@@ -79,6 +79,7 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'cable-kickback': require('../assets/exercises/cable-kickback.jpg'),
   'weighted-dips': require('../assets/exercises/weighted-dips.jpg'),
   'close-grip-pushups': require('../assets/exercises/close-grip-pushups.jpg'),
+  'two-arm-db-kickbacks': require('../assets/exercises/two-arm-db-kickbacks.jpg'),
   // Biceps
   'bb-curl': require('../assets/exercises/bb-curl.jpg'),
   'ez-bar-curl': require('../assets/exercises/ez-bar-curl.jpg'),
@@ -269,6 +270,7 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
 
   // Triceps Kickbacks
   'db-kickbacks': IMAGES['db-kickbacks'],
+  'two-arm-db-kickbacks': IMAGES['two-arm-db-kickbacks'],
   'cable-one-arm-kickback': IMAGES['cable-kickback'],
   'cable-kickback': IMAGES['cable-kickback'],
 
@@ -302,6 +304,8 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'cable-rope-curl': IMAGES['cable-rope-curl'],
   'cable-hammer-curl': IMAGES['cable-rope-curl'],
   'bayesian-cable-curl': IMAGES['bayesian-cable-curl'],
+  'behind-the-body-cable-curl': IMAGES['bayesian-cable-curl'],
+  'behind-the-back-cable-curl': IMAGES['bayesian-cable-curl'],
   'rev-db-curl': IMAGES['rev-db-curl'],
   'rev-bb-curl': IMAGES['rev-bb-curl'],
   'rev-ez-bar-curl': IMAGES['rev-ez-bar-curl'],
@@ -327,6 +331,7 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'face-pull-back': IMAGES['face-pull'],
   'reverse-cable-fly': IMAGES['cable-rear-delt-fly'],
   'cable-rear-delt-row': IMAGES['cable-rear-delt-row'],
+  'cable-rear-delt-row-back': IMAGES['cable-rear-delt-row'],
   'machine-shoulder-press': IMAGES['machine-shoulder-press'],
   'smith-shoulder-press': IMAGES['smith-shoulder-press'],
   'machine-lateral-raise': IMAGES['machine-lateral-raise'],

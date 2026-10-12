@@ -94,6 +94,7 @@ export const SHOULDER_EXERCISE_IDS = new Set([
   'cable-lateral-raise',
   'cable-front-raise',
   'cable-rear-delt-fly',
+  'cable-rear-delt-row',
   'cable-upright-row',
   'face-pull',
   'machine-shoulder-press',
@@ -170,6 +171,7 @@ export const DEFAULT_EXERCISES: ExerciseSeed[] = [
   { id: 'lying-db-ext', name: 'Lying Dumbbell Extension', muscleGroup: 'Triceps', instrument: 'Dumbbell', target: 'Long Head', isCustom: false, isFavorite: false },
   { id: 'single-arm-db-overhead-ext', name: 'Single-Arm Dumbbell Overhead Extension', muscleGroup: 'Triceps', instrument: 'Dumbbell', target: 'Long Head', isCustom: false, isFavorite: false },
   { id: 'db-kickbacks', name: 'Dumbbell Kickbacks', muscleGroup: 'Triceps', instrument: 'Dumbbell', target: 'Lateral Head', isCustom: false, isFavorite: false },
+  { id: 'two-arm-db-kickbacks', name: 'Two-Arm Dumbbell Kickbacks', muscleGroup: 'Triceps', instrument: 'Dumbbell', target: 'Lateral & Long Heads', isCustom: false, isFavorite: false },
   { id: 'two-arm-db-overhead-ext', name: 'Two-Arm Overhead DB Extension', muscleGroup: 'Triceps', instrument: 'Dumbbell', target: 'Long Head', isCustom: false, isFavorite: false },
 
   // -- Bodyweight --
@@ -244,7 +246,7 @@ export const DEFAULT_EXERCISES: ExerciseSeed[] = [
   { id: 'straight-arm-pulldown', name: 'Straight Arm Pulldown', muscleGroup: 'Back', instrument: 'Cable', target: 'Lower Lats', isCustom: false, isFavorite: false },
   { id: 'cable-back-pullover', name: 'Cable Pullover', muscleGroup: 'Back', instrument: 'Cable', target: 'Lower Lats', isCustom: false, isFavorite: false },
   { id: 'face-pull-back', name: 'Face Pull', muscleGroup: 'Back', instrument: 'Cable', target: 'Rear Delts & Upper Back', isCustom: false, isFavorite: false },
-  { id: 'cable-rear-delt-row', name: 'Cable Rear Delt Row', muscleGroup: 'Back', instrument: 'Cable', target: 'Rear Delts & Upper Back', isCustom: false, isFavorite: false },
+  { id: 'cable-rear-delt-row-back', name: 'Cable Rear Delt Row', muscleGroup: 'Back', instrument: 'Cable', target: 'Rear Delts & Upper Back', isCustom: false, isFavorite: false },
   { id: 'reverse-cable-fly', name: 'Reverse Cable Fly', muscleGroup: 'Back', instrument: 'Cable', target: 'Rear Delts', isCustom: false, isFavorite: false },
 
   // -- Machine --
@@ -277,6 +279,7 @@ export const DEFAULT_EXERCISES: ExerciseSeed[] = [
   { id: 'cable-lateral-raise', name: 'Cable Lateral Raise', muscleGroup: 'Shoulders', instrument: 'Cable', target: 'Side Delts', isCustom: false, isFavorite: false },
   { id: 'cable-front-raise', name: 'Cable Front Raise', muscleGroup: 'Shoulders', instrument: 'Cable', target: 'Front Delts', isCustom: false, isFavorite: false },
   { id: 'cable-rear-delt-fly', name: 'Cable Rear Delt Fly', muscleGroup: 'Shoulders', instrument: 'Cable', target: 'Rear Delts', isCustom: false, isFavorite: false },
+  { id: 'cable-rear-delt-row', name: 'Cable Rear Delt Row', muscleGroup: 'Shoulders', instrument: 'Cable', target: 'Rear Delts & Upper Back', isCustom: false, isFavorite: false },
   { id: 'cable-upright-row', name: 'Cable Upright Row', muscleGroup: 'Shoulders', instrument: 'Cable', target: 'Side Delts & Traps', isCustom: false, isFavorite: false },
   { id: 'face-pull', name: 'Face Pull', muscleGroup: 'Shoulders', instrument: 'Cable', target: 'Rear Delts & Upper Back', isCustom: false, isFavorite: false },
 
@@ -467,7 +470,7 @@ export const MOVEMENT_PATTERN_GROUPS: string[][] = [
   // Lateral Raises (Side Delts)
   ['db-lateral-raise', 'leaning-db-lateral-raise', 'cable-lateral-raise', 'machine-lateral-raise'],
   // Rear Delts (Posterior Delts)
-  ['reverse-pec-deck', 'machine-rear-delt-fly', 'face-pull', 'face-pull-back', 'cable-rear-delt-fly', 'cable-rear-delt-row', 'reverse-cable-fly', 'db-rear-delt-fly'],
+  ['reverse-pec-deck', 'machine-rear-delt-fly', 'face-pull', 'face-pull-back', 'cable-rear-delt-fly', 'cable-rear-delt-row', 'cable-rear-delt-row-back', 'reverse-cable-fly', 'db-rear-delt-fly'],
   // Front Delts / Upright Pulls
   ['bb-upright-row', 'ez-bar-upright-row', 'db-upright-row', 'cable-upright-row', 'db-front-raise', 'cable-front-raise', 'plate-front-raise'],
 
@@ -483,7 +486,7 @@ export const MOVEMENT_PATTERN_GROUPS: string[][] = [
   // Compound Presses & Dips
   ['close-grip-bench', 'bench-dips', 'weighted-dips', 'tricep-dip-machine', 'close-grip-pushups', 'diamond-pushups'],
   // Kickbacks
-  ['db-kickbacks', 'cable-kickback'],
+  ['db-kickbacks', 'two-arm-db-kickbacks', 'cable-kickback'],
 
   // ==========================
   // BICEPS VARIATION FAMILIES
@@ -1133,6 +1136,22 @@ export const STAPLE_REPLACEMENT_MAP: Record<string, string[]> = {
     'face-pull',
     'machine-rear-delt-fly',
     'db-rear-delt-fly',
+    'cable-rear-delt-row',
+  ],
+  // Cable Rear Delt Row
+  'cable-rear-delt-row': [
+    'face-pull',
+    'cable-rear-delt-fly',
+    'reverse-pec-deck',
+    'machine-rear-delt-fly',
+    'db-rear-delt-fly',
+  ],
+  'cable-rear-delt-row-back': [
+    'face-pull-back',
+    'face-pull',
+    'cable-rear-delt-fly',
+    'reverse-pec-deck',
+    'machine-rear-delt-fly',
   ],
   // Upright Rows
   'bb-upright-row': [
