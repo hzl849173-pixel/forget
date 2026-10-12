@@ -141,7 +141,6 @@ export const DEFAULT_EXERCISES: ExerciseSeed[] = [
 
   // -- Bodyweight --
   { id: 'push-ups', name: 'Push-up', muscleGroup: 'Chest', instrument: 'Bodyweight', target: 'Mid Chest & Core', isCustom: false, isFavorite: false },
-  { id: 'weighted-pushups', name: 'Weighted Push-ups', muscleGroup: 'Chest', instrument: 'Bodyweight', target: 'Mid Chest', isCustom: false, isFavorite: false },
   { id: 'incline-pushup', name: 'Incline Push-up', muscleGroup: 'Chest', instrument: 'Bodyweight', target: 'Lower Chest', isCustom: false, isFavorite: false },
   { id: 'decline-pushup', name: 'Decline Push-up', muscleGroup: 'Chest', instrument: 'Bodyweight', target: 'Upper Chest', isCustom: false, isFavorite: false },
   { id: 'chest-dips', name: 'Parallel Bar Chest Dips', muscleGroup: 'Chest', instrument: 'Bodyweight', target: 'Lower Chest', isCustom: false, isFavorite: false },
@@ -158,7 +157,6 @@ export const DEFAULT_EXERCISES: ExerciseSeed[] = [
   { id: 'rev-grip-pushdown', name: 'Reverse Grip Tricep Pushdown', muscleGroup: 'Triceps', instrument: 'Cable', target: 'Medial Head', isCustom: false, isFavorite: false },
   { id: 'cable-overhead-ext', name: 'Overhead Cable Extension', muscleGroup: 'Triceps', instrument: 'Cable', target: 'Long Head', isCustom: false, isFavorite: false },
   { id: 'cable-rope-overhead', name: 'Cable Overhead Rope Extension', muscleGroup: 'Triceps', instrument: 'Cable', target: 'Long Head', isCustom: false, isFavorite: false },
-  { id: 'cable-one-arm-kickback', name: 'Cable One-Arm Kickback', muscleGroup: 'Triceps', instrument: 'Cable', target: 'Lateral Head', isCustom: false, isFavorite: false },
   { id: 'cable-kickback', name: 'Cable Kickback', muscleGroup: 'Triceps', instrument: 'Cable', target: 'Lateral Head', isCustom: false, isFavorite: false },
 
   // -- Barbell --
@@ -169,9 +167,8 @@ export const DEFAULT_EXERCISES: ExerciseSeed[] = [
   { id: 'close-grip-bench', name: 'Close Grip Bench Press', muscleGroup: 'Triceps', instrument: 'Barbell', target: 'All 3 Heads', isCustom: false, isFavorite: false },
 
   // -- Dumbbell --
-  { id: 'db-skull-crushers', name: 'Dumbbell Skull Crushers', muscleGroup: 'Triceps', instrument: 'Dumbbell', target: 'Long & Lateral Heads', isCustom: false, isFavorite: false },
   { id: 'lying-db-ext', name: 'Lying Dumbbell Extension', muscleGroup: 'Triceps', instrument: 'Dumbbell', target: 'Long Head', isCustom: false, isFavorite: false },
-  { id: 'overhead-db-extension', name: 'Overhead Dumbbell Extension', muscleGroup: 'Triceps', instrument: 'Dumbbell', target: 'Long Head', isCustom: false, isFavorite: false },
+  { id: 'single-arm-db-overhead-ext', name: 'Single-Arm Dumbbell Overhead Extension', muscleGroup: 'Triceps', instrument: 'Dumbbell', target: 'Long Head', isCustom: false, isFavorite: false },
   { id: 'db-kickbacks', name: 'Dumbbell Kickbacks', muscleGroup: 'Triceps', instrument: 'Dumbbell', target: 'Lateral Head', isCustom: false, isFavorite: false },
   { id: 'two-arm-db-overhead-ext', name: 'Two-Arm Overhead DB Extension', muscleGroup: 'Triceps', instrument: 'Dumbbell', target: 'Long Head', isCustom: false, isFavorite: false },
 
@@ -444,7 +441,7 @@ export const MOVEMENT_PATTERN_GROUPS: string[][] = [
   // Chest Flyes (Isolation)
   ['pec-deck', 'machine-fly', 'cable-crossover', 'high-to-low-cable', 'low-to-high-cable', 'db-flyes', 'db-incline-flyes'],
   // Bodyweight Push-ups
-  ['push-ups', 'weighted-pushups', 'incline-pushup', 'decline-pushup'],
+  ['push-ups', 'incline-pushup', 'decline-pushup'],
   // Pullovers
   ['db-pullover', 'cable-pullover'],
 
@@ -480,13 +477,13 @@ export const MOVEMENT_PATTERN_GROUPS: string[][] = [
   // Pushdowns (Lateral/Medial Head)
   ['tricep-pushdown', 'rope-pushdown', 'cable-vbar-pushdown', 'straight-bar-pushdown', 'single-arm-pushdown', 'rev-grip-pushdown'],
   // Overhead Extensions (Long Head)
-  ['cable-overhead-ext', 'cable-rope-overhead', 'overhead-db-extension', 'two-arm-db-overhead-ext', 'bb-overhead-ext', 'ez-bar-french-press'],
+  ['cable-overhead-ext', 'cable-rope-overhead', 'single-arm-db-overhead-ext', 'two-arm-db-overhead-ext', 'bb-overhead-ext', 'ez-bar-french-press'],
   // Lying Extensions (Skull Crushers)
-  ['skull-crushers', 'ez-bar-skull-crusher', 'db-skull-crushers', 'lying-db-ext'],
+  ['skull-crushers', 'ez-bar-skull-crusher', 'lying-db-ext'],
   // Compound Presses & Dips
   ['close-grip-bench', 'bench-dips', 'weighted-dips', 'tricep-dip-machine', 'close-grip-pushups', 'diamond-pushups'],
   // Kickbacks
-  ['db-kickbacks', 'cable-one-arm-kickback', 'cable-kickback'],
+  ['db-kickbacks', 'cable-kickback'],
 
   // ==========================
   // BICEPS VARIATION FAMILIES
@@ -707,7 +704,6 @@ export const STAPLE_REPLACEMENT_MAP: Record<string, string[]> = {
   ],
   // Push-up
   'push-ups': [
-    'weighted-pushups',
     'incline-pushup',
     'db-bench-press',
     'chest-dips',
@@ -1182,7 +1178,7 @@ export const STAPLE_REPLACEMENT_MAP: Record<string, string[]> = {
     'tricep-pushdown',
     'cable-vbar-pushdown',
     'cable-rope-overhead',
-    'overhead-db-extension',
+    'single-arm-db-overhead-ext',
     'skull-crushers',
   ],
   // Cable V-Bar Pushdown
@@ -1202,7 +1198,7 @@ export const STAPLE_REPLACEMENT_MAP: Record<string, string[]> = {
   // Overhead Cable Extension
   'cable-overhead-ext': [
     'cable-rope-overhead',
-    'overhead-db-extension',
+    'single-arm-db-overhead-ext',
     'two-arm-db-overhead-ext',
     'skull-crushers',
     'rope-pushdown',
@@ -1211,13 +1207,13 @@ export const STAPLE_REPLACEMENT_MAP: Record<string, string[]> = {
   // Cable Rope Overhead Extension
   'cable-rope-overhead': [
     'cable-overhead-ext',
-    'overhead-db-extension',
+    'single-arm-db-overhead-ext',
     'skull-crushers',
     'rope-pushdown',
     'two-arm-db-overhead-ext',
   ],
-  // Overhead Dumbbell Extension
-  'overhead-db-extension': [
+  // Single-Arm DB Overhead Extension
+  'single-arm-db-overhead-ext': [
     'cable-rope-overhead',
     'cable-overhead-ext',
     'two-arm-db-overhead-ext',
@@ -1226,33 +1222,24 @@ export const STAPLE_REPLACEMENT_MAP: Record<string, string[]> = {
   ],
   // Two-Arm DB Overhead Extension
   'two-arm-db-overhead-ext': [
-    'overhead-db-extension',
+    'single-arm-db-overhead-ext',
     'cable-rope-overhead',
     'skull-crushers',
   ],
   // Skull Crusher
   'skull-crushers': [
     'ez-bar-skull-crusher',
-    'db-skull-crushers',
     'close-grip-bench',
     'cable-rope-overhead',
     'rope-pushdown',
-    'overhead-db-extension',
+    'single-arm-db-overhead-ext',
   ],
   // EZ-Bar Skull Crusher
   'ez-bar-skull-crusher': [
     'skull-crushers',
-    'db-skull-crushers',
     'close-grip-bench',
     'cable-rope-overhead',
     'rope-pushdown',
-  ],
-  // Dumbbell Skull Crushers
-  'db-skull-crushers': [
-    'ez-bar-skull-crusher',
-    'skull-crushers',
-    'close-grip-bench',
-    'cable-rope-overhead',
   ],
   // Close Grip Bench Press
   'close-grip-bench': [

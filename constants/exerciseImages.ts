@@ -252,6 +252,7 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'lying-db-ext': IMAGES['db-skull-crushers'],
 
   // Triceps Overhead Extensions
+  'single-arm-db-overhead-ext': IMAGES['overhead-db-extension'],
   'overhead-db-extension': IMAGES['overhead-db-extension'],
   'two-arm-db-overhead-ext': IMAGES['two-arm-db-overhead-ext'],
   'bb-overhead-ext': IMAGES['bb-overhead-ext'],
