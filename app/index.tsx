@@ -876,13 +876,17 @@ export default function SinglePageLandingScreen() {
 
     try {
       if (Platform.OS === 'android') {
+        try {
+          await notifee.deleteChannel('workout-alarm-v13');
+        } catch (_) {}
+
         await notifee.createChannel({
-          id: 'workout-alarm-v13',
+          id: 'workout-alarm-v14',
           name: 'Rest Timer Alarm',
           importance: AndroidImportance.HIGH,
           sound: 'alarm',
           vibration: true,
-          vibrationPattern: [100, 300],
+          vibrationPattern: [100, 400, 200, 400],
           bypassDnd: true,
           visibility: AndroidVisibility.PUBLIC,
         });
@@ -949,12 +953,12 @@ export default function SinglePageLandingScreen() {
           title: "Time's up! ⏱️",
           body: "Rest period over. Time to start your next set!",
           android: {
-            channelId: 'workout-alarm-v13',
+            channelId: 'workout-alarm-v14',
             smallIcon: 'notification_icon',
             color: '#10B981',
             importance: AndroidImportance.HIGH,
             sound: restTimerSound === 'none' ? undefined : 'alarm',
-            vibrationPattern: [100, 300],
+            vibrationPattern: [100, 400, 200, 400],
             ongoing: false,
             autoCancel: true,
             pressAction: { id: 'default' },
@@ -1067,11 +1071,6 @@ export default function SinglePageLandingScreen() {
     await AsyncStorage.removeItem('@workout_rest_timer_duration').catch(() => {});
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-    // Play pleasant, properly audible sound (non-looping chime)
-    if (restTimerSound !== 'none') {
-      playTimerSound();
-    }
 
     const isMinimized = AppState.currentState !== 'active';
 
@@ -1258,14 +1257,17 @@ export default function SinglePageLandingScreen() {
             try {
               await notifee.deleteChannel('workout-alarm-v12');
             } catch (_) {}
+            try {
+              await notifee.deleteChannel('workout-alarm-v13');
+            } catch (_) {}
 
             await notifee.createChannel({
-              id: 'workout-alarm-v13',
+              id: 'workout-alarm-v14',
               name: 'Rest Timer Alarm',
               importance: AndroidImportance.HIGH,
               sound: 'alarm',
               vibration: true,
-              vibrationPattern: [100, 300],
+              vibrationPattern: [100, 400, 200, 400],
               bypassDnd: true,
               visibility: AndroidVisibility.PUBLIC,
             });
@@ -1291,10 +1293,11 @@ export default function SinglePageLandingScreen() {
 
           try {
             await Notifications.deleteNotificationChannelAsync('workout-alarm-v12').catch(() => {});
-            await Notifications.setNotificationChannelAsync('workout-alarm-v13', {
+            await Notifications.deleteNotificationChannelAsync('workout-alarm-v13').catch(() => {});
+            await Notifications.setNotificationChannelAsync('workout-alarm-v14', {
               name: 'Rest Timer Alarm',
               importance: Notifications.AndroidImportance.MAX,
-              vibrationPattern: [100, 300],
+              vibrationPattern: [100, 400, 200, 400],
               lightColor: '#10B981',
               sound: 'alarm.wav',
               enableVibrate: true,
@@ -2624,9 +2627,24 @@ export default function SinglePageLandingScreen() {
           { id: generateId(), exerciseId: editingModalExerciseId, sets: setsToSave, notes: exerciseNote.trim() || undefined },
         ];
       }
+      setActiveSessionExercises(updated);
+      await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
     }
 
-    await handleFinishWorkoutDay(updated);
+    if (sessionStartTime === 0 && loggingMode === 'live') {
+      const now = Date.now();
+      setSessionStartTime(now);
+      await AsyncStorage.setItem('@session_start_time', String(now));
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setEditingModalExerciseId(null);
+    setSelectedModalMuscle(null);
+    setSelectedSubGroup(null);
+    setExpandedExerciseId(null);
+    setActiveSegment('log');
+    setMainScrollEnabled(true);
+    mainScrollRef.current?.scrollTo({ y: 0, animated: false });
   };
 
 
@@ -2980,16 +2998,17 @@ export default function SinglePageLandingScreen() {
           text: 'Discard',
           style: 'destructive',
           onPress: async () => {
+            setCustomAlertVisible(false);
+            setSelectedModalMuscle(null);
+            setSelectedSubGroup(null);
+            setEditingModalExerciseId(null);
+            setEditingActiveExerciseId(null);
+            setReplacingActiveId(null);
+            setSelectedPickerExerciseIds(new Set());
             setActiveSessionExercises([]);
             setSessionStartTime(0);
             setSessionStartedFromTemplate(false);
             setSessionTemplateId(null);
-            setReplacingActiveId(null);
-            setEditingActiveExerciseId(null);
-            setEditingModalExerciseId(null);
-            setSelectedPickerExerciseIds(new Set());
-            setSelectedModalMuscle(null);
-            setSelectedSubGroup(null);
             setMainScrollEnabled(true);
             await Promise.all([
               AsyncStorage.removeItem('@active_session_exercises'),
@@ -7141,7 +7160,7 @@ export default function SinglePageLandingScreen() {
                       onPress={() => {
                         setCustomAlertVisible(false);
                         if (btn.onPress) {
-                          setTimeout(btn.onPress, 100);
+                          btn.onPress();
                         }
                       }}
                       activeOpacity={0.7}
