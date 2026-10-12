@@ -195,6 +195,7 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'cable-crunch': require('../assets/exercises/cable-crunch.jpg'),
   'cable-woodchop': require('../assets/exercises/cable-woodchop.jpg'),
   'cable-oblique-crunch': require('../assets/exercises/cable-oblique-crunch.jpg'),
+  'machine-ab-crunch': require('../assets/exercises/machine-ab-crunch.jpg'),
 };
 
 export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
@@ -391,7 +392,7 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'cable-crunch': IMAGES['cable-crunch'],
   'cable-woodchop': IMAGES['cable-woodchop'],
   'cable-oblique-crunch': IMAGES['cable-oblique-crunch'],
-  'machine-ab-crunch': IMAGES['cable-crunch'],
+  'machine-ab-crunch': IMAGES['machine-ab-crunch'],
   'ab-crunch': IMAGES['ab-crunch'],
   'reverse-crunch': IMAGES['reverse-crunch'],
   'bicycle-crunches': IMAGES['bicycle-crunches'],
