@@ -4988,7 +4988,7 @@ export default function SinglePageLandingScreen() {
 
     {/* Muscle Workout list popup overlay */}
     {selectedModalMuscle !== null && (
-      <View style={[StyleSheet.absoluteFill, styles.modalContainer, { backgroundColor: theme.background, zIndex: 500, elevation: 500 }]}>
+      <View style={[StyleSheet.absoluteFill, styles.modalContainer, { backgroundColor: theme.background, zIndex: 3000, elevation: 3000 }]}>
         <View
           style={[
             styles.modalInnerContainer,
@@ -5309,7 +5309,8 @@ export default function SinglePageLandingScreen() {
                     const isFav = liveEx?.isFavorite ?? false;
                     const itemInstrument = item.instrument || 'Other';
                     const itemColor = sectionColorMap[section?.title || ''] || '#6B7280';
-                    const isAlreadyInActive = fromTemplateList
+                    const isTemplateMode = fromTemplateList || templateListVisible;
+                    const isAlreadyInActive = isTemplateMode
                       ? templateListExercises.some((le) => le.exerciseId === item.id)
                       : activeSessionExercises.some((le) => le.exerciseId === item.id);
                     const isChecked = isAlreadyInActive || selectedPickerExerciseIds.has(item.id);
@@ -5321,114 +5322,61 @@ export default function SinglePageLandingScreen() {
                           { backgroundColor: theme.cardBg, borderColor: theme.borderColor },
                         ]}
                       >
-                        {(fromTemplateList || loggingMode === 'live') && (
-                          <TouchableOpacity
-                            activeOpacity={0.7}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 6 }}
-                            onPress={() => {
-                              if (isChecked) {
-                                if (fromTemplateList) {
-                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                  const updated = templateListExercises.filter((le) => le.exerciseId !== item.id);
-                                  setTemplateListExercises(updated);
-                                  if (activeTemplateId) {
-                                    updateTemplate(activeTemplateId, updated);
-                                  }
-                                  setSelectedPickerExerciseIds((prev) => {
-                                    if (!prev.has(item.id)) return prev;
-                                    const next = new Set(prev);
-                                    next.delete(item.id);
-                                    return next;
-                                  });
-                                } else if (loggingMode === 'live') {
-                                  if (activeSessionExercises.length > 0) {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                    const updated = activeSessionExercises.filter((le) => le.exerciseId !== item.id);
-                                    setActiveSessionExercises(updated);
-                                    AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
-                                    if (updated.length === 0) {
-                                      setSessionStartTime(0);
-                                      AsyncStorage.removeItem('@session_start_time');
-                                    }
-                                    if (editingModalExerciseId === item.id) {
-                                      setEditingModalExerciseId(null);
-                                    }
-                                    setSelectedPickerExerciseIds((prev) => {
-                                      if (!prev.has(item.id)) return prev;
-                                      const next = new Set(prev);
-                                      next.delete(item.id);
-                                      return next;
-                                    });
-                                  } else {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                    setSelectedPickerExerciseIds((prev) => {
-                                      const next = new Set(prev);
-                                      next.delete(item.id);
-                                      return next;
-                                    });
-                                  }
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 6 }}
+                          onPress={() => {
+                            if (isChecked) {
+                              if (isTemplateMode) {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                const updated = templateListExercises.filter((le) => le.exerciseId !== item.id);
+                                setTemplateListExercises(updated);
+                                if (activeTemplateId) {
+                                  updateTemplate(activeTemplateId, updated);
                                 }
+                                setSelectedPickerExerciseIds((prev) => {
+                                  if (!prev.has(item.id)) return prev;
+                                  const next = new Set(prev);
+                                  next.delete(item.id);
+                                  return next;
+                                });
                               } else {
-                                if (loggingMode === 'live' && !fromTemplateList && activeSessionExercises.length > 0) {
-                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                  const previousLog = getPreviousWorkoutForExercise(item.id);
-                                  const initialSets: WorkoutSet[] = [];
-                                  if (previousLog && previousLog.sets.length > 0) {
-                                    previousLog.sets.forEach((set) => {
-                                      initialSets.push({
-                                        id: generateId(),
-                                        weight: set.weight,
-                                        reps: set.reps,
-                                        isCompleted: false,
-                                        isWeightPrefilled: set.weight > 0,
-                                        isRepsPrefilled: set.reps > 0,
-                                      });
-                                    });
-                                  }
-
-                                  while (initialSets.length < 3) {
-                                    const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
-                                    initialSets.push({
-                                      id: generateId(),
-                                      weight: lastSet ? lastSet.weight : 0,
-                                      reps: lastSet ? lastSet.reps : 0,
-                                      isCompleted: false,
-                                      isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
-                                      isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
-                                    });
-                                  }
-
-                                  const updated = [
-                                    ...activeSessionExercises,
-                                    {
-                                      id: generateId(),
-                                      exerciseId: item.id,
-                                      sets: initialSets,
-                                    },
-                                  ];
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                if (activeSessionExercises.some((le) => le.exerciseId === item.id)) {
+                                  const updated = activeSessionExercises.filter((le) => le.exerciseId !== item.id);
                                   setActiveSessionExercises(updated);
                                   AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
-                                } else {
-                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                  setSelectedPickerExerciseIds((prev) => {
-                                    const next = new Set(prev);
-                                    next.add(item.id);
-                                    return next;
-                                  });
+                                  if (updated.length === 0 && loggingMode === 'live') {
+                                    setSessionStartTime(0);
+                                    AsyncStorage.removeItem('@session_start_time');
+                                  }
                                 }
+                                setSelectedPickerExerciseIds((prev) => {
+                                  if (!prev.has(item.id)) return prev;
+                                  const next = new Set(prev);
+                                  next.delete(item.id);
+                                  return next;
+                                });
                               }
-                            }}
-                            style={[
-                              styles.modalExerciseCheckbox,
-                              {
-                                borderColor: isChecked ? '#10B981' : theme.borderColor,
-                                backgroundColor: isChecked ? '#10B981' : 'transparent',
-                              },
-                            ]}
-                          >
-                            {isChecked && <Check size={11} color="#FFFFFF" strokeWidth={3} />}
-                          </TouchableOpacity>
-                        )}
+                            } else {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                              setSelectedPickerExerciseIds((prev) => {
+                                const next = new Set(prev);
+                                next.add(item.id);
+                                return next;
+                              });
+                            }
+                          }}
+                          style={[
+                            styles.modalExerciseCheckbox,
+                            {
+                              borderColor: isChecked ? '#10B981' : theme.borderColor,
+                              backgroundColor: isChecked ? '#10B981' : 'transparent',
+                            },
+                          ]}
+                        >
+                          {isChecked && <Check size={11} color="#FFFFFF" strokeWidth={3} />}
+                        </TouchableOpacity>
 
                         <TouchableOpacity
                           style={styles.modalExerciseMainClick}
@@ -5438,139 +5386,45 @@ export default function SinglePageLandingScreen() {
                               return;
                             }
 
-                            if (fromTemplateList || loggingMode === 'live') {
-                              if (isAlreadyInActive) {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                if (fromTemplateList) {
-                                  const existingInActive = templateListExercises.find((le) => le.exerciseId === item.id);
-                                  setActiveSets(existingInActive ? existingInActive.sets.map((s) => ({ ...s })) : []);
-                                  setSameForAll(true);
-                                  setExerciseNote(existingInActive?.notes || '');
-                                  setExpandedExerciseId(item.id);
-                                  setSelectedModalMuscle(null);
-                                  setSelectedSubGroup(null);
-                                } else {
-                                  const existingInActive = activeSessionExercises.find((le) => le.exerciseId === item.id);
-                                  if (existingInActive) {
-                                    setActiveSets(existingInActive.sets.map((s) => ({ ...s })));
-                                    setSameForAll(true);
-                                    setExerciseNote(existingInActive.notes || '');
-                                    setShowNoteInput(!!existingInActive.notes);
-                                    setEditingModalExerciseId(existingInActive.exerciseId);
+                            if (isChecked) {
+                              if (isTemplateMode) {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                const updated = templateListExercises.filter((le) => le.exerciseId !== item.id);
+                                setTemplateListExercises(updated);
+                                if (activeTemplateId) {
+                                  updateTemplate(activeTemplateId, updated);
+                                }
+                                setSelectedPickerExerciseIds((prev) => {
+                                  if (!prev.has(item.id)) return prev;
+                                  const next = new Set(prev);
+                                  next.delete(item.id);
+                                  return next;
+                                });
+                              } else {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                if (activeSessionExercises.some((le) => le.exerciseId === item.id)) {
+                                  const updated = activeSessionExercises.filter((le) => le.exerciseId !== item.id);
+                                  setActiveSessionExercises(updated);
+                                  AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                                  if (updated.length === 0 && loggingMode === 'live') {
+                                    setSessionStartTime(0);
+                                    AsyncStorage.removeItem('@session_start_time');
                                   }
                                 }
-                                return;
+                                setSelectedPickerExerciseIds((prev) => {
+                                  if (!prev.has(item.id)) return prev;
+                                  const next = new Set(prev);
+                                  next.delete(item.id);
+                                  return next;
+                                });
                               }
-
-                              if (loggingMode === 'live' && !fromTemplateList && activeSessionExercises.length > 0) {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                const previousLog = getPreviousWorkoutForExercise(item.id);
-                                const initialSets: WorkoutSet[] = [];
-                                if (previousLog && previousLog.sets.length > 0) {
-                                  previousLog.sets.forEach((set) => {
-                                    initialSets.push({
-                                      id: generateId(),
-                                      weight: set.weight,
-                                      reps: set.reps,
-                                      isCompleted: false,
-                                      isWeightPrefilled: set.weight > 0,
-                                      isRepsPrefilled: set.reps > 0,
-                                    });
-                                  });
-                                }
-
-                                while (initialSets.length < 3) {
-                                  const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
-                                  initialSets.push({
-                                    id: generateId(),
-                                    weight: lastSet ? lastSet.weight : 0,
-                                    reps: lastSet ? lastSet.reps : 0,
-                                    isCompleted: false,
-                                    isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
-                                    isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
-                                  });
-                                }
-
-                                const updated = [
-                                  ...activeSessionExercises,
-                                  {
-                                    id: generateId(),
-                                    exerciseId: item.id,
-                                    sets: initialSets,
-                                  },
-                                ];
-                                setActiveSessionExercises(updated);
-                                AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
-                                return;
-                              }
-
+                            } else {
                               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                               setSelectedPickerExerciseIds((prev) => {
                                 const next = new Set(prev);
-                                if (next.has(item.id)) {
-                                  next.delete(item.id);
-                                } else {
-                                  next.add(item.id);
-                                }
+                                next.add(item.id);
                                 return next;
                               });
-                              return;
-                            }
-
-                            const targetList = fromTemplateList ? templateListExercises : activeSessionExercises;
-                            const existingInActive = targetList.find((le) => le.exerciseId === item.id);
-                            const initialSets: WorkoutSet[] = [];
-                            if (existingInActive && existingInActive.sets.length > 0) {
-                              existingInActive.sets.forEach((set) => {
-                                initialSets.push({
-                                  id: set.id,
-                                  weight: set.weight,
-                                  reps: set.reps,
-                                  isCompleted: fromTemplateList ? true : set.isCompleted,
-                                  isWeightPrefilled: set.isWeightPrefilled,
-                                  isRepsPrefilled: set.isRepsPrefilled,
-                                });
-                              });
-                            } else {
-                              const previousLog = getPreviousWorkoutForExercise(item.id);
-                              if (previousLog && previousLog.sets.length > 0) {
-                                previousLog.sets.forEach((set) => {
-                                  initialSets.push({
-                                    id: generateId(),
-                                    weight: set.weight,
-                                    reps: set.reps,
-                                    isCompleted: false,
-                                    isWeightPrefilled: set.weight > 0,
-                                    isRepsPrefilled: set.reps > 0,
-                                  });
-                                });
-                              }
-
-                              while (initialSets.length < 3) {
-                                const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
-                                initialSets.push({
-                                  id: generateId(),
-                                  weight: lastSet ? lastSet.weight : 0,
-                                  reps: lastSet ? lastSet.reps : 0,
-                                  isCompleted: false,
-                                  isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
-                                  isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
-                                });
-                              }
-                            }
-                            if (fromTemplateList) {
-                              setActiveSets(initialSets);
-                              setSameForAll(true);
-                              setExerciseNote(existingInActive?.notes || '');
-                              setExpandedExerciseId(item.id);
-                              setSelectedModalMuscle(null);
-                              setSelectedSubGroup(null);
-                            } else {
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                              setActiveSets(initialSets);
-                              setSameForAll(true);
-                              setExerciseNote(existingInActive?.notes || '');
-                              setEditingModalExerciseId(item.id);
                             }
                           }}
                           onLongPress={() => {
@@ -5731,118 +5585,181 @@ export default function SinglePageLandingScreen() {
                   }
                 />
 
-                {/* Modal Sticky Footer if active session is not empty in post-workout mode */}
-                {loggingMode === 'post_workout' && activeSessionExercises.length > 0 && !fromTemplateList && (
+                {/* Modal Sticky Footer if post-workout mode */}
+                {loggingMode === 'post_workout' && !fromTemplateList && !templateListVisible && (activeSessionExercises.length > 0 || selectedPickerExerciseIds.size > 0) && (
                   <View
                     style={[
                       styles.modalStickyFooter,
                       {
-                        backgroundColor: theme.cardBg,
-                        borderTopColor: theme.borderColor,
-                        paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 16,
+                        backgroundColor: 'transparent',
+                        borderTopWidth: 0,
+                        bottom: insets.bottom > 0 ? insets.bottom + 12 : 20,
+                        paddingBottom: 0,
+                        paddingHorizontal: 20,
+                        flexDirection: 'column',
+                        alignItems: 'flex-end',
+                        justifyContent: 'flex-end',
+                        gap: 8,
                       },
                     ]}
+                    pointerEvents="box-none"
                   >
                     <TouchableOpacity
-                      style={styles.modalCancelBtn}
-                      onPress={handleCancelSession}
-                      activeOpacity={0.7}
-                      hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-                    >
-                      <Trash2 size={14} color="#EF4444" strokeWidth={2.2} />
-                      <Text style={styles.modalCancelBtnText}>CANCEL</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.modalFinishBtn}
-                      onPress={() => {
+                      style={[
+                        styles.modalFinishBtn,
+                        activeSessionExercises.length > 0
+                          ? {
+                              paddingVertical: 8,
+                              paddingHorizontal: 16,
+                              borderRadius: 10,
+                              shadowColor: '#000000',
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.2,
+                              shadowRadius: 4,
+                              elevation: 4,
+                            }
+                          : {
+                              shadowColor: '#000000',
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.2,
+                              shadowRadius: 4,
+                              elevation: 4,
+                            },
+                      ]}
+                      onPress={async () => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        if (selectedPickerExerciseIds.size > 0) {
+                          const newExercises: LoggedExercise[] = [];
+                          selectedPickerExerciseIds.forEach((id) => {
+                            if (activeSessionExercises.some(e => e.exerciseId === id)) return;
+                            const previousLog = getPreviousWorkoutForExercise(id);
+                            const initialSets: WorkoutSet[] = [];
+                            if (previousLog && previousLog.sets.length > 0) {
+                              previousLog.sets.forEach((set) => {
+                                initialSets.push({
+                                  id: generateId(),
+                                  weight: set.weight,
+                                  reps: set.reps,
+                                  isCompleted: false,
+                                  isWeightPrefilled: set.weight > 0,
+                                  isRepsPrefilled: set.reps > 0,
+                                });
+                              });
+                            }
+                            while (initialSets.length < 3) {
+                              const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
+                              initialSets.push({
+                                id: generateId(),
+                                weight: lastSet ? lastSet.weight : 0,
+                                reps: lastSet ? lastSet.reps : 0,
+                                isCompleted: false,
+                                isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
+                                isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
+                              });
+                            }
+                            newExercises.push({
+                              id: generateId(),
+                              exerciseId: id,
+                              sets: initialSets,
+                            });
+                          });
+
+                          const updated = [...activeSessionExercises, ...newExercises];
+                          setActiveSessionExercises(updated);
+                          await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                        }
+                        setSelectedPickerExerciseIds(new Set());
                         setSelectedModalMuscle(null);
                         setSelectedSubGroup(null);
+                        setEditingModalExerciseId(null);
+                        setEditingActiveExerciseId(null);
+                        setCameFromActiveSessionPlus(false);
+                        setCameFromReplaceTarget(null);
                         setActiveSegment('log');
                       }}
                       activeOpacity={0.8}
                     >
-                      <Text style={styles.modalFinishBtnText}>
-                        VIEW SESSION ({activeSessionExercises.length})
+                      <Text style={[styles.modalFinishBtnText, activeSessionExercises.length > 0 && { fontSize: 11 }]}>
+                        {activeSessionExercises.length > 0
+                          ? `VIEW SESSION (${activeSessionExercises.length + selectedPickerExerciseIds.size})`
+                          : `LOG (${selectedPickerExerciseIds.size})`}
                       </Text>
                     </TouchableOpacity>
+
+                    {activeSessionExercises.length > 0 && (
+                      <TouchableOpacity
+                        style={[
+                          styles.modalCancelBtn,
+                          {
+                            paddingVertical: 6,
+                            paddingHorizontal: 12,
+                            borderRadius: 8,
+                            gap: 4,
+                            backgroundColor: '#F87171',
+                            borderWidth: 0,
+                            shadowColor: '#000000',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.2,
+                            shadowRadius: 2,
+                            elevation: 2,
+                          },
+                        ]}
+                        onPress={handleCancelSession}
+                        activeOpacity={0.7}
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      >
+                        <Trash2 size={12} color="#000000" strokeWidth={2.2} />
+                        <Text style={[styles.modalCancelBtnText, { fontSize: 11, color: '#000000' }]}>CANCEL</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 )}
 
                 {/* Modal Sticky Footer in Live mode */}
-                {loggingMode === 'live' && !fromTemplateList && (selectedPickerExerciseIds.size > 0 || activeSessionExercises.length > 0) && (
-                  (() => {
-                    const isStartLiveBtn = selectedPickerExerciseIds.size > 0 && activeSessionExercises.length === 0;
-                    return (
-                      <View
-                        style={[
-                          styles.modalStickyFooter,
-                          isStartLiveBtn
+                {loggingMode === 'live' && !fromTemplateList && !templateListVisible && (selectedPickerExerciseIds.size > 0 || activeSessionExercises.length > 0) && (
+                  <View
+                    style={[
+                      styles.modalStickyFooter,
+                      {
+                        backgroundColor: 'transparent',
+                        borderTopWidth: 0,
+                        bottom: insets.bottom > 0 ? insets.bottom + 12 : 20,
+                        paddingBottom: 0,
+                        paddingHorizontal: 20,
+                        flexDirection: 'column',
+                        alignItems: 'flex-end',
+                        justifyContent: 'flex-end',
+                        gap: 8,
+                      },
+                    ]}
+                    pointerEvents="box-none"
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.modalFinishBtn,
+                        {
+                          backgroundColor: '#10B981',
+                          shadowColor: '#000000',
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.2,
+                          shadowRadius: 4,
+                          elevation: 4,
+                          ...(activeSessionExercises.length > 0
                             ? {
-                                backgroundColor: 'transparent',
-                                borderTopWidth: 0,
-                                bottom: insets.bottom > 0 ? insets.bottom + 8 : 16,
-                                paddingBottom: 0,
-                                justifyContent: 'flex-end',
+                                paddingVertical: 8,
+                                paddingHorizontal: 16,
+                                borderRadius: 10,
                               }
-                            : {
-                                backgroundColor: theme.cardBg,
-                                borderTopColor: theme.borderColor,
-                                paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 16,
-                              },
-                        ]}
-                        pointerEvents={isStartLiveBtn ? 'box-none' : 'auto'}
-                      >
-                        {!isStartLiveBtn && selectedPickerExerciseIds.size === 0 && activeSessionExercises.length > 0 ? (
-                          <TouchableOpacity
-                            style={styles.modalCancelBtn}
-                            onPress={handleCancelSession}
-                            activeOpacity={0.7}
-                            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-                          >
-                            <Trash2 size={14} color="#EF4444" strokeWidth={2.2} />
-                            <Text style={styles.modalCancelBtnText}>CANCEL</Text>
-                          </TouchableOpacity>
-                        ) : null}
-
-                        <TouchableOpacity
-                          style={[
-                            styles.modalFinishBtn,
-                            {
-                              backgroundColor: '#10B981',
-                              ...(isStartLiveBtn
-                                ? {
-                                    shadowColor: '#000000',
-                                    shadowOffset: { width: 0, height: 2 },
-                                    shadowOpacity: 0.2,
-                                    shadowRadius: 4,
-                                    elevation: 4,
-                                  }
-                                : {}),
-                            },
-                          ]}
-                          onPress={async () => {
-                            if (activeSessionExercises.length > 0) {
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                              const targetToOpen = editingModalExerciseId
-                                ? activeSessionExercises.find(e => e.exerciseId === editingModalExerciseId) || activeSessionExercises[0]
-                                : activeSessionExercises[0];
-                              if (targetToOpen) {
-                                setActiveSets(targetToOpen.sets.map((s) => ({ ...s })));
-                                setExerciseNote(targetToOpen.notes || '');
-                                setShowNoteInput(!!targetToOpen.notes);
-                                setSameForAll(true);
-                                setEditingModalExerciseId(targetToOpen.exerciseId);
-                              }
-                              return;
-                            }
-
-                            if (selectedPickerExerciseIds.size === 0) return;
-
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            : {}),
+                        },
+                      ]}
+                      onPress={async () => {
+                        if (activeSessionExercises.length > 0) {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          if (selectedPickerExerciseIds.size > 0) {
                             const newExercises: LoggedExercise[] = [];
                             selectedPickerExerciseIds.forEach((id) => {
+                              if (activeSessionExercises.some(e => e.exerciseId === id)) return;
                               const previousLog = getPreviousWorkoutForExercise(id);
                               const initialSets: WorkoutSet[] = [];
                               if (previousLog && previousLog.sets.length > 0) {
@@ -5876,55 +5793,143 @@ export default function SinglePageLandingScreen() {
                               });
                             });
 
-                            setActiveSessionExercises(newExercises);
-                            AsyncStorage.setItem('@active_session_exercises', JSON.stringify(newExercises));
+                            const updated = [...activeSessionExercises, ...newExercises];
+                            setActiveSessionExercises(updated);
+                            await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(updated));
+                          }
 
-                            const now = Date.now();
-                            setSessionStartTime(now);
-                            AsyncStorage.setItem('@session_start_time', now.toString());
+                          // Strictly return to active session screen, NOT opening workout logger
+                          setSelectedPickerExerciseIds(new Set());
+                          setSelectedModalMuscle(null);
+                          setSelectedSubGroup(null);
+                          setEditingModalExerciseId(null);
+                          setEditingActiveExerciseId(null);
+                          setCameFromActiveSessionPlus(false);
+                          setCameFromReplaceTarget(null);
+                          setActiveSegment('log');
+                          return;
+                        }
 
-                            const firstToOpen = newExercises[0];
-                            if (firstToOpen) {
-                              setActiveSets(firstToOpen.sets.map((s) => ({ ...s })));
-                              setExerciseNote(firstToOpen.notes || '');
-                              setShowNoteInput(!!firstToOpen.notes);
-                              setSameForAll(true);
-                              setEditingModalExerciseId(firstToOpen.exerciseId);
-                            }
-                            setSelectedPickerExerciseIds(new Set());
-                          }}
-                          activeOpacity={0.8}
-                        >
-                          <Text style={styles.modalFinishBtnText}>
-                            {activeSessionExercises.length > 0
-                              ? `VIEW SESSION (${activeSessionExercises.length})`
-                              : `START (${selectedPickerExerciseIds.size})`}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    );
-                  })()
+                        if (selectedPickerExerciseIds.size === 0) return;
+
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        const newExercises: LoggedExercise[] = [];
+                        selectedPickerExerciseIds.forEach((id) => {
+                          const previousLog = getPreviousWorkoutForExercise(id);
+                          const initialSets: WorkoutSet[] = [];
+                          if (previousLog && previousLog.sets.length > 0) {
+                            previousLog.sets.forEach((set) => {
+                              initialSets.push({
+                                id: generateId(),
+                                weight: set.weight,
+                                reps: set.reps,
+                                isCompleted: false,
+                                isWeightPrefilled: set.weight > 0,
+                                isRepsPrefilled: set.reps > 0,
+                              });
+                            });
+                          }
+
+                          while (initialSets.length < 3) {
+                            const lastSet = initialSets.length > 0 ? initialSets[initialSets.length - 1] : null;
+                            initialSets.push({
+                              id: generateId(),
+                              weight: lastSet ? lastSet.weight : 0,
+                              reps: lastSet ? lastSet.reps : 0,
+                              isCompleted: false,
+                              isWeightPrefilled: lastSet ? !!lastSet.isWeightPrefilled : false,
+                              isRepsPrefilled: lastSet ? !!lastSet.isRepsPrefilled : false,
+                            });
+                          }
+                          newExercises.push({
+                            id: generateId(),
+                            exerciseId: id,
+                            sets: initialSets,
+                          });
+                        });
+
+                        setActiveSessionExercises(newExercises);
+                        await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(newExercises));
+
+                        const now = Date.now();
+                        setSessionStartTime(now);
+                        await AsyncStorage.setItem('@session_start_time', now.toString());
+
+                        setSelectedPickerExerciseIds(new Set());
+                        setSelectedModalMuscle(null);
+                        setSelectedSubGroup(null);
+                        setEditingModalExerciseId(null);
+                        setEditingActiveExerciseId(null);
+                        setCameFromActiveSessionPlus(false);
+                        setCameFromReplaceTarget(null);
+                        setActiveSegment('log');
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.modalFinishBtnText, activeSessionExercises.length > 0 && { fontSize: 11 }]}>
+                        {activeSessionExercises.length > 0
+                          ? `VIEW SESSION (${activeSessionExercises.length + selectedPickerExerciseIds.size})`
+                          : `START (${selectedPickerExerciseIds.size})`}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {activeSessionExercises.length > 0 && (
+                      <TouchableOpacity
+                        style={[
+                          styles.modalCancelBtn,
+                          {
+                            paddingVertical: 6,
+                            paddingHorizontal: 12,
+                            borderRadius: 8,
+                            gap: 4,
+                            backgroundColor: '#F87171',
+                            borderWidth: 0,
+                            shadowColor: '#000000',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.2,
+                            shadowRadius: 2,
+                            elevation: 2,
+                          },
+                        ]}
+                        onPress={handleCancelSession}
+                        activeOpacity={0.7}
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      >
+                        <Trash2 size={12} color="#000000" strokeWidth={2.2} />
+                        <Text style={[styles.modalCancelBtnText, { fontSize: 11, color: '#000000' }]}>CANCEL</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 )}
 
-                {/* Modal Sticky Footer if fromTemplateList is true */}
-                {fromTemplateList && (
+                {/* Modal Sticky Footer if template mode (fromTemplateList or templateListVisible) */}
+                {(fromTemplateList || templateListVisible) && (
                   <View
                     style={[
                       styles.modalStickyFooter,
                       {
-                        backgroundColor: theme.cardBg,
-                        borderTopColor: theme.borderColor,
-                        paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 16,
+                        backgroundColor: 'transparent',
+                        borderTopWidth: 0,
+                        bottom: insets.bottom > 0 ? insets.bottom + 12 : 20,
+                        paddingBottom: 0,
+                        paddingHorizontal: 20,
+                        flexDirection: 'column',
+                        alignItems: 'flex-end',
                         justifyContent: 'flex-end',
                       },
                     ]}
+                    pointerEvents="box-none"
                   >
                     <TouchableOpacity
                       style={[
                         styles.modalFinishBtn,
                         {
-                          backgroundColor: selectedPickerExerciseIds.size > 0 ? '#10B981' : (isDarkMode ? '#2D2D3A' : '#E5E7EB'),
-                          opacity: selectedPickerExerciseIds.size > 0 ? 1 : 0.6,
+                          backgroundColor: '#10B981',
+                          shadowColor: '#000000',
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.2,
+                          shadowRadius: 4,
+                          elevation: 4,
                         }
                       ]}
                       onPress={async () => {
@@ -5980,6 +5985,9 @@ export default function SinglePageLandingScreen() {
                         setSelectedModalMuscle(null);
                         setSelectedSubGroup(null);
                         setSelectedPickerExerciseIds(new Set());
+                        setEditingModalExerciseId(null);
+                        setEditingActiveExerciseId(null);
+                        setEditingTemplateExerciseId(null);
 
                         setIsCreatingNewTemplate(false);
                         setFromTemplateList(true);
@@ -5990,10 +5998,10 @@ export default function SinglePageLandingScreen() {
                       disabled={selectedPickerExerciseIds.size === 0}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.modalFinishBtnText, selectedPickerExerciseIds.size === 0 && { color: theme.textSecondary }]}>
+                      <Text style={styles.modalFinishBtnText}>
                         {selectedPickerExerciseIds.size > 0
-                          ? `ADD TO TEMPLATE (${selectedPickerExerciseIds.size})`
-                          : 'SELECT EXERCISES'}
+                          ? `ADD (${selectedPickerExerciseIds.size})`
+                          : 'ADD'}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -8081,6 +8089,7 @@ export default function SinglePageLandingScreen() {
                   {!isDeleteMode && (
                     <TouchableOpacity
                       onPress={() => {
+                        setFromTemplateList(true);
                         handleSelectMuscleCard(getMostFrequentMuscleGroup(templateListExercises));
                       }}
                       activeOpacity={0.6}
@@ -8114,6 +8123,7 @@ export default function SinglePageLandingScreen() {
                   </Text>
                   <TouchableOpacity
                     onPress={() => {
+                      setFromTemplateList(true);
                       handleSelectMuscleCard(getMostFrequentMuscleGroup(templateListExercises));
                     }}
                     activeOpacity={0.7}
