@@ -58,6 +58,7 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   // Triceps
   'rope-pushdown': require('../assets/exercises/rope-pushdown.jpg'),
   'skull-crushers': require('../assets/exercises/skull-crushers.jpg'),
+  'single-arm-db-overhead-ext': require('../assets/exercises/single-arm-db-overhead-ext.jpg'),
   'overhead-db-extension': require('../assets/exercises/overhead-db-extension.jpg'),
   'close-grip-bench': require('../assets/exercises/close-grip-bench.jpg'),
   'bench-dips': require('../assets/exercises/bench-dips.jpg'),
@@ -116,6 +117,7 @@ const IMAGES: Record<string, ImageSourcePropType> = {
   'cable-lateral-raise': require('../assets/exercises/cable-lateral-raise.jpg'),
   'cable-front-raise': require('../assets/exercises/cable-front-raise.jpg'),
   'cable-rear-delt-fly': require('../assets/exercises/cable-rear-delt-fly.jpg'),
+  'cable-rear-delt-row': require('../assets/exercises/cable-rear-delt-row.jpg'),
   'cable-upright-row': require('../assets/exercises/cable-upright-row.jpg'),
   'face-pull': require('../assets/exercises/face-pull.jpg'),
   'machine-shoulder-press': require('../assets/exercises/machine-shoulder-press.jpg'),
@@ -252,7 +254,7 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'lying-db-ext': IMAGES['db-skull-crushers'],
 
   // Triceps Overhead Extensions
-  'single-arm-db-overhead-ext': IMAGES['overhead-db-extension'],
+  'single-arm-db-overhead-ext': IMAGES['single-arm-db-overhead-ext'],
   'overhead-db-extension': IMAGES['overhead-db-extension'],
   'two-arm-db-overhead-ext': IMAGES['two-arm-db-overhead-ext'],
   'bb-overhead-ext': IMAGES['bb-overhead-ext'],
@@ -324,7 +326,7 @@ export const EXERCISE_IMAGES: Record<string, ImageSourcePropType> = {
   'face-pull': IMAGES['face-pull'],
   'face-pull-back': IMAGES['face-pull'],
   'reverse-cable-fly': IMAGES['cable-rear-delt-fly'],
-  'cable-rear-delt-row': IMAGES['cable-rear-delt-fly'],
+  'cable-rear-delt-row': IMAGES['cable-rear-delt-row'],
   'machine-shoulder-press': IMAGES['machine-shoulder-press'],
   'smith-shoulder-press': IMAGES['smith-shoulder-press'],
   'machine-lateral-raise': IMAGES['machine-lateral-raise'],
