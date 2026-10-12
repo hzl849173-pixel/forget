@@ -70,13 +70,13 @@ export const INSTRUMENT_ORDER: Instrument[] = [
 ];
 
 export const INSTRUMENT_COLORS: Record<Instrument, string> = {
-  Dumbbell: '#3B82F6',    // Electric Blue
-  Barbell: '#EF4444',     // Crimson Red
-  Cable: '#8B5CF6',       // Vivid Purple
-  Machine: '#10B981',     // Emerald Green
-  Bodyweight: '#F59E0B',  // Warm Amber
+  Barbell: '#3B82F6',     // Royal Blue
+  Dumbbell: '#22C55E',    // Kelly Green
+  Machine: '#8B5CF6',     // Vibrant Purple
+  Cable: '#FF8A00',       // Warm Orange
+  Bodyweight: '#EAB308',  // Amber
   Kettlebell: '#EC4899',  // Vibrant Pink
-  Other: '#6B7280',       // Slate Gray
+  Other: '#EAB308',       // Amber
 };
 
 export const SHOULDER_EXERCISE_IDS = new Set([

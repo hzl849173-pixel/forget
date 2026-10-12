@@ -3463,33 +3463,38 @@ export default function SinglePageLandingScreen() {
     }
   });
 
-  // Dynamic section color mapping: first list on top gets muscle group's own color, then green -> purple -> blue -> teal
+  // Fixed section and instrument color mapping:
+  // Favorites: Warm Orange (#FF8A00)
+  // Popular Workouts: Emerald Green (#10B981)
+  // Recent Workouts: Cyan (#06B6D4)
+  // Barbell: Royal Blue (#3B82F6)
+  // Dumbbell: Kelly Green (#22C55E)
+  // Machine: Vibrant Purple (#8B5CF6)
+  // Cable: Warm Orange (#FF8A00)
+  // Bodyweight: Amber (#EAB308)
+  // Other: Amber (#EAB308)
+  const SECTION_STATIC_COLORS: Record<string, string> = {
+    Favorites: '#FF8A00',
+    'Popular Workouts': '#10B981',
+    'Recent Workouts': '#06B6D4',
+    'Added Workouts': '#EC4899',
+    Barbell: '#3B82F6',
+    Dumbbell: '#22C55E',
+    Machine: '#8B5CF6',
+    Cable: '#FF8A00',
+    Bodyweight: '#EAB308',
+    Kettlebell: '#EC4899',
+    Other: '#EAB308',
+  };
+
   const sectionColorMap: Record<string, string> = {};
-  const currentMuscleColor = categoryColors[selectedModalMuscle || 'Chest'] || '#10B981';
-
-  // Base rotation: green -> purple -> blue -> teal, followed by orange, pink, gold
-  const CYCLE_PALETTE = [
-    '#10B981', // Green
-    '#8B5CF6', // Purple
-    '#3B82F6', // Blue
-    '#14B8A6', // Teal
-    '#F97316', // Orange
-    '#EC4899', // Pink
-    '#EAB308', // Gold
-  ];
-
-  // Exclude current muscle color so it is not repeated in subsequent lists
-  const remainingPalette = CYCLE_PALETTE.filter(
-    (c) => c.toLowerCase() !== currentMuscleColor.toLowerCase()
-  );
-
-  exerciseSections.forEach((s, idx) => {
-    if (idx === 0) {
-      sectionColorMap[s.title] = currentMuscleColor;
-    } else {
-      sectionColorMap[s.title] = remainingPalette[(idx - 1) % remainingPalette.length];
-    }
+  exerciseSections.forEach((s) => {
+    sectionColorMap[s.title] = SECTION_STATIC_COLORS[s.title] || (INSTRUMENT_COLORS as Record<string, string>)[s.title] || '#EAB308';
   });
+
+  // Dynamic color for "Add New Exercise" at bottom: inherits the color of the section directly above it
+  const lastSectionTitle = exerciseSections.length > 0 ? exerciseSections[exerciseSections.length - 1].title : '';
+  const addNewExerciseColor = (lastSectionTitle && sectionColorMap[lastSectionTitle]) ? sectionColorMap[lastSectionTitle] : '#EAB308';
 
   const filteredHistory = historySearch.trim()
     ? history.filter((item) => {
@@ -5673,9 +5678,9 @@ export default function SinglePageLandingScreen() {
                           },
                         ]}
                       >
-                        <View style={[styles.activeSessionItemAccent, { backgroundColor: currentMuscleColor }]} />
+                        <View style={[styles.activeSessionItemAccent, { backgroundColor: addNewExerciseColor }]} />
                         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 4 }}>
-                          <Plus size={14} color={currentMuscleColor} strokeWidth={2.5} />
+                          <Plus size={14} color={addNewExerciseColor} strokeWidth={2.5} />
                           <Text
                             style={[
                               styles.modalExerciseName,
@@ -5708,9 +5713,9 @@ export default function SinglePageLandingScreen() {
                           },
                         ]}
                       >
-                        <View style={[styles.activeSessionItemAccent, { backgroundColor: currentMuscleColor }]} />
+                        <View style={[styles.activeSessionItemAccent, { backgroundColor: addNewExerciseColor }]} />
                         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 4 }}>
-                          <Plus size={14} color={currentMuscleColor} strokeWidth={2.5} />
+                          <Plus size={14} color={addNewExerciseColor} strokeWidth={2.5} />
                           <Text
                             style={[
                               styles.modalExerciseName,
