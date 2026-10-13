@@ -56,12 +56,13 @@ export default function TemplatesScreen() {
         }));
 
         const now = Date.now();
-        await AsyncStorage.setItem('@active_session_exercises', JSON.stringify(exercisesToLoad));
-        await AsyncStorage.setItem('@session_start_time', String(now));
-        await AsyncStorage.setItem('@session_started_from_template', 'true');
-        await AsyncStorage.setItem('@session_template_id', tmpl.id);
-
-        await setOnboardingCompleted();
+        await Promise.all([
+            AsyncStorage.setItem('@active_session_exercises', JSON.stringify(exercisesToLoad)),
+            AsyncStorage.setItem('@session_start_time', String(now)),
+            AsyncStorage.setItem('@session_started_from_template', 'true'),
+            AsyncStorage.setItem('@session_template_id', tmpl.id),
+            setOnboardingCompleted(),
+        ]);
         router.replace('/');
     };
 

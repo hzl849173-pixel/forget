@@ -59,9 +59,11 @@ export default function ModeScreen() {
 
     const handleNext = async () => {
         if (!selectedMode) return;
-        await AsyncStorage.setItem('@workout_logging_mode', selectedMode);
-        await AsyncStorage.setItem('@has_seen_mode_explanation', 'true');
-        await setOnboardingCompleted();
+        await Promise.all([
+            AsyncStorage.setItem('@workout_logging_mode', selectedMode),
+            AsyncStorage.setItem('@has_seen_mode_explanation', 'true'),
+            setOnboardingCompleted(),
+        ]);
         router.replace('/');
     };
 

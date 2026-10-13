@@ -35,6 +35,7 @@ import {
   BackHandler,
   Dimensions,
   Easing,
+  InteractionManager,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -1339,7 +1340,9 @@ export default function SinglePageLandingScreen() {
         console.warn('Notification setup error:', e);
       }
     }
-    configureNotifications();
+    const task = InteractionManager.runAfterInteractions(() => {
+      configureNotifications();
+    });
 
     const unsubscribeForeground = notifee.onForegroundEvent(({ type, detail }) => {
       if (type === EventType.ACTION_PRESS) {
@@ -1355,7 +1358,10 @@ export default function SinglePageLandingScreen() {
       }
     });
 
-    return () => unsubscribeForeground();
+    return () => {
+      task.cancel();
+      unsubscribeForeground();
+    };
   }, []);
 
   React.useEffect(() => {

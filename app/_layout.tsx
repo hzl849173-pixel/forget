@@ -159,7 +159,7 @@ export default function RootLayout() {
             <Stack.Screen name="onboarding/templates" options={{ headerShown: false }} />
 
             {/* home */}
-            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }} />
           </Stack>
           <StatusBar style="auto" />
           <AppUpdateModal
