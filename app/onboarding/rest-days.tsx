@@ -98,15 +98,15 @@ export default function RestDaysScreen() {
                     </Text>
                 </View>
 
-                {/* Sarcastic Challenge Card - Variation 3B */}
+                {/* Sarcastic Consistency Callout */}
                 <View style={styles.challengeCard}>
                     <View style={styles.challengeHeaderRow}>
                         <View style={styles.challengeBadge}>
-                            <Text style={styles.challengeBadgeText}>THE CONSISTENCY TEST</Text>
+                            <Text style={styles.challengeBadgeText}>REALITY CHECK</Text>
                         </View>
                     </View>
                     <Text style={styles.challengeBody}>
-                        Lock in your official rest day now. Everybody talks a big game on Day 1, but most people break their consistency before Month 1 is even over. Let’s see how far you actually go before your consistency snaps.
+                        Choose your rest days now. &apos;I didn&apos;t feel like going&apos; is an excuse, not a rest day.
                     </Text>
                 </View>
 
@@ -232,22 +232,13 @@ const styles = StyleSheet.create({
         lineHeight: 19,
     },
     challengeCard: {
-        marginTop: 22,
-        borderRadius: 18,
-        backgroundColor: '#0F172A',
-        padding: 20,
-        gap: 12,
-        ...Platform.select({
-            ios: {
-                shadowColor: '#000000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.12,
-                shadowRadius: 8,
-            },
-            android: {
-                elevation: 3,
-            },
-        }),
+        marginTop: 20,
+        borderRadius: 14,
+        backgroundColor: '#F9FAFB',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        padding: 16,
+        gap: 10,
     },
     challengeHeaderRow: {
         flexDirection: 'row',
@@ -255,24 +246,24 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     challengeBadge: {
-        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        backgroundColor: '#FEF2F2',
         borderWidth: 1,
-        borderColor: 'rgba(239, 68, 68, 0.3)',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 8,
+        borderColor: '#FEE2E2',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 6,
     },
     challengeBadgeText: {
         fontSize: 10,
         fontWeight: '800',
         letterSpacing: 0.8,
-        color: '#F87171',
+        color: '#DC2626',
     },
     challengeBody: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: '500',
-        color: '#F1F5F9',
-        lineHeight: 22,
+        color: '#374151',
+        lineHeight: 20,
         letterSpacing: -0.1,
     },
     selectorSection: {

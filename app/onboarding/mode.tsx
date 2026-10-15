@@ -25,14 +25,14 @@ const MODES: ModeOption[] = [
         value: 'post_workout',
         title: 'Focus Mode',
         tag: 'LOG AFTER WORKOUT',
-        description: 'Finish your workout first, then log all weights and reps in under 30 seconds. Zero screen time while lifting.',
+        description: 'Pick one exercise at a time and enter all your weights and reps completely.',
         dotColor: '#2563EB',
     },
     {
         value: 'live',
         title: 'Live Session',
         tag: 'TRACK AS YOU TRAIN',
-        description: 'Log sets as you go, manage active exercises, and use built-in rest timers between sets.',
+        description: 'Select multiple exercises to prepare your workout and track gym time with an automatic timer.',
         dotColor: '#10B981',
     },
 ];

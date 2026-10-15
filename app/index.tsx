@@ -7399,7 +7399,7 @@ export default function SinglePageLandingScreen() {
                   <Text style={{ fontSize: 11.5, color: theme.textSecondary, lineHeight: 17 }}>
                     {loggingMode === 'post_workout'
                       ? 'Pick one exercise at a time and enter all your weights and reps completely.'
-                      : 'Select multiple exercises first to prepare your whole workout, then go through them.'}
+                      : 'Select multiple exercises to prepare your workout and track gym time with an automatic timer.'}
                   </Text>
                 </View>
 
@@ -9462,7 +9462,7 @@ export default function SinglePageLandingScreen() {
                     <Text style={{ fontSize: 11.5, color: theme.textSecondary, lineHeight: 17 }}>
                       {loggingMode === 'post_workout'
                         ? 'Pick one exercise at a time and enter all your weights and reps completely.'
-                        : 'Select multiple exercises first to prepare your whole workout, then go through them.'}
+                        : 'Select multiple exercises to prepare your workout and track gym time with an automatic timer.'}
                     </Text>
                   </View>
                 </View>
