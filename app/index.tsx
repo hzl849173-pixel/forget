@@ -11474,7 +11474,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 6,
     paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingVertical: 10,
   },
   modalExerciseMainClick: {
     flex: 1,
@@ -11483,7 +11483,7 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
   },
   modalExerciseName: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
