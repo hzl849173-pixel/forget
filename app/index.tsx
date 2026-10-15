@@ -3622,7 +3622,7 @@ export default function SinglePageLandingScreen() {
                       {getInitials(auth.currentUser?.displayName ?? null, auth.currentUser?.email ?? null)}
                     </Text>
                   ) : (
-                    <User size={14} color={theme.textSecondary} strokeWidth={2.5} />
+                    <User size={16} color={theme.textSecondary} strokeWidth={2.5} />
                   )}
                 </TouchableOpacity>
 
@@ -3631,12 +3631,12 @@ export default function SinglePageLandingScreen() {
           </View>
 
           {/* Segment Selector Toggle */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.segmentScrollContent}>
+          <View style={[styles.segmentContainer, { backgroundColor: theme.segmentBg }]}>
             {([
               { key: 'log', label: 'Log' },
               { key: 'templates', label: 'Templates' },
-              { key: 'history', label: 'History' },
               { key: 'progress', label: 'Progress' },
+              { key: 'history', label: 'History' },
             ] as const).map((seg) => {
               const isActive = activeSegment === seg.key;
               return (
@@ -3644,9 +3644,9 @@ export default function SinglePageLandingScreen() {
                   key={seg.key}
                   style={[
                     styles.segmentPill,
+                    isActive && styles.segmentPillActive,
                     {
                       backgroundColor: isActive ? theme.segmentBtnActiveBg : 'transparent',
-                      borderColor: isActive ? theme.segmentBtnActiveBorder : 'transparent',
                     }
                   ]}
                   onPress={() => {
@@ -3657,15 +3657,20 @@ export default function SinglePageLandingScreen() {
                     mainScrollRef.current?.scrollTo({ y: 0, animated: false });
                     setActiveSegment(seg.key as any);
                   }}
-                  activeOpacity={0.8}
+                  activeOpacity={0.7}
                 >
-                  <Text style={[styles.segmentPillText, { color: isActive ? theme.textPrimary : theme.textSecondary }]}>
+                  <Text
+                    style={[styles.segmentPillText, { color: isActive ? theme.textPrimary : theme.textSecondary }]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.85}
+                  >
                     {seg.label}
                   </Text>
                 </TouchableOpacity>
               );
             })}
-          </ScrollView>
+          </View>
 
           {/* Segment Switch Logic */}
           <View>
@@ -8853,7 +8858,7 @@ export default function SinglePageLandingScreen() {
         <Modal
           visible={consistencyModalVisible}
           transparent={true}
-          animationType="none"
+          animationType="fade"
           onRequestClose={() => {
             setConsistencyModalVisible(false);
             setStreakSessionsExpanded(false);
@@ -9181,13 +9186,7 @@ export default function SinglePageLandingScreen() {
                 </View>
                 <TouchableOpacity
                   style={[styles.profileStatCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}
-                  onPress={() => {
-                    handleCloseProfile(() => {
-                      setTimeout(() => {
-                        handleOpenConsistency();
-                      }, 100);
-                    });
-                  }}
+                  onPress={handleOpenConsistency}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.profileStatNumber, { color: '#FACC15' }]}>{overallStats.currentStreak}</Text>
@@ -9630,22 +9629,32 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   // Segment Selector
-  segmentScrollContent: {
+  segmentContainer: {
     flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 2,
+    alignItems: 'center',
+    padding: 3,
+    borderRadius: 99,
     marginBottom: 24,
   },
   segmentPill: {
+    flex: 1,
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 4,
     borderRadius: 99,
-    borderWidth: 0.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentPillActive: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
   segmentPillText: {
     fontSize: 12,
     fontWeight: '800',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   sectionHeader: {
     fontSize: 10,
@@ -10950,6 +10959,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   workoutDaysText: {
     fontSize: 13,
@@ -10965,6 +10979,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 5,
     minWidth: 38,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   restTimerText: {
     fontSize: 12,
@@ -11727,16 +11746,20 @@ const styles = StyleSheet.create({
   },
   // Profile styles
   profileBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   profileBadgeInitials: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '800',
     color: '#FFFFFF',
   },
