@@ -10,7 +10,6 @@ import {
   Dumbbell,
   Flame,
   GripVertical,
-  Info,
   Minus,
   Play,
   Plus,
@@ -135,8 +134,6 @@ import { ProgressGrid } from '@/components/ui/progress-grid';
 import { DEFAULT_EXERCISES, INSTRUMENT_ORDER, INSTRUMENT_COLORS, MUSCLE_GROUPS, ALL_MUSCLE_GROUPS, MuscleGroup, SHOULDER_EXERCISE_IDS, POPULAR_EXERCISE_IDS, getMovementPatternGroup, getMovementFamilyIds } from '@/constants/exercises';
 import { getExerciseImage } from '@/constants/equipmentImages';
 import { getExerciseIllustration } from '@/constants/exerciseImages';
-import { getFormGuide, FormGuide } from '@/constants/formGuides';
-import { FormGuideModal } from '@/components/exercise/FormGuideModal';
 import { useWorkoutAnalytics } from '@/hooks/use-workout-analytics';
 import { Exercise, LoggedExercise, PersonalRecord, useWorkout, WorkoutSession, WorkoutSet, WorkoutTemplate } from '@/hooks/use-workout-storage';
 import DragList from 'react-native-draglist';
@@ -743,7 +740,6 @@ export default function SinglePageLandingScreen() {
   const [editingActiveExerciseId, setEditingActiveExerciseId] = useState<string | null>(null);
   const [editingTemplateExerciseId, setEditingTemplateExerciseId] = useState<string | null>(null);
   const [editingModalExerciseId, setEditingModalExerciseId] = useState<string | null>(null);
-  const [activeFormGuide, setActiveFormGuide] = useState<FormGuide | null>(null);
   const [inPlaceLoggingContext, setInPlaceLoggingContext] = useState<{
     source: 'workout_list' | 'template_list' | 'active_session';
     returnModalMuscle?: MuscleGroup | null;
@@ -4392,29 +4388,6 @@ export default function SinglePageLandingScreen() {
                                     <Text style={[styles.activeSessionItemName, { color: theme.textPrimary, flexShrink: 1 }]} numberOfLines={1}>
                                       {details.name}
                                     </Text>
-                                    {getFormGuide(details.id) && (
-                                      <TouchableOpacity
-                                        onPress={(e) => {
-                                          e.stopPropagation();
-                                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                          setActiveFormGuide(getFormGuide(details.id));
-                                        }}
-                                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                        activeOpacity={0.6}
-                                        style={{
-                                          width: 18,
-                                          height: 18,
-                                          borderRadius: 9,
-                                          backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.15)' : '#DCFCE7',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          borderWidth: 1,
-                                          borderColor: isDarkMode ? 'rgba(16, 185, 129, 0.3)' : '#86EFAC',
-                                        }}
-                                      >
-                                        <Info size={11} color="#10B981" strokeWidth={2.6} />
-                                      </TouchableOpacity>
-                                    )}
                                   </View>
                                   <View style={styles.activeSessionItemMeta}>
                                     <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${muscleColor}15` }]}>
@@ -5077,7 +5050,7 @@ export default function SinglePageLandingScreen() {
                             activeOpacity={0.7}
                             style={styles.modalAddExercisePill}
                           >
-                            <Plus size={12} color="#10B981" strokeWidth={2.5} />
+                            <Plus size={11} color="#10B981" strokeWidth={2.5} />
                             <Text style={styles.modalAddExercisePillText}>
                               ADD
                             </Text>
@@ -5087,7 +5060,7 @@ export default function SinglePageLandingScreen() {
                             activeOpacity={0.7}
                             style={styles.modalCloseIconButton}
                           >
-                            <X size={20} color={theme.textSecondary} strokeWidth={2.2} />
+                            <X size={18} color={theme.textSecondary} strokeWidth={2.2} />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -5165,10 +5138,10 @@ export default function SinglePageLandingScreen() {
                         ]}
                       >
                         <Search
-                          size={18}
+                          size={16}
                           color={theme.inputPlaceholder || (isDarkMode ? '#6B7280' : '#9CA3AF')}
                           strokeWidth={2}
-                          style={{ marginRight: 8 }}
+                          style={{ marginRight: 6 }}
                         />
                         <TextInput
                           style={[styles.searchInputInline, { color: theme.textPrimary }]}
@@ -5529,7 +5502,7 @@ export default function SinglePageLandingScreen() {
                           activeOpacity={0.65}
                         >
 
-                          <View style={[styles.activeSessionItemAccent, { backgroundColor: itemColor, height: getExerciseIllustration(item.id) ? 36 : 28 }]} />
+                          <View style={[styles.activeSessionItemAccent, { backgroundColor: itemColor, height: getExerciseIllustration(item.id) ? 32 : 26, marginRight: 10 }]} />
 
                           {(() => {
                             const illustration = getExerciseIllustration(item.id);
@@ -5554,45 +5527,20 @@ export default function SinglePageLandingScreen() {
                             );
                           })()}
 
-                          <View style={{ flex: 1, marginRight: 8 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <Text
-                                style={[styles.modalExerciseName, { color: theme.textPrimary, flexShrink: 1 }]}
-                                numberOfLines={1}
-                              >
-                                {item.name}
-                              </Text>
-                              {getFormGuide(item.id) && (
-                                <TouchableOpacity
-                                  onPress={(e) => {
-                                    e.stopPropagation();
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setActiveFormGuide(getFormGuide(item.id));
-                                  }}
-                                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                  activeOpacity={0.6}
-                                  style={{
-                                    width: 18,
-                                    height: 18,
-                                    borderRadius: 9,
-                                    backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.15)' : '#DCFCE7',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    borderWidth: 1,
-                                    borderColor: isDarkMode ? 'rgba(16, 185, 129, 0.3)' : '#86EFAC',
-                                  }}
-                                >
-                                  <Info size={11} color="#10B981" strokeWidth={2.6} />
-                                </TouchableOpacity>
-                              )}
-                            </View>
+                          <View style={{ flex: 1, marginRight: 6 }}>
+                            <Text
+                              style={[styles.modalExerciseName, { color: theme.textPrimary, flexShrink: 1 }]}
+                              numberOfLines={1}
+                            >
+                              {item.name}
+                            </Text>
                             {(() => {
                               const activeEntry = activeSessionExercises.find((le) => le.exerciseId === item.id);
                               if (!activeEntry) return null;
                               return (
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                                  <Check size={11} color="#10B981" strokeWidth={2.5} />
-                                  <Text style={{ fontSize: 11, fontWeight: '600', color: '#10B981' }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                                  <Check size={10} color="#10B981" strokeWidth={2.5} />
+                                  <Text style={{ fontSize: 10, fontWeight: '600', color: '#10B981' }}>
                                     {activeEntry.sets.length} set{activeEntry.sets.length > 1 ? 's' : ''} in session
                                   </Text>
                                 </View>
@@ -5600,7 +5548,7 @@ export default function SinglePageLandingScreen() {
                             })()}
                           </View>
 
-                          <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${itemColor}18` }]}>
+                          <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${itemColor}18`, marginRight: 2 }]}>
                             <Text style={[styles.activeSessionMuscleBadgeText, { color: itemColor }]}>
                               {itemInstrument.toUpperCase()}
                             </Text>
@@ -5618,7 +5566,7 @@ export default function SinglePageLandingScreen() {
                             activeOpacity={0.7}
                           >
                             <Star
-                              size={17}
+                              size={16}
                               color={isFav ? '#FF8A00' : (POPULAR_EXERCISE_IDS.includes(item.id) ? '#9CA3AF' : theme.textSecondary)}
                               fill={isFav ? '#FF8A00' : (POPULAR_EXERCISE_IDS.includes(item.id) ? '#9CA3AF' : 'transparent')}
                               strokeWidth={isFav ? 2.2 : 1.8}
@@ -6530,30 +6478,6 @@ export default function SinglePageLandingScreen() {
                                   <Text style={[styles.activeSessionTitle, { color: theme.textPrimary, flexShrink: 1 }]} numberOfLines={1}>
                                     {targetEx.name}
                                   </Text>
-                                  {getFormGuide(targetEx.id) && (
-                                    <TouchableOpacity
-                                      onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        setActiveFormGuide(getFormGuide(targetEx.id));
-                                      }}
-                                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                      activeOpacity={0.6}
-                                      style={{
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        gap: 3.5,
-                                        paddingHorizontal: 7,
-                                        paddingVertical: 2.5,
-                                        borderRadius: 12,
-                                        backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.15)' : '#DCFCE7',
-                                        borderWidth: 1,
-                                        borderColor: isDarkMode ? 'rgba(16, 185, 129, 0.3)' : '#86EFAC',
-                                      }}
-                                    >
-                                      <Info size={11} color="#10B981" strokeWidth={2.6} />
-                                      <Text style={{ fontSize: 9, fontWeight: '800', color: '#10B981', letterSpacing: 0.3 }}>FORM</Text>
-                                    </TouchableOpacity>
-                                  )}
                                 </View>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
                                   <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary, marginTop: 0 }]}>
@@ -7503,13 +7427,7 @@ export default function SinglePageLandingScreen() {
           </View>
         </Modal>
 
-        {/* Form Guide Demonstration Modal */}
-        <FormGuideModal
-          visible={activeFormGuide !== null}
-          guide={activeFormGuide}
-          onClose={() => setActiveFormGuide(null)}
-          isDarkMode={isDarkMode}
-        />
+
 
         {/* Workout Detail Modal */}
         <Modal
@@ -10553,7 +10471,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
     minHeight: 64,
@@ -10564,12 +10482,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalHeaderTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
     letterSpacing: -0.4,
   },
   modalHeaderSubtitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
     marginTop: 2,
     letterSpacing: 0.1,
@@ -10578,8 +10496,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 9,
     borderRadius: 99,
     borderWidth: 1,
     borderColor: '#10B98140',
@@ -10587,7 +10505,7 @@ const styles = StyleSheet.create({
   },
   modalAddExercisePillText: {
     color: '#10B981',
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
@@ -10635,22 +10553,22 @@ const styles = StyleSheet.create({
     color: '#10B981', // Emerald Green Close
   },
   searchContainer: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     marginTop: 16,
     marginBottom: 12,
   },
   searchBarWrapper: {
-    height: 46,
-    borderRadius: 14,
+    height: 40,
+    borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
   },
   searchInputInline: {
     flex: 1,
     height: '100%',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     paddingVertical: 0,
     paddingHorizontal: 0,
@@ -10678,7 +10596,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   modalListContent: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingBottom: 95,
     paddingTop: 4,
   },
@@ -10811,7 +10729,7 @@ const styles = StyleSheet.create({
   },
   modalSwitcherScroll: {
     gap: 8,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     alignItems: 'center',
   },
   switcherLeftFade: {
@@ -10831,15 +10749,15 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   modalSwitcherPill: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
+    paddingVertical: 5,
+    paddingHorizontal: 11,
     borderRadius: 99,
     borderWidth: 1,
     borderColor: '#212330',
     backgroundColor: '#13141C',
   },
   modalSwitcherPillText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#9CA3AF',
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -11534,12 +11452,12 @@ const styles = StyleSheet.create({
   modalSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingTop: 12,
+    paddingBottom: 6,
     gap: 10,
   },
   modalSectionHeaderText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
@@ -11552,32 +11470,32 @@ const styles = StyleSheet.create({
   modalExerciseItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     marginBottom: 6,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 9,
   },
   modalExerciseMainClick: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 1,
   },
   modalExerciseName: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
   modalExerciseThumbContainer: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: 10,
     borderWidth: 1,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   modalExerciseThumb: {
     width: '100%',
@@ -11590,7 +11508,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   modalExerciseActionBtn: {
-    padding: 6,
+    padding: 5,
     alignItems: 'center',
     justifyContent: 'center',
   },
