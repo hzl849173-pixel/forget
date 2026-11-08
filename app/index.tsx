@@ -25,7 +25,7 @@ import {
   X
 } from 'lucide-react-native';
 import { Audio } from 'expo-av';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -723,7 +723,8 @@ export default function SinglePageLandingScreen() {
   const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(null);
   const [activeSets, setActiveSets] = useState<WorkoutSet[]>([]);
 
-  const [sameForAll, setSameForAll] = useState(true);
+  const [sameForAll, setSameForAll] = useState(false);
+  const sameForAllPrefRef = useRef(false);
 
   const [activeSessionExercises, setActiveSessionExercises] = useState<LoggedExercise[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<number>(0);
@@ -824,6 +825,14 @@ export default function SinglePageLandingScreen() {
         } catch (e) {
           // ignore parse error
         }
+      }
+    });
+
+    AsyncStorage.getItem('@pref_same_for_all').then((val) => {
+      if (val !== null) {
+        const parsed = val === 'true';
+        sameForAllPrefRef.current = parsed;
+        setSameForAll(parsed);
       }
     });
   }, []);
@@ -1700,7 +1709,7 @@ export default function SinglePageLandingScreen() {
     setSearch('');
     setExpandedExerciseId(null);
     setActiveSets([]);
-    setSameForAll(true);
+    setSameForAll(sameForAllPrefRef.current);
     setSortedExerciseList(sortExercisesForMuscle(targetMuscle));
   };
 
@@ -1978,11 +1987,11 @@ export default function SinglePageLandingScreen() {
     if (expandedExerciseId === exerciseId) {
       setExpandedExerciseId(null);
       setActiveSets([]);
-      setSameForAll(true);
+      setSameForAll(sameForAllPrefRef.current);
     } else {
       setExpandedExerciseId(exerciseId);
 
-      setSameForAll(true);
+      setSameForAll(sameForAllPrefRef.current);
 
       const existingInActive = activeSessionExercises.find((le) => le.exerciseId === exerciseId);
       const initialSets: WorkoutSet[] = [];
@@ -2086,7 +2095,7 @@ export default function SinglePageLandingScreen() {
     }
 
     setActiveSets(initialSets);
-    setSameForAll(true);
+    setSameForAll(sameForAllPrefRef.current);
     setEditingActiveExerciseId(loggedExId || exerciseId);
   };
 
@@ -2214,7 +2223,7 @@ export default function SinglePageLandingScreen() {
         setActiveSets(initialSets);
         setExerciseNote(targetTmplEx.notes || '');
         setShowNoteInput(!!targetTmplEx.notes);
-        setSameForAll(true);
+        setSameForAll(sameForAllPrefRef.current);
         setEditingActiveExerciseId(targetExId);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
@@ -2489,7 +2498,9 @@ export default function SinglePageLandingScreen() {
   const toggleSameForAll = () => {
     const nextVal = !sameForAll;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    sameForAllPrefRef.current = nextVal;
     setSameForAll(nextVal);
+    AsyncStorage.setItem('@pref_same_for_all', nextVal ? 'true' : 'false').catch(() => {});
     if (nextVal && activeSets.length > 0) {
       const firstSet = activeSets[0];
       setActiveSets(activeSets.map((s) => ({
@@ -2616,7 +2627,7 @@ export default function SinglePageLandingScreen() {
         setActiveSets(nextSets);
         setExerciseNote(nextEx.notes || '');
         setShowNoteInput(!!nextEx.notes);
-        setSameForAll(true);
+        setSameForAll(sameForAllPrefRef.current);
         setEditingModalExerciseId(nextEx.exerciseId);
         return;
       }
@@ -2673,7 +2684,7 @@ export default function SinglePageLandingScreen() {
       setActiveSets(initialSets);
       setExerciseNote(targetLog.notes || '');
       setShowNoteInput(!!targetLog.notes);
-      setSameForAll(true);
+      setSameForAll(sameForAllPrefRef.current);
       setEditingModalExerciseId(targetExId);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -2777,7 +2788,7 @@ export default function SinglePageLandingScreen() {
         setExpandedExerciseId(nextEx.exerciseId);
         setActiveSets(nextEx.sets.map((s) => ({ ...s, isCompleted: true })));
         setExerciseNote(nextEx.notes || '');
-        setSameForAll(true);
+        setSameForAll(sameForAllPrefRef.current);
         return;
       }
 
@@ -2830,7 +2841,7 @@ export default function SinglePageLandingScreen() {
 
       setActiveSets(nextSets);
       setExerciseNote(nextEx.notes || '');
-      setSameForAll(true);
+      setSameForAll(sameForAllPrefRef.current);
       return;
     }
 
@@ -2854,7 +2865,7 @@ export default function SinglePageLandingScreen() {
     }
     setExpandedExerciseId(null);
     setActiveSets([]);
-    setSameForAll(true);
+    setSameForAll(sameForAllPrefRef.current);
     setExerciseNote('');
   };
 
@@ -2994,7 +3005,7 @@ export default function SinglePageLandingScreen() {
     setActiveSets([]);
     setExerciseNote('');
     setShowNoteInput(false);
-    setSameForAll(true);
+    setSameForAll(sameForAllPrefRef.current);
     setActiveSessionExercises([]);
     setTemplateListVisible(false);
     setFromTemplateList(false);
@@ -3230,7 +3241,7 @@ export default function SinglePageLandingScreen() {
       // Reset modal, logger, and views
       setExpandedExerciseId(null);
       setActiveSets([]);
-      setSameForAll(true);
+      setSameForAll(sameForAllPrefRef.current);
       setSelectedModalMuscle(null);
       setSelectedSubGroup(null);
       setTemplateListVisible(false);
@@ -3345,7 +3356,7 @@ export default function SinglePageLandingScreen() {
     setActiveSets(initialSets);
     setExerciseNote(logEx.notes || '');
     setShowNoteInput(!!logEx.notes);
-    setSameForAll(true);
+    setSameForAll(sameForAllPrefRef.current);
 
     setInPlaceLoggingContext({
       source: 'template_list',
@@ -3373,7 +3384,7 @@ export default function SinglePageLandingScreen() {
     }
     setExpandedExerciseId(null);
     setActiveSets([]);
-    setSameForAll(true);
+    setSameForAll(sameForAllPrefRef.current);
     setExerciseNote('');
   };
 
@@ -3892,49 +3903,6 @@ export default function SinglePageLandingScreen() {
 
                       return (
                         <View>
-                          {/* Top Fixed Action Bar: CANCEL on left, SAVE on right */}
-                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                            <TouchableOpacity
-                              onPress={() => handleCancelInPlaceLogger()}
-                              activeOpacity={0.7}
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: 4,
-                                paddingVertical: 6,
-                                paddingHorizontal: 12,
-                                borderRadius: 99,
-                                backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.08)' : '#FEE2E2',
-                                borderWidth: 1,
-                                borderColor: isDarkMode ? 'rgba(239, 68, 68, 0.22)' : '#FECACA',
-                              }}
-                            >
-                              <X size={12} color={isDarkMode ? '#F87171' : '#DC2626'} strokeWidth={2.4} />
-                              <Text style={{ fontSize: 11, fontWeight: '700', color: isDarkMode ? '#F87171' : '#DC2626', letterSpacing: 0.5 }}>
-                                CANCEL
-                              </Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                              onPress={() => handleSaveInPlace(targetEx.id)}
-                              activeOpacity={0.85}
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: 5,
-                                paddingVertical: 6,
-                                paddingHorizontal: 16,
-                                borderRadius: 99,
-                                backgroundColor: '#10B981',
-                              }}
-                            >
-                              <Check size={13} color="#000000" strokeWidth={3} />
-                              <Text style={{ fontSize: 11, fontWeight: '800', color: '#000000', letterSpacing: 0.5 }}>
-                                SAVE
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-
                           {/* Top Workout Navigation Pill Wrap (All exercises visible on one page, zero scrolling) */}
                           {loggingMode !== 'live' && listForSwitcher.length > 1 && (
                             <View style={[styles.loggerNavPillWrap, { marginTop: 2, marginBottom: 14 }]}>
@@ -3993,20 +3961,22 @@ export default function SinglePageLandingScreen() {
                           )}
 
                           <View style={{ marginVertical: 4, paddingBottom: 8 }}>
-                            {/* Exercise Header & Details (Inside Scrollable Area) */}
-                            <View style={{ marginBottom: 8, paddingBottom: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.borderColor }}>
+                            {/* Exercise Header & Details */}
+                            <View style={{ marginBottom: 10, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.borderColor }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                                 <View style={{ flex: 1, paddingRight: 4 }}>
                                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                                    <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor, height: 14, width: 3, borderRadius: 2 }]} />
-                                    <Text style={[styles.activeSessionTitle, { color: theme.textPrimary, flexShrink: 1 }]} numberOfLines={1}>
+                                    <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor, height: 15, width: 3.5, borderRadius: 2 }]} />
+                                    <Text style={[styles.activeSessionTitle, { color: theme.textPrimary, flexShrink: 1, fontSize: 16 }]} numberOfLines={1}>
                                       {targetEx.name}
                                     </Text>
                                   </View>
-                                  <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
-                                    <Text style={[styles.activeSessionSubtitle, { color: theme.textSecondary, marginTop: 0 }]}>
-                                      {targetEx.muscleGroup.toUpperCase()} • {activeSets.length} set{activeSets.length !== 1 ? 's' : ''}
-                                    </Text>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 3 }}>
+                                    <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${muscleColor}15`, flexShrink: 0 }]}>
+                                      <Text style={[styles.activeSessionMuscleBadgeText, { color: muscleColor }]}>
+                                        {targetEx.muscleGroup.toUpperCase()}
+                                      </Text>
+                                    </View>
                                     {targetEx.target ? (
                                       <View style={{
                                         backgroundColor: `${muscleColor}14`,
@@ -4015,6 +3985,7 @@ export default function SinglePageLandingScreen() {
                                         borderRadius: 4,
                                         borderWidth: 0.5,
                                         borderColor: `${muscleColor}28`,
+                                        flexShrink: 0,
                                       }}>
                                         <Text style={{ fontSize: 10, fontWeight: '600', color: muscleColor, letterSpacing: 0.1 }}>
                                           {targetEx.target}
@@ -4024,8 +3995,8 @@ export default function SinglePageLandingScreen() {
                                   </View>
                                 </View>
 
-                                {/* Rest Timer Pill on the right of the heading */}
-                                <View style={{ marginRight: 6 }}>
+                                {/* Rest Timer Pill & Close Sign */}
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                                   {restTimerRunning ? (
                                     <TouchableOpacity
                                       onPress={() => {
@@ -4075,6 +4046,24 @@ export default function SinglePageLandingScreen() {
                                       </Text>
                                     </TouchableOpacity>
                                   )}
+
+                                  <TouchableOpacity
+                                    onPress={() => handleCancelInPlaceLogger()}
+                                    activeOpacity={0.6}
+                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                    style={{
+                                      width: 28,
+                                      height: 28,
+                                      borderRadius: 14,
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : '#F3F4F6',
+                                      borderWidth: 1,
+                                      borderColor: theme.borderColor,
+                                    }}
+                                  >
+                                    <X size={15} color={theme.textSecondary} strokeWidth={2.4} />
+                                  </TouchableOpacity>
                                 </View>
                               </View>
                             </View>
@@ -4317,6 +4306,28 @@ export default function SinglePageLandingScreen() {
                                 />
                               </View>
                             )}
+
+                            {/* Bottom Centered Save Button */}
+                            <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 14, marginBottom: 4 }}>
+                              <TouchableOpacity
+                                onPress={() => handleSaveInPlace(targetEx.id)}
+                                activeOpacity={0.8}
+                                style={[
+                                  styles.finishSessionBtn,
+                                  {
+                                    backgroundColor: '#10B981',
+                                    paddingVertical: 10,
+                                    paddingHorizontal: 48,
+                                    borderRadius: 10,
+                                    minWidth: 140,
+                                  }
+                                ]}
+                              >
+                                <Text style={[styles.finishSessionBtnText, { fontSize: 11, letterSpacing: 0.3 }]}>
+                                  SAVE
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
                           </View>
                         </View>
                       );
@@ -4447,35 +4458,19 @@ export default function SinglePageLandingScreen() {
                               >
                                 <View style={[styles.activeSessionItemAccent, { backgroundColor: muscleColor }]} />
                                 <View style={styles.activeSessionItemContent}>
-                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, marginRight: 8 }}>
                                     <Text style={[styles.activeSessionItemName, { color: theme.textPrimary, flexShrink: 1 }]} numberOfLines={1}>
                                       {details.name}
                                     </Text>
                                   </View>
                                   <View style={styles.activeSessionItemMeta}>
-                                    <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${muscleColor}15` }]}>
+                                    <View style={[styles.activeSessionMuscleBadge, { backgroundColor: `${muscleColor}15`, flexShrink: 0 }]}>
                                       <Text style={[styles.activeSessionMuscleBadgeText, { color: muscleColor }]}>
                                         {details.muscleGroup.toUpperCase()}
                                       </Text>
                                     </View>
-                                    <Text style={[styles.activeSessionItemSets, { color: theme.textSecondary }]}>
-                                      {item.sets.length} set{item.sets.length > 1 ? 's' : ''}
-                                    </Text>
                                   </View>
                                 </View>
-                                <TouchableOpacity
-                                  onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setEditingActiveExerciseId(null);
-                                    setReplacingActiveId(item.id || item.exerciseId);
-                                  }}
-                                  style={{ padding: 4, marginRight: 2 }}
-                                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                  activeOpacity={0.6}
-                                >
-                                  <RefreshCw size={13} color={theme.textSecondary} opacity={0.45} strokeWidth={2} />
-                                </TouchableOpacity>
-                                <ChevronRight size={16} color={theme.textSecondary} opacity={0.4} strokeWidth={2} />
                               </TouchableOpacity>
                             </SwipeableActiveExerciseRow>
                           );
@@ -5549,7 +5544,7 @@ export default function SinglePageLandingScreen() {
                               }
 
                               setActiveSets(initialSets);
-                              setSameForAll(true);
+                              setSameForAll(sameForAllPrefRef.current);
                               setExerciseNote(existingInActive?.notes || '');
                               setShowNoteInput(!!existingInActive?.notes);
                               setEditingModalExerciseId(item.id);
@@ -7935,7 +7930,7 @@ export default function SinglePageLandingScreen() {
 
                   setActiveSets(nextSets);
                   setExerciseNote(targetEx.notes || '');
-                  setSameForAll(true);
+                  setSameForAll(sameForAllPrefRef.current);
                 };
 
                 const navigateToExercise = (direction: 'prev' | 'next') => {
@@ -7965,7 +7960,7 @@ export default function SinglePageLandingScreen() {
 
                   setActiveSets(nextSets);
                   setExerciseNote(nextEx.notes || '');
-                  setSameForAll(true);
+                  setSameForAll(sameForAllPrefRef.current);
                 };
 
                 const getCompactNavName = (name: string) => {
@@ -11241,6 +11236,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flexShrink: 0,
   },
   activeSessionMuscleBadge: {
     paddingHorizontal: 5,
