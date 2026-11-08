@@ -7,9 +7,12 @@ console.log("[googleAuth] Module is loading...");
 console.log("[googleAuth] Platform:", Platform.OS);
 console.log("[googleAuth] Installed package version: 16.1.2");
 
-const webClientIdEnv = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID;
+const DEFAULT_WEB_CLIENT_ID = '870975577935-09ivit2r75a4ahvupgploc06da4ra1ev.apps.googleusercontent.com';
+const DEFAULT_ANDROID_CLIENT_ID = '870975577935-7nkm47agahiufr0vrq0po5pl4orq2i8v.apps.googleusercontent.com';
+
+const webClientIdEnv = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID || DEFAULT_WEB_CLIENT_ID;
 const iosClientIdEnv = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID_IOS;
-const androidClientIdEnv = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID_ANDROID;
+const androidClientIdEnv = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID_ANDROID || DEFAULT_ANDROID_CLIENT_ID;
 
 console.log("[googleAuth] Required environment variables exist status:");
 console.log("  EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID exists:", !!webClientIdEnv);
@@ -27,7 +30,7 @@ let isGoogleConfigured = false;
 console.log("[googleAuth] Google Web Client ID being used at initialization:", maskClientId(webClientIdEnv));
 
 // Configure Google Sign-In with webClientId if available at initialization
-const webClientId = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID;
+const webClientId = webClientIdEnv;
 if (webClientId) {
     console.log('[googleAuth] Initializing module-level GoogleSignin.configure with client ID:', maskClientId(webClientId));
     try {
@@ -78,7 +81,7 @@ export function useGoogleSignIn() {
  */
 export async function signOutFromGoogle(): Promise<void> {
     try {
-        const clientId = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID;
+        const clientId = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID || DEFAULT_WEB_CLIENT_ID;
         if (clientId && !isGoogleConfigured) {
             console.log("[googleAuth] Configuring GoogleSignin lazily inside signOutFromGoogle...");
             GoogleSignin.configure({
@@ -109,7 +112,7 @@ export async function signIn(): Promise<FirebaseUser | null> {
     console.log("[googleAuth] signIn() initiated.");
     let lastStep = "NONE";
     try {
-        const clientId = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID;
+        const clientId = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID || DEFAULT_WEB_CLIENT_ID;
         console.log("[googleAuth] Runtime EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID:", maskClientId(clientId));
         if (!clientId) {
             throw new Error('Google Sign-In configuration error: EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID is not defined in your environment.');

@@ -4525,11 +4525,109 @@ export default function SinglePageLandingScreen() {
                 </Card>
               )}
 
-              {/* Muscle Selector (hidden during active Live session) */}
+              {/* Quick Start Templates and Muscle Selector (hidden during active Live session) */}
               {!(loggingMode === 'live' && (activeSessionExercises.length > 0 || editingActiveExerciseId !== null)) && (
                 <>
+                  {/* Quick Start Templates */}
+                  {(() => {
+                    const defaultOrder = ['tmpl-push', 'tmpl-pull', 'tmpl-legs', 'tmpl-upper', 'tmpl-full'];
+                    const sortedQuickTemplates = [...templates].sort((a, b) => {
+                      const isDefaultA = defaultOrder.includes(a.id);
+                      const isDefaultB = defaultOrder.includes(b.id);
+
+                      // 1. Newly created (custom) templates come before default templates
+                      if (!isDefaultA && isDefaultB) return -1;
+                      if (isDefaultA && !isDefaultB) return 1;
+
+                      // 2. If both are user-created templates: newest created on top (first)
+                      if (!isDefaultA && !isDefaultB) {
+                        const timeA = new Date(a.createdAt || 0).getTime();
+                        const timeB = new Date(b.createdAt || 0).getTime();
+                        if (timeA !== timeB) return timeB - timeA;
+                        return 0;
+                      }
+
+                      // 3. For default templates, sort by usage first, then standard split order
+                      const usageA = a.usageCount || 0;
+                      const usageB = b.usageCount || 0;
+                      if (usageB !== usageA) return usageB - usageA;
+
+                      const idxA = defaultOrder.indexOf(a.id);
+                      const idxB = defaultOrder.indexOf(b.id);
+                      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                      if (idxA !== -1) return -1;
+                      if (idxB !== -1) return 1;
+
+                      return 0;
+                    });
+
+                    if (sortedQuickTemplates.length === 0) return null;
+
+                    const cardWidth = Math.floor((screenWidth - 32 - 16) / 3);
+
+                    return (
+                      <>
+                        <Text style={[styles.sectionHeader, { color: theme.textSecondary }]}>TEMPLATES</Text>
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingBottom: 6 }}
+                          style={{ marginHorizontal: -16, marginBottom: 14 }}
+                        >
+                          {sortedQuickTemplates.map((tmpl) => {
+                            const sessionMuscles: MuscleGroup[] = [];
+                            tmpl.exercises.forEach((logEx) => {
+                              const details = exercises.find((e) => e.id === logEx.exerciseId);
+                              if (details) sessionMuscles.push(details.muscleGroup);
+                            });
+                            const primaryMuscle = sessionMuscles[0] || 'Chest';
+                            const muscleColor = categoryColors[primaryMuscle] || '#10B981';
+
+                            return (
+                              <TouchableOpacity
+                                key={tmpl.id}
+                                onPress={() => {
+                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                  setTargetScrollTemplateId(tmpl.id);
+                                  setHighlightedTemplateId(tmpl.id);
+                                  setActiveSegment('templates');
+                                }}
+                                activeOpacity={0.8}
+                                style={{
+                                  width: cardWidth,
+                                  backgroundColor: theme.cardBg,
+                                  borderWidth: 1,
+                                  borderColor: theme.borderColor,
+                                  borderLeftWidth: 3.5,
+                                  borderLeftColor: muscleColor,
+                                  paddingVertical: 10,
+                                  paddingHorizontal: 8,
+                                  borderRadius: 10,
+                                  justifyContent: 'center',
+                                  shadowColor: '#000000',
+                                  shadowOffset: { width: 0, height: 1 },
+                                  shadowOpacity: isDarkMode ? 0 : 0.05,
+                                  shadowRadius: 2,
+                                  elevation: 1,
+                                }}
+                              >
+                                <Text
+                                  style={{ color: theme.textPrimary, fontSize: 12.5, fontWeight: '700' }}
+                                  numberOfLines={1}
+                                  ellipsizeMode="tail"
+                                >
+                                  {tmpl.name}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </ScrollView>
+                      </>
+                    );
+                  })()}
+
                   {/* Muscle Selector Cards Grid */}
-                  <Text style={[styles.sectionHeader, { color: theme.textSecondary, marginTop: 4, marginBottom: 12 }]}>
+                  <Text style={[styles.sectionHeader, { color: theme.textSecondary, marginTop: templates.length > 0 ? 0 : 4, marginBottom: 12 }]}>
                     SELECT MUSCLE GROUP
                   </Text>
                   <View style={styles.muscleGrid}>
